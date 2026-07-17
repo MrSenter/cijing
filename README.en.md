@@ -96,9 +96,15 @@ Full terms: [`LICENSE`](LICENSE) (code) and [`LICENSE-assets.md`](LICENSE-assets
 
 > The cartoon characters are residents of the town of Cíjìng. Assets are non-commercial — please don't use the characters or scenes for profit.
 
-## Want to reproduce / add a scene?
+## Still growing · build a town of your own
 
-The whole production pipeline (AI image task-books, the text-free stage-image spec, visual auditing, the code poster pipeline, local audio generation, single-file packaging) is in this repo's [`factory/`](factory/) directory. Want to add a scene to your own town, or switch to another language? Start there.
+Cíjìng's everyday scenes are **far from complete** — a post office breakdown, a school, a hospital ward, a wet market, a hardware store… there's plenty left to add. It's a city that keeps growing, and you're welcome to add to it.
+
+The whole production pipeline lives in this repo's [`factory/`](factory/) directory — but it can do more than "add a scene":
+
+> **You can swap the map for your own town, and cast yourself (and the people you care about) as the main characters** — a point-and-read city that's entirely yours.
+
+That's exactly what Cíjìng's two "libraries" are for — the **character library** keeps a fixed cast looking like the same people across every scene (so the protagonist can be *you*), and the **scene library** grows a town with a coherent spatial flow (so it's *your city*, not a pile of loose pictures). Switch languages, add a scene, or build a whole new city — it all starts in `factory/`.
 
 ---
 
