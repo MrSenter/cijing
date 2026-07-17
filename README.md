@@ -18,16 +18,16 @@
 
 <br><br>
 
-### 🎮 [**下载单文件版，双击即玩 →**](https://github.com/MrSenter/cijing/releases/latest)
+### ▶️ [**在线试玩 —— 点开就玩，不用下载**](https://mrsenter.github.io/cijing/)
 
-<sub>一个 html 文件，图和发音全打包在里面，不用 clone 整个仓库</sub>
+<sub>或 [下载单文件版](https://github.com/MrSenter/cijing/releases/latest) 双击离线玩（一个 html，图和发音全打包）· 手机/平板见下方</sub>
 
 </div>
 
 ---
 
 > **这个仓库两种用法** 👇
-> - 🎮 **想玩** → [下载单文件](https://github.com/MrSenter/cijing/releases/latest) 或打开根目录 `index.html`（本 README）
+> - 🎮 **想玩** → [**在线试玩**](https://mrsenter.github.io/cijing/)（点开即玩）或 [下载单文件](https://github.com/MrSenter/cijing/releases/latest) 离线玩
 > - 🛠️ **想复刻 / 加场景 / 换语言** → 看 [**`factory/` 目录**](factory/)，那里是**完整生产工作流**（角色库/场景库、生图任务书、视觉审计、发音管线、海报管线 + 全套规范）
 
 ## 这是什么

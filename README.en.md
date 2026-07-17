@@ -18,16 +18,16 @@ One scene, one world. Tap an object → its name, pronunciation & meaning. Like 
 
 <br><br>
 
-### 🎮 [**Download the single-file version and just double-click →**](https://github.com/MrSenter/cijing/releases/latest)
+### ▶️ [**Play online — no download, just click**](https://mrsenter.github.io/cijing/)
 
-<sub>One html file with all images & audio baked in — no need to clone the repo</sub>
+<sub>Or [download the single file](https://github.com/MrSenter/cijing/releases/latest) to play offline (one html, images & audio baked in) · phone/tablet below</sub>
 
 </div>
 
 ---
 
 > **This repo, two ways to use it** 👇
-> - 🎮 **Just play** → [download the single file](https://github.com/MrSenter/cijing/releases/latest) or open `index.html` (this README)
+> - 🎮 **Just play** → [**play online**](https://mrsenter.github.io/cijing/) (one click) or [download the single file](https://github.com/MrSenter/cijing/releases/latest) to play offline
 > - 🛠️ **Reproduce / add a scene / switch language** → see the [**`factory/` directory**](factory/) — the **full production workflow** (character & scene libraries, image task-books, visual auditing, audio pipeline, poster pipeline + all the specs)
 
 ## What is this
