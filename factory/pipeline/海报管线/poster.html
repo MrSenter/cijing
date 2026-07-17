@@ -1,0 +1,268 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 1536px; height: 1024px;
+    overflow: hidden;
+    background: #000;
+    font-family: -apple-system, sans-serif;
+  }
+  #stage {
+    position: relative;
+    width: 1536px; height: 1024px;
+    background-size: cover;
+    background-position: center;
+  }
+  #stage img.bg {
+    position: absolute; top:0; left:0; width:1536px; height:1024px;
+    display: block;
+  }
+
+  /* ---- 顶部横幅 ---- */
+  #banner {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-0.6deg);
+    background: #f3e6c8;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.35) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(120,90,40,0.06) 0%, transparent 50%);
+    border: 2px solid #8a6a3a;
+    border-radius: 14px 18px 16px 20px / 20px 14px 22px 16px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.35), inset 0 0 0 3px rgba(255,255,255,0.15);
+    padding: 12px 40px;
+    z-index: 50;
+  }
+  #banner .en {
+    font-family: "Chalkboard SE", "Marker Felt", "PingFang SC", sans-serif;
+    font-weight: bold;
+    font-size: 34px;
+    color: #3a2a12;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  #banner .zh {
+    font-family: "PingFang SC", sans-serif;
+    font-size: 18px;
+    color: #6b4a24;
+    text-align: center;
+    margin-top: 2px;
+  }
+  #banner .dot { color: #a3803f; }
+
+  /* ---- 单词标签 ---- */
+  .tag {
+    position: absolute;
+    background: #f5ecd6;
+    background-image:
+      radial-gradient(circle at 25% 20%, rgba(255,255,255,0.4) 0%, transparent 35%),
+      radial-gradient(circle at 75% 80%, rgba(110,80,35,0.07) 0%, transparent 45%);
+    border: 1.5px solid #9c7a45;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.28);
+    padding: 4px 9px 5px;
+    text-align: center;
+    white-space: nowrap;
+    line-height: 1.15;
+    z-index: 10;
+  }
+  .tag .en {
+    font-family: "Chalkboard SE", "Marker Felt", "PingFang SC", sans-serif;
+    font-weight: bold;
+    font-size: 16px;
+    color: #1e1a12;
+  }
+  .tag .zh {
+    font-family: "PingFang SC", sans-serif;
+    font-size: 11px;
+    color: #6b4423;
+    margin-top: 1px;
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <img class="bg" id="bgImg" alt="">
+  <div id="banner">
+    <div class="en" id="bannerText"></div>
+  </div>
+</div>
+
+<script>
+if (window.__DATA__) { init(window.__DATA__); }
+else { fetch('data.json').then(r => r.json()).then(init); }
+
+function init(DATA) {
+const PAGE_W = 1536, PAGE_H = 1024;
+
+// 底图与横幅由数据驱动（stageAbsPath 优先，退回相对文件名）
+const bgEl = document.getElementById('bgImg');
+bgEl.src = DATA.stageAbsPath ? encodeURI('file://' + DATA.stageAbsPath) : DATA.stage;
+const bannerEl = document.getElementById('bannerText');
+bannerEl.textContent = '';
+bannerEl.append((DATA.sceneNameEn || '') + ' ');
+const dotEl = document.createElement('span');
+dotEl.className = 'dot';
+dotEl.textContent = '·';
+bannerEl.append(dotEl, ' ' + (DATA.sceneNameZh || ''));
+const MARGIN = 6; // 页面边界安全距离
+const GAP = 6;    // 标签之间安全间距
+
+const stage = document.getElementById('stage');
+
+// 撕纸质感圆角随机化 + 微旋转
+function randRot() { return (Math.random() * 4 - 2).toFixed(2); }
+function randRadius() {
+  const a = 8 + Math.random()*8, b = 8 + Math.random()*8,
+        c = 8 + Math.random()*8, d = 8 + Math.random()*8;
+  return `${a}px ${b}px ${c}px ${d}px / ${d}px ${c}px ${b}px ${a}px`;
+}
+
+// hotspot 百分比 -> 像素矩形
+function hsRect(h) {
+  return {
+    x: h.x/100*PAGE_W, y: h.y/100*PAGE_H,
+    w: h.wd/100*PAGE_W, h: h.ht/100*PAGE_H
+  };
+}
+function rectsOverlap(a,b) {
+  return !(a.x+a.w <= b.x - GAP || b.x+b.w <= a.x - GAP ||
+           a.y+a.h <= b.y - GAP || b.y+b.h <= a.y - GAP);
+}
+function withinPage(r) {
+  return r.x >= MARGIN && r.y >= MARGIN &&
+         r.x+r.w <= PAGE_W-MARGIN && r.y+r.h <= PAGE_H-MARGIN;
+}
+
+// 1) 先隐藏渲染，测量每个标签的真实尺寸
+const tagEls = [];
+DATA.hotspots.forEach((h, i) => {
+  const word = DATA.words[h.w];
+  const el = document.createElement('div');
+  el.className = 'tag';
+  el.style.visibility = 'hidden';
+  el.style.left = '0px'; el.style.top = '0px';
+  el.style.borderRadius = randRadius();
+  const rot = randRot();
+  el.dataset.rot = rot;
+  el.innerHTML = `<div class="en">${word.en}</div><div class="zh">${word.zh}</div>`;
+  stage.appendChild(el);
+  tagEls.push({ el, hotspot: h, word });
+});
+
+// 强制 reflow 后测量
+const sizes = tagEls.map(t => {
+  const r = t.el.getBoundingClientRect();
+  return { w: r.width, h: r.height };
+});
+
+// 2) 贪心放置：候选位置序列，逐个尝试
+const placed = []; // 已放置的矩形(含标签)
+const issues = [];
+
+// 把横幅也当作已占用区域，避免标签被横幅遮住
+{
+  const bannerEl = document.getElementById('banner');
+  const br = bannerEl.getBoundingClientRect();
+  placed.push({x: br.left, y: br.top, w: br.width, h: br.height});
+}
+
+function tryPlacements(hs, size) {
+  const hr = hsRect(hs);
+  const cx = hr.x + hr.w/2, cy = hr.y + hr.h/2;
+  const candidates = [];
+
+  // 各锚位的候选坐标
+  const anchors = {
+    above:  {x: cx - size.w/2, y: hr.y - size.h - 8},
+    below:  {x: cx - size.w/2, y: hr.y + hr.h + 8},
+    left:   {x: hr.x - size.w - 8, y: cy - size.h/2},
+    right:  {x: hr.x + hr.w + 8, y: cy - size.h/2},
+    // 贴着热区内部边缘放（适合热区本身很大、标签可以"嵌"在物体上不遮住关键部分的情况）
+    'inside-top':    {x: cx - size.w/2, y: hr.y + 6},
+    'inside-bottom': {x: cx - size.w/2, y: hr.y + hr.h - size.h - 6},
+    'inside-left':   {x: hr.x + 6, y: cy - size.h/2},
+    'inside-right':  {x: hr.x + hr.w - size.w - 6, y: cy - size.h/2},
+  };
+
+  // 若 hotspot 指定了 anchor 偏好，优先尝试该锚位
+  if (hs.anchor && anchors[hs.anchor]) {
+    candidates.push(Object.assign({tag: 'anchor:' + hs.anchor}, anchors[hs.anchor]));
+  }
+  // 默认顺序：上/下/左/右
+  ['above','below','left','right'].forEach(k => {
+    if (k !== hs.anchor) candidates.push(Object.assign({tag:k}, anchors[k]));
+  });
+
+  // 全部默认锚位都失败时：绕自己热区中心做局部螺旋搜索（就近找位置，不再径向外推到页面另一端）
+  for (let radius = 20; radius <= 340; radius += 20) {
+    for (let ang = 0; ang < 360; ang += 30) {
+      const rad = ang * Math.PI / 180;
+      candidates.push({
+        x: cx + Math.cos(rad) * radius - size.w/2,
+        y: cy + Math.sin(rad) * radius - size.h/2,
+        tag: `spiral${radius}@${ang}`
+      });
+    }
+  }
+
+  for (const c of candidates) {
+    const r = {x:c.x, y:c.y, w:size.w, h:size.h};
+    if (!withinPage(r)) continue;
+    let conflict = false;
+    for (const p of placed) {
+      if (rectsOverlap(r,p)) { conflict = true; break; }
+    }
+    if (!conflict) return {rect:r, tag:c.tag};
+  }
+  return null;
+}
+
+// 有明确锚位偏好的标签优先占位，避免被后来的自由标签抢走贴身位置
+const order = tagEls.map((t, i) => i)
+  .sort((a, b) => (tagEls[b].hotspot.anchor ? 1 : 0) - (tagEls[a].hotspot.anchor ? 1 : 0));
+
+order.forEach((i) => {
+  const t = tagEls[i];
+  const size = sizes[i];
+  const result = tryPlacements(t.hotspot, size);
+  if (result) {
+    t.el.style.left = result.rect.x + 'px';
+    t.el.style.top = result.rect.y + 'px';
+    t.el.style.transform = `rotate(${t.el.dataset.rot}deg)`;
+    t.el.style.visibility = 'visible';
+    placed.push(result.rect);
+  } else {
+    // 全部失败：仍放在默认上方位置（可能重叠），记入 issues
+    const hr = hsRect(t.hotspot);
+    const cx = hr.x + hr.w/2;
+    const fallback = {x: cx - size.w/2, y: Math.max(MARGIN, hr.y - size.h - 8), w:size.w, h:size.h};
+    t.el.style.left = fallback.x + 'px';
+    t.el.style.top = fallback.y + 'px';
+    t.el.style.transform = `rotate(${t.el.dataset.rot}deg)`;
+    t.el.style.visibility = 'visible';
+    placed.push(fallback);
+    issues.push(t.word.en);
+  }
+});
+
+window.__labelCount = tagEls.length;
+window.__issues = issues;
+// 底图加载完成才算就绪，避免截图截到空底
+(function(){
+  function done(){ window.__ready = true; }
+  if (bgEl.complete && bgEl.naturalWidth > 0) { done(); }
+  else {
+    bgEl.addEventListener('load', done);
+    bgEl.addEventListener('error', function(){ issues.push('BG_LOAD_FAIL'); done(); });
+  }
+})();
+console.log('LABEL_COUNT=' + tagEls.length);
+console.log('ISSUES=' + JSON.stringify(issues));
+}
+</script>
+</body>
+</html>

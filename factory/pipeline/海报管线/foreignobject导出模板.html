@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>词境海报导出 · 超市（赛道B / foreignObject）</title>
+<style>
+  /* 这块 <style> 只作用于页面外壳(按钮/滚动容器),不会被序列化进导出的 SVG,
+     因为导出时只克隆 #poster 节点,且 #poster 内部所有视觉样式都写在行内 style 里。 */
+  html,body{ margin:0; padding:0; background:#20242b; color:#eee; font-family:-apple-system,"PingFang SC",sans-serif; }
+  #toolbar{ position:sticky; top:0; z-index:100; padding:12px 16px; background:#14161b; box-shadow:0 2px 8px rgba(0,0,0,.4); display:flex; gap:12px; align-items:center; }
+  #toolbar button{ font-size:15px; padding:8px 18px; border-radius:6px; border:none; background:#4a8cff; color:#fff; cursor:pointer; }
+  #toolbar button:disabled{ background:#555; cursor:default; }
+  #status{ font-size:13px; color:#9aa; }
+  #scrollArea{ padding:24px; overflow:auto; }
+  #posterWrap{ transform-origin: top left; }
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <button id="exportBtn">导出 PNG（3072×2048）</button>
+  <span id="status">就绪</span>
+</div>
+<div id="scrollArea">
+  <div id="posterWrap">
+    <!-- #poster 内所有元素的视觉样式都必须是行内 style,不依赖上面的 <style> 块,
+         因为导出时会 cloneNode 这个节点直接塞进 <foreignObject>。 -->
+    <div id="poster" style="position:relative; width:1536px; height:1024px; overflow:hidden; background:#000; font-family:-apple-system, 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;">
+    </div>
+  </div>
+</div>
+
+<script>
+const STAGE_B64 = "__STAGE_B64__"; // data:image/png;base64,.... 构建期写死,双击即用,无网络请求
+
+const DATA = {
+  "sceneNameEn": "Supermarket",
+  "sceneNameZh": "超市",
+  "words": [
+    { "en": "shopping cart", "zh": "购物车" },
+    { "en": "basket", "zh": "购物篮" },
+    { "en": "shelf", "zh": "货架" },
+    { "en": "aisle", "zh": "走道" },
+    { "en": "freezer", "zh": "冷冻柜" },
+    { "en": "refrigerated case", "zh": "冷藏柜" },
+    { "en": "scale", "zh": "电子秤" },
+    { "en": "checkout", "zh": "收银台" },
+    { "en": "cash register", "zh": "收银机" },
+    { "en": "conveyor belt", "zh": "传送带" },
+    { "en": "scanner", "zh": "扫码枪" },
+    { "en": "receipt", "zh": "小票" },
+    { "en": "price tag", "zh": "价签" },
+    { "en": "plastic bag", "zh": "塑料袋" },
+    { "en": "carton", "zh": "纸盒装" },
+    { "en": "can", "zh": "罐头" },
+    { "en": "jar", "zh": "玻璃罐" },
+    { "en": "produce", "zh": "生鲜果蔬" },
+    { "en": "divider", "zh": "结账分隔棒" },
+    { "en": "deli counter", "zh": "熟食柜台" }
+  ],
+  "hotspots": [
+    { "x": 0.5, "y": 8,    "wd": 21.5, "ht": 37,  "w": 17 },
+    { "x": 30,  "y": 6,    "wd": 17,   "ht": 55,  "w": 2 },
+    { "x": 47,  "y": 26,   "wd": 14,   "ht": 30,  "w": 3 },
+    { "x": 50.5,"y": 56,   "wd": 30,   "ht": 40,  "w": 7 },
+    { "x": 52,  "y": 58,   "wd": 20,   "ht": 30,  "w": 9 },
+    { "x": 1,   "y": 46,   "wd": 22,   "ht": 46,  "w": 0 },
+    { "x": 22.5,"y": 66,   "wd": 14.5, "ht": 22,  "w": 1 },
+    { "x": 70.5,"y": 18.5, "wd": 14.5, "ht": 26,  "w": 4 },
+    { "x": 85,  "y": 3,    "wd": 14.5, "ht": 63,  "w": 5 },
+    { "x": 15.5,"y": 28,   "wd": 12.5, "ht": 20,  "w": 6 },
+    { "x": 66,  "y": 42,   "wd": 14,   "ht": 23,  "w": 8 },
+    { "x": 87.5,"y": 56,   "wd": 8,    "ht": 15,  "w": 10 },
+    { "x": 77.5,"y": 51,   "wd": 5,    "ht": 10,  "w": 11 },
+    { "x": 35.5,"y": 15.5, "wd": 5,    "ht": 5.5, "w": 12 },
+    { "x": 79,  "y": 71,   "wd": 17,   "ht": 25,  "w": 13 },
+    { "x": 57,  "y": 53.5, "wd": 5.5,  "ht": 11,  "w": 14 },
+    { "x": 54.5,"y": 61,   "wd": 5,    "ht": 8,   "w": 15 },
+    { "x": 61.5,"y": 61.5, "wd": 4.5,  "ht": 9,   "w": 16 },
+    { "x": 58,  "y": 77.5, "wd": 14,   "ht": 7.5, "w": 18 },
+    { "x": 46.5,"y": 9,    "wd": 15.5, "ht": 16,  "w": 19 }
+  ]
+};
+
+const PAGE_W = 1536, PAGE_H = 1024;
+const GAP = 10;
+
+// ---- 简单确定性伪随机(给旋转角用,保证同数据每次结果一致) ----
+function seededRand(seed){
+  let s = seed % 2147483647; if (s<=0) s += 2147483646;
+  return function(){ s = (s*16807) % 2147483647; return (s-1)/2147483646; };
+}
+const rand = seededRand(20260716);
+
+function rectsOverlap(a,b,margin){
+  margin = margin||0;
+  return !(a.right+margin<=b.left || a.left-margin>=b.right || a.bottom+margin<=b.top || a.top-margin>=b.bottom);
+}
+
+function pctRectToPx(h){
+  const left = h.x/100*PAGE_W;
+  const top = h.y/100*PAGE_H;
+  const width = h.wd/100*PAGE_W;
+  const height = h.ht/100*PAGE_H;
+  return { left, top, width, height, right: left+width, bottom: top+height };
+}
+
+function buildPoster(){
+  const poster = document.getElementById('poster');
+  poster.innerHTML = '';
+
+  // 1) 舞台底图,铺满
+  const img = document.createElement('img');
+  img.src = STAGE_B64;
+  img.width = PAGE_W; img.height = PAGE_H;
+  img.style.cssText = `position:absolute; left:0; top:0; width:${PAGE_W}px; height:${PAGE_H}px; display:block; object-fit:cover;`;
+  poster.appendChild(img);
+
+  const placedRects = [];
+
+  // 2) 顶部横幅(米色纸质,居中)
+  const bannerText = `${DATA.sceneNameEn} · ${DATA.sceneNameZh}`;
+  const banner = document.createElement('div');
+  banner.style.cssText = [
+    'position:absolute',
+    'top:26px',
+    'left:50%',
+    'transform:translateX(-50%)',
+    'padding:14px 46px',
+    'background:linear-gradient(135deg,#f8efd6,#ecd9ab)',
+    'border:2px solid rgba(120,86,38,0.55)',
+    'border-radius:12px',
+    'box-shadow:0 6px 14px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.35)',
+    'font-size:38px',
+    'font-weight:800',
+    'color:#3a2a12',
+    'letter-spacing:1px',
+    'white-space:nowrap',
+    'text-shadow:0 1px 0 rgba(255,255,255,0.5)',
+    'font-family:Georgia,\'PingFang SC\',\'Helvetica Neue\',Arial,sans-serif'
+  ].join(';');
+  banner.textContent = bannerText;
+  poster.appendChild(banner);
+
+  // 量出横幅实际占位,加入已占用矩形表(留出安全边距,标签不能压横幅)
+  const bRect = banner.getBoundingClientRect();
+  const pRect = poster.getBoundingClientRect();
+  const bannerBox = {
+    left: bRect.left - pRect.left - 10,
+    top: bRect.top - pRect.top - 10,
+    right: bRect.right - pRect.left + 10,
+    bottom: bRect.bottom - pRect.top + 10
+  };
+  placedRects.push(bannerBox);
+
+  // 3) 逐词生成标签,贪心防重叠摆放
+  DATA.hotspots
+    .slice()
+    .sort((a,b)=> (a.wd*a.ht) - (b.wd*b.ht)) // 小热区先摆,给大热区留腾挪空间
+    .forEach(hs => {
+      const word = DATA.words[hs.w];
+      const hotRect = pctRectToPx(hs);
+      const rotation = (rand()*4 - 2).toFixed(2); // -2°~2°
+
+      const label = document.createElement('div');
+      label.style.cssText = [
+        'position:absolute',
+        'left:-9999px',
+        'top:-9999px',
+        'padding:7px 12px',
+        'background:linear-gradient(135deg,#f7ecd0,#e9d5a3)',
+        'border:1.5px solid rgba(110,80,34,0.6)',
+        'border-radius:9px',
+        'box-shadow:0 3px 7px rgba(0,0,0,0.38), inset 0 0 0 1px rgba(255,255,255,0.3)',
+        'text-align:center',
+        'white-space:nowrap',
+        `transform:rotate(${rotation}deg)`,
+        'transform-origin:center center'
+      ].join(';');
+
+      const en = document.createElement('div');
+      en.textContent = word.en;
+      en.style.cssText = "font-family:'Arial Black','Helvetica Neue',Arial,sans-serif; font-weight:800; font-size:19px; color:#2a1c0c; line-height:1.15;";
+
+      const zh = document.createElement('div');
+      zh.textContent = word.zh;
+      zh.style.cssText = "font-family:'PingFang SC','Microsoft YaHei','Heiti SC',sans-serif; font-weight:600; font-size:13px; color:#6d4a24; margin-top:2px; line-height:1.2;";
+
+      label.appendChild(en);
+      label.appendChild(zh);
+      poster.appendChild(label);
+
+      // 量尺寸(transform 不影响 layout box,量出来的是未旋转前的轴对齐尺寸,足够用)
+      const w = label.offsetWidth;
+      const h = label.offsetHeight;
+
+      const rect = placeLabel(hotRect, w, h, placedRects);
+      label.style.left = rect.left + 'px';
+      label.style.top = rect.top + 'px';
+      placedRects.push(rect);
+    });
+}
+
+function placeLabel(hotRect, w, h, placedRects){
+  const cx = hotRect.left + hotRect.width/2;
+  const cy = hotRect.top + hotRect.height/2;
+
+  const candidates = [];
+  // 上
+  candidates.push({left: cx - w/2, top: hotRect.top - GAP - h});
+  // 下
+  candidates.push({left: cx - w/2, top: hotRect.bottom + GAP});
+  // 左
+  candidates.push({left: hotRect.left - GAP - w, top: cy - h/2});
+  // 右
+  candidates.push({left: hotRect.right + GAP, top: cy - h/2});
+  // 径向外推兜底(半径递增,角度环绕)
+  const radii = [GAP+40, GAP+75, GAP+120, GAP+175, GAP+240, GAP+320];
+  const angles = [270,90,180,0,225,315,135,45,250,290,110,70,200,160,340,20];
+  radii.forEach(r=>{
+    angles.forEach(a=>{
+      const rad = a*Math.PI/180;
+      const ccx = cx + r*Math.cos(rad);
+      const ccy = cy + r*Math.sin(rad);
+      candidates.push({left: ccx - w/2, top: ccy - h/2});
+    });
+  });
+
+  const margin = 6;
+  for(const c of candidates){
+    const rect = {left:c.left, top:c.top, right:c.left+w, bottom:c.top+h};
+    if(rect.left < 6 || rect.top < 6 || rect.right > PAGE_W-6 || rect.bottom > PAGE_H-6) continue;
+    let ok = true;
+    for(const p of placedRects){
+      if(rectsOverlap(rect, p, margin)){ ok = false; break; }
+    }
+    if(ok) return rect;
+  }
+  // 实在放不下:夹取到画面内,允许轻微重叠(极端兜底,20 词在此规模下基本不会走到这)
+  const last = candidates[candidates.length-1];
+  const left = Math.min(Math.max(last.left, 6), PAGE_W-6-w);
+  const top = Math.min(Math.max(last.top, 6), PAGE_H-6-h);
+  return {left, top, right:left+w, bottom:top+h};
+}
+
+// ---- 导出:DOM → SVG(foreignObject) → Image → Canvas(2x) → PNG ----
+async function exportPNG(){
+  const btn = document.getElementById('exportBtn');
+  const status = document.getElementById('status');
+  btn.disabled = true;
+  status.textContent = '导出中…';
+
+  try {
+    const poster = document.getElementById('poster');
+    const clone = poster.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+    // 保险起见,克隆节点本身也显式带上尺寸(行内样式已经有了,这里不额外覆盖)
+
+    const serializer = new XMLSerializer();
+    const clonedHTML = serializer.serializeToString(clone);
+
+    const svgStr =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_W}" height="${PAGE_H}" viewBox="0 0 ${PAGE_W} ${PAGE_H}">` +
+      `<foreignObject x="0" y="0" width="${PAGE_W}" height="${PAGE_H}">` +
+      clonedHTML +
+      `</foreignObject></svg>`;
+
+    const svgDataUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+
+    const img = new Image();
+    img.width = PAGE_W;
+    img.height = PAGE_H;
+
+    const loaded = new Promise((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = (e) => reject(new Error('SVG 图片加载失败(foreignObject 序列化可能有问题)'));
+    });
+    img.src = svgDataUri;
+    await loaded;
+
+    const SCALE = 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = PAGE_W * SCALE;
+    canvas.height = PAGE_H * SCALE;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(SCALE, SCALE);
+    ctx.drawImage(img, 0, 0, PAGE_W, PAGE_H);
+
+    canvas.toBlob((blob) => {
+      if(!blob){ status.textContent = '导出失败:toBlob 返回空'; btn.disabled=false; return; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '海报B-超市-foreignobject.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      status.textContent = `导出完成 ${canvas.width}×${canvas.height}`;
+      btn.disabled = false;
+    }, 'image/png');
+
+  } catch (err) {
+    status.textContent = '导出出错: ' + err.message;
+    btn.disabled = false;
+    console.error(err);
+  }
+}
+
+document.getElementById('exportBtn').addEventListener('click', exportPNG);
+
+buildPoster();
+</script>
+</body>
+</html>
