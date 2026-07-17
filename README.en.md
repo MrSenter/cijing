@@ -66,6 +66,7 @@ A minimal one-command example (one scene image + a tiny word list → one playab
 
 ## Limitations (read before you get excited)
 
+- **This started as a workflow experiment, not a polished product.** The whole point was building the *factory*; the game is a sample of what it produces. So expect rough edges and unfinished details in the game itself — the polish went into the pipeline, not the app.
 - **No one-click.** Generating a scene is human-directed: write the task-book, generate, audit, fix missing objects by local inpainting, hand-place hotspots. The auditing and hotspotting still need a human in the loop.
 - **Bring your own image model.** No image weights are shipped; you wire in your own `image_gen`.
 - **Chinese audio isn't bundled.** edge-tts uses Microsoft's online voices — redistributing the generated mp3s is a legal gray area, so the shipped build has no Chinese audio (it falls back to the browser's Web Speech voice). English audio (Kokoro, Apache-2.0) *is* bundled.
