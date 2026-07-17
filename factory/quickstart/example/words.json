@@ -1,0 +1,158 @@
+{
+  "sceneName": "The Post Office · 邮局",
+  "words": [
+    {
+      "en": "parcel",
+      "ipa": "/ˈpɑːrsl/",
+      "zh": "包裹",
+      "x": 42,
+      "y": 30,
+      "wd": 17,
+      "ht": 20
+    },
+    {
+      "en": "shipping label",
+      "ipa": "/ˈʃɪpɪŋ ˌleɪbl/",
+      "zh": "运单/快递面单",
+      "x": 50,
+      "y": 31,
+      "wd": 10,
+      "ht": 6
+    },
+    {
+      "en": "postal scale",
+      "ipa": "/ˈpoʊstl skeɪl/",
+      "zh": "邮政秤",
+      "x": 49,
+      "y": 44,
+      "wd": 15,
+      "ht": 9
+    },
+    {
+      "en": "packing tape",
+      "ipa": "/ˈpækɪŋ teɪp/",
+      "zh": "封箱胶带",
+      "x": 2,
+      "y": 64,
+      "wd": 12,
+      "ht": 16
+    },
+    {
+      "en": "bubble wrap",
+      "ipa": "/ˈbʌbl ræp/",
+      "zh": "气泡膜",
+      "x": 14,
+      "y": 66,
+      "wd": 13,
+      "ht": 17
+    },
+    {
+      "en": "bubble mailer",
+      "ipa": "/ˈbʌbl ˌmeɪlər/",
+      "zh": "气泡信封",
+      "x": 26,
+      "y": 68,
+      "wd": 17,
+      "ht": 24
+    },
+    {
+      "en": "packing peanuts",
+      "ipa": "/ˈpækɪŋ ˌpiːnʌts/",
+      "zh": "防震泡沫粒",
+      "x": 0,
+      "y": 80,
+      "wd": 13,
+      "ht": 18
+    },
+    {
+      "en": "box cutter",
+      "ipa": "/ˈbɑːks ˌkʌtər/",
+      "zh": "开箱刀",
+      "x": 42,
+      "y": 74,
+      "wd": 11,
+      "ht": 15
+    },
+    {
+      "en": "stamp",
+      "ipa": "/stæmp/",
+      "zh": "邮票",
+      "x": 52,
+      "y": 80,
+      "wd": 9,
+      "ht": 11
+    },
+    {
+      "en": "postcard",
+      "ipa": "/ˈpoʊstkɑːrd/",
+      "zh": "明信片",
+      "x": 80,
+      "y": 32,
+      "wd": 10,
+      "ht": 12
+    },
+    {
+      "en": "envelope",
+      "ipa": "/ˈenvəloʊp/",
+      "zh": "信封",
+      "x": 52,
+      "y": 66,
+      "wd": 20,
+      "ht": 18
+    },
+    {
+      "en": "mailing tube",
+      "ipa": "/ˈmeɪlɪŋ tuːb/",
+      "zh": "邮寄纸筒",
+      "x": 84,
+      "y": 60,
+      "wd": 13,
+      "ht": 30
+    },
+    {
+      "en": "service window",
+      "ipa": "/ˈsɜːrvɪs ˌwɪndoʊ/",
+      "zh": "服务窗口",
+      "x": 38,
+      "y": 2,
+      "wd": 26,
+      "ht": 20
+    },
+    {
+      "en": "p.o. box",
+      "ipa": "/ˌpiː oʊ ˈbɑːks/",
+      "zh": "私人邮箱格",
+      "x": 20,
+      "y": 26,
+      "wd": 12,
+      "ht": 27
+    },
+    {
+      "en": "mail slot",
+      "ipa": "/ˈmeɪl slɑːt/",
+      "zh": "投递口",
+      "x": 13,
+      "y": 18,
+      "wd": 7,
+      "ht": 13
+    },
+    {
+      "en": "self-service kiosk",
+      "ipa": "/ˌself ˈsɜːrvɪs ˈkiːɑːsk/",
+      "zh": "自助机",
+      "x": 0,
+      "y": 10,
+      "wd": 14,
+      "ht": 48
+    },
+    {
+      "en": "postal worker",
+      "ipa": "/ˈpoʊstl ˌwɜːrkər/",
+      "zh": "邮政员工",
+      "x": 54,
+      "y": 6,
+      "wd": 20,
+      "ht": 46
+    }
+  ]
+}

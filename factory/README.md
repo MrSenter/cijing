@@ -1,5 +1,7 @@
 <div align="center">
 
+**简体中文** · [English](README.en.md)
+
 # 词境工厂 · Cíjìng Factory
 
 **词境的生产流水线** —— 从"想一个场景"到"能点读的一张图"的全套工具与规范。
@@ -11,6 +13,9 @@
 > 词境的生活场景还没铺满，本就是一座持续生长的城——你不必等它完整，直接拿这套工作流造你自己的那座。角色库让主角固定成同一个人（可以是你），场景库让一座城长出连贯动线。
 
 > 成品（能直接玩的那个）在**仓库根目录**（`index.html` + 图 + 音）。这个 `factory/` 目录是**它怎么造出来的**。
+
+> 🚀 **想先跑一个看看？** [`quickstart/`](quickstart/) 里一条命令、一张图 + 一份词表 → 一个可玩的单场景 HTML：
+> `python3 build_scene.py example/words.json example/scene.jpg -o output.html`
 
 ---
 

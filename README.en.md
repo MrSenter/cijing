@@ -4,110 +4,89 @@
 
 # 词境 · Cíjìng
 
-**A point-and-read game for learning the English words for everyday things**
+**An open, reproducible pipeline for building point-and-read language worlds — plus a playable demo it produced.**
 
-One scene, one world. Tap an object → its name, pronunciation & meaning. Like a grown-up's touch-to-read pen.
+### ▶️ [**Play the demo — no download, just click**](https://mrsenter.github.io/cijing/)
 
-*"The things around you that you can't name."*
+<img src="docs/screenshots/car-driver.jpg" width="680" alt="A driver's-view scene: tap any object for its English name, phonetics, Chinese, and audio">
 
-<br>
-
-<img src="docs/screenshots/map.jpg" width="720" alt="Cíjìng town map">
-
-<sub>A whole little town · tap any building to jump into that scene</sub>
-
-<br><br>
-
-### ▶️ [**Play online — no download, just click**](https://mrsenter.github.io/cijing/)
-
-<sub>Or [download the single file](https://github.com/MrSenter/cijing/releases/latest) to play offline (one html, images & audio baked in) · phone/tablet below</sub>
+<sub>Tap any object → English + phonetics + Chinese + example sentence + audio. Switch label modes, or hide them all to quiz yourself.</sub>
 
 </div>
 
 ---
 
-> **This repo, two ways to use it** 👇
-> - 🎮 **Just play** → [**play online**](https://mrsenter.github.io/cijing/) (one click) or [download the single file](https://github.com/MrSenter/cijing/releases/latest) to play offline
-> - 🛠️ **Reproduce / add a scene / switch language** → see the [**`factory/` directory**](factory/) — the **full production workflow** (character & scene libraries, image task-books, visual auditing, audio pipeline, poster pipeline + all the specs)
+## The one idea that makes it work
 
-## What is this
+> **The scene images contain zero text. Every word, phonetic, and translation is overlaid by the code layer at runtime.**
 
-Cíjìng is a **scene-based, point-and-read English learning game**. Each image is an everyday scene (a kitchen, a car, a supermarket, an airport…), and every object in it is tappable — tap it and up pops its English name, phonetic spelling, Chinese meaning, and an example sentence, read aloud to you.
+The AI only ever draws a *clean, wordless stage*. Nothing is baked into the pixels. That single constraint is what turns a picture into a language tool:
 
-- **27 scenes · ~800 words**: from home (bedroom / kitchen / bathroom) to out and about (supermarket / café / clinic / airport / hotel) — a complete little city
-- **Four modes**: EN+中 / English only / Chinese only / all hidden (turns into a "find the word" quiz)
-- **A whole-town map**: tap a building to jump straight into its scene
-- **Runs fully local**: open and play — no internet, no uploads, no ads, no tracking
+- **One image, many languages** — the artwork is generated once; swapping languages only swaps the word layer.
+- **Hotspots, not hand-labels** — a vision model reads the image and emits percentage-coordinate boxes; the runtime draws the labels.
+- **One hotspot set, four modes** — show both languages / English only / Chinese only / hide-all (which becomes a find-the-word quiz).
 
-<p align="center">
-  <img src="docs/screenshots/car-driver.jpg" width="49%" alt="Car — driver's view">
-  <img src="docs/screenshots/supermarket.jpg" width="49%" alt="Supermarket">
-  <img src="docs/screenshots/airport.jpg" width="49%" alt="Airport">
-  <img src="docs/screenshots/park.jpg" width="49%" alt="Park">
-</p>
+Bake text into the image and you get a poster: it can't be tapped, hidden, quizzed, or re-translated. Keep the image wordless and the code owns everything interactive.
 
-<sub>Tap an object → English + phonetics + Chinese + example sentence + audio. Above is the "both languages" mode; you can switch to English-only, Chinese-only, or hide-all to quiz yourself.</sub>
+## The factory (this is the actual project)
 
-## Who it's for
+词境 is less "a vocabulary game" and more **a workflow for mass-producing them**. The game is the proof it works. The whole pipeline and its specs live in [**`factory/`**](factory/):
 
-- **Anyone who wants the real, everyday vocabulary** (students abroad, new immigrants, overseas Chinese — or learners at home filling the "words the textbook never taught" gap). You can discuss *economy* and *politics*, yet not know your home's *downspout*, the bathroom *vanity*, or a car's *mud flap*. Cíjìng follows real daily-life routines, so what you learn is what you'll **actually need next time** — it even covers the "stuck at the worst moment" scenes: seeing a doctor, dealing with utilities/renting, car maintenance.
-- **Kids' English & parent-child learning** — the storybook art + tap-to-hear makes it great for pointing at things and learning names together. The content skews toward **everyday life**; kids will find the kitchen, bedroom, park, and supermarket easiest (the more technical scenes like car repair and plumbing are better with a grown-up).
+```
+① Word list     decide the tappable objects in a scene (new words, no dupes)
+     ↓
+② Image task    → a wordless stage image        factory/templates/生图任务书模板.md
+     ↓            (unified art spec + "no text" rule + physical-plausibility rule)
+③ Visual audit   check every word is present, zero text, plausible   factory/pipeline/审计员岗位.md
+     ↓            (missing object → local inpaint fix, not a full redraw)
+④ Hotspots       read the image, box each word in % coords   factory/docs/场景数据格式.md
+     ↓
+⑤ Assemble       word list + hotspots + image → one slide object
+     ↓
+⑥ Audio          English via Kokoro / Chinese via edge-tts   factory/pipeline/发音管线/
+     ↓            (+ whisper machine-ear QA to catch TTS failures)
+⑦ Ship           browser smoke-test → single-file build      factory/pipeline/发音管线/打包便携版.py
+```
 
-## How to play
+Two "libraries" hold a whole town together:
+- **Character library** — a fixed cast with written appearance anchors + a reference sheet, fed to the image gen so the same people stay consistent across every scene. (So *you* can be the protagonist.)
+- **Scene library** — each scene is a slide; their order encodes a spatial route through the town (↑↓ = change scene, ←→ = pan views within a scene). So it's a *city*, not a pile of loose pictures.
 
-**Computer (Mac / Windows)**: download and double-click the single-file version, or open `index.html`.
+## Build your own — honestly
 
-**iPad / iPhone** (two ways):
+This is a **human-in-the-loop, multi-step workflow, not a one-click generator.** You direct each stage; the tools do the heavy lifting. Bring your own:
 
-> ⚠️ iOS caveat: after you copy the html into the Files app, **tapping it only previews — it won't launch the game** (Safari/Chrome don't even appear in "Open with" — an iOS limitation). Use one of these:
+- **Image generation** — any `image_gen` agent (the author uses Codex CLI). You supply the API/model.
+- **English TTS** — [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) + [mlx-audio](https://github.com/Blaizzy/mlx-audio) (Apache-2.0, redistributable).
+- **Chinese TTS** — [edge-tts](https://github.com/rany2/edge-tts) (Microsoft online voices).
+- **QA** — [whisper.cpp](https://github.com/ggerganov/whisper.cpp) to grade the generated audio.
+- **Posters** — Node + Playwright.
 
-- **Option A · install Edge**: copy the file to your device → share from the Files app → open with **Edge** (Edge registers as a local-html handler, so it launches properly).
-- **Option B · local network (no file transfer)**: run a local server on your computer, connect your phone/tablet to the same Wi-Fi (or the computer's hotspot), and open the link in a browser:
-  ```bash
-  # on your computer, inside the cijing folder:
-  python3 -m http.server 8000
-  # then on your phone/tablet, open: http://<computer-LAN-IP>:8000
-  ```
+A minimal one-command example (one scene image + a tiny word list → one playable HTML) is in [`factory/quickstart/`](factory/quickstart/).
 
-**Controls**:
-- **Tap an object** → hear it, see the word card
-- **↑ ↓** change scene　**← →** pan between views within a scene (e.g. the car's four views; the airport's check-in → security → gate → baggage claim)
-- Top bar: switch **EN+中 / English only / Chinese only / hide all**; "hide all" starts a **find-the-word quiz**
-- Left **📖 index** grouped by 🏠home / 🚗transit / 🛒out; right **🗺 map** jumps by building
-- Word labels are **semi-transparent by default and pop to the front when tapped**, so crowded scenes stay tappable
+## Limitations (read before you get excited)
 
-## Pronunciation
+- **No one-click.** Generating a scene is human-directed: write the task-book, generate, audit, fix missing objects by local inpainting, hand-place hotspots. The auditing and hotspotting still need a human in the loop.
+- **Bring your own image model.** No image weights are shipped; you wire in your own `image_gen`.
+- **Chinese audio isn't bundled.** edge-tts uses Microsoft's online voices — redistributing the generated mp3s is a legal gray area, so the shipped build has no Chinese audio (it falls back to the browser's Web Speech voice). English audio (Kokoro, Apache-2.0) *is* bundled.
+- **Coverage is partial.** ~27 everyday scenes so far — nowhere near exhaustive. It's meant to grow, or to be rebuilt as your own town.
+- **The art is AI-generated.** Occasional synthesis glitches; a whisper QA pass has been run, but trust your ears/eyes.
 
-- **English audio** is bundled (local, [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) neural voice, Apache-2.0)
-- **Chinese audio** is not bundled (see license note); tapping a word in Chinese falls back to your browser's built-in voice. To generate offline Chinese audio, see the audio pipeline in [`factory/pipeline/发音管线`](factory/pipeline/发音管线).
+## The demo, briefly
 
-> **The pronunciation is AI-generated.** It's accurate the vast majority of the time, but a few words may have synthesis glitches. Cíjìng has run a round of machine-ear QA (whisper cross-check), but trust your own ears. To re-check/re-fix the audio yourself, the factory repo has a full **QA mode** (`发音质检.py`) — it needs an open-source speech-recognition model ([whisper.cpp](https://github.com/ggerganov/whisper.cpp)) to "grade" the audio.
+- **27 scenes · ~800 words** — home (bedroom / kitchen / bathroom) → out (supermarket / café / clinic / barbershop) → travel (airport / hotel), plus a town map you tap to enter scenes.
+- **Fully local** — open and play; no login, no network, no ads, no tracking.
+- Play online above, or [download a single self-contained html](https://github.com/MrSenter/cijing/releases/latest) to run offline. (iPad/iPhone: the Files app only previews it — open with Edge, or serve it over your LAN. Details in [简体中文 README](README.md).)
 
 ## License
 
-Cíjìng licenses **code** and **assets** separately:
+| Part | License |
+|------|---------|
+| Code (`index.html`, the `factory/` scripts) | **MIT** |
+| Assets (illustrations, audio, vocabulary) | **CC BY-NC 4.0** — credit "词境 / Cíjìng", non-commercial |
 
-| Part | License | What you can do |
-|------|---------|-----------------|
-| Code (`index.html` & app logic) | **MIT** | Use, modify, sell freely — just keep the copyright notice |
-| Assets (illustrations / audio / vocabulary) | **CC BY-NC 4.0** | Learn, share, remix freely — **must credit "词境 / Cíjìng", no commercial use** |
+See [`LICENSE`](LICENSE) and [`LICENSE-assets.md`](LICENSE-assets.md). The cartoon characters are residents of the town — please don't use them commercially.
 
-Full terms: [`LICENSE`](LICENSE) (code) and [`LICENSE-assets.md`](LICENSE-assets.md) (assets).
+## Credits
 
-> The cartoon characters are residents of the town of Cíjìng. Assets are non-commercial — please don't use the characters or scenes for profit.
-
-## Still growing · build a town of your own
-
-Cíjìng's everyday scenes are **far from complete** — a post office breakdown, a school, a hospital ward, a wet market, a hardware store… there's plenty left to add. It's a city that keeps growing, and you're welcome to add to it.
-
-The whole production pipeline lives in this repo's [`factory/`](factory/) directory — but it can do more than "add a scene":
-
-> **You can swap the map for your own town, and cast yourself (and the people you care about) as the main characters** — a point-and-read city that's entirely yours.
-
-That's exactly what Cíjìng's two "libraries" are for — the **character library** keeps a fixed cast looking like the same people across every scene (so the protagonist can be *you*), and the **scene library** grows a town with a coherent spatial flow (so it's *your city*, not a pile of loose pictures). Switch languages, add a scene, or build a whole new city — it all starts in `factory/`.
-
----
-
-<div align="center">
-Made with ❤️ for people who'd rather play than memorize word lists
-</div>
+Built on [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), [mlx-audio](https://github.com/Blaizzy/mlx-audio), [edge-tts](https://github.com/rany2/edge-tts), [whisper.cpp](https://github.com/ggerganov/whisper.cpp), and Playwright.
