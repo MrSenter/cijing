@@ -4173,14 +4173,14 @@
   function slideBrief(idx){
     var s = slides[idx];
     var vn = viewLabel(s);
-    return s.sceneCode + " " + s.sceneNames[nativeLang] + (vn ? " · " + vn : "");
+    return s.sceneNames[nativeLang] + (vn ? " · " + vn : "");
   }
   function updateArrowTooltips(){
     var gi = currentSceneGroupIndex();
     var prevSceneSlide = slides[sceneGroups[(gi - 1 + sceneGroups.length) % sceneGroups.length].firstIndex];
     var nextSceneSlide = slides[sceneGroups[(gi + 1) % sceneGroups.length].firstIndex];
-    var upText = t("arrowPrevScene") + prevSceneSlide.sceneCode + " " + prevSceneSlide.sceneNames[nativeLang];
-    var downText = t("arrowNextScene") + nextSceneSlide.sceneCode + " " + nextSceneSlide.sceneNames[nativeLang];
+    var upText = t("arrowPrevScene") + prevSceneSlide.sceneNames[nativeLang];
+    var downText = t("arrowNextScene") + nextSceneSlide.sceneNames[nativeLang];
     elTipUp.textContent = upText;
     elTipDown.textContent = downText;
     elBtnUp.setAttribute("aria-label", upText);
@@ -4369,7 +4369,7 @@
         if(idxs.length > 1){
           var head = document.createElement("div");
           head.className = "toc-group-title";
-          head.textContent = slides[g.firstIndex].sceneCode + " " + slides[g.firstIndex].sceneNames[nativeLang];
+          head.textContent = slides[g.firstIndex].sceneNames[nativeLang];
           body.appendChild(head);
           idxs.forEach(function(i){ body.appendChild(buildTocRow(i, viewLabel(slides[i]))); });
         } else {
