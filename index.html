@@ -225,7 +225,7 @@
   .quiz-start:focus-visible{ outline: 2px solid var(--glow); outline-offset:2px; }
 
   /* ---------- 顶栏语言胶囊：🌐 母语→学习语言，点开两行选择器 ---------- */
-  .lang-capsule{ position: relative; }
+  .lang-capsule{ position: relative; display:flex; align-items:center; gap:6px; }
   .lang-capsule-btn{
     display:flex;
     align-items:center;
@@ -244,6 +244,27 @@
   .lang-capsule-btn:hover{ background: var(--glow-soft); }
   .lang-capsule-btn:focus-visible{ outline: 2px solid var(--rust); outline-offset:2px; }
   .lang-capsule-globe{ font-size: 0.85rem; }
+  /* 一键反转按钮：跟胶囊主按钮同排，不用开 popover 就能互换母语/学习语言 */
+  .lang-swap-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    width: 30px;
+    height: 30px;
+    padding:0;
+    background: var(--tag-bg);
+    border:1px solid var(--tag-border);
+    border-radius:8px;
+    font-size: 0.92rem;
+    font-weight:700;
+    color: var(--rust-dark);
+    cursor:pointer;
+    box-shadow: 0 3px 8px var(--shadow);
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .lang-swap-btn:hover{ background: var(--glow-soft); transform: rotate(180deg); }
+  .lang-swap-btn:focus-visible{ outline: 2px solid var(--rust); outline-offset:2px; }
   .lang-capsule-popover{
     position:absolute;
     top: calc(100% + 8px);
@@ -1215,6 +1236,7 @@
     .label-tab{ padding: 5px 9px; font-size: 0.7rem; }
     .quiz-start{ padding: 7px 14px; font-size: 0.8rem; }
     .lang-capsule-btn{ padding: 6px 10px; font-size: 0.72rem; }
+    .lang-swap-btn{ width: 26px; height: 26px; font-size: 0.82rem; }
     .lang-capsule-popover{ min-width: 0; width: min(260px, 84vw); padding: 12px; }
     .entry-card{ padding: 24px 20px 20px; }
     .entry-title{ font-size: 1.3rem; }
@@ -1287,6 +1309,7 @@
         <button class="lang-capsule-btn" id="langCapsuleBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="langCapsulePopover">
           <span class="lang-capsule-globe">🌐</span><span id="langCapsuleText"></span>
         </button>
+        <button class="lang-swap-btn" id="langSwapBtn" type="button" aria-label="" title="">⇄</button>
         <div class="lang-capsule-popover" id="langCapsulePopover" role="dialog" aria-label="语言设置 / Language settings" hidden>
           <div class="lang-capsule-row">
             <span class="lang-capsule-row-label" id="capsuleNativeLabel"></span>
@@ -3733,6 +3756,7 @@
       quizStart: "🎯 开始找词",
       quizResultTitle: "测验完成", quizRetry: "再来一轮", quizExit: "返回探索",
       capsuleNative: "母语", capsuleLearn: "学习",
+      langSwapAria: "交换母语与学习语言",
       esComingSoon: "未开发",
       openPanelSuffix: "↗", goToPrefix: "去", goToSuffix: "🚪",
       ariaOpenPanel: "打开", ariaGoTo: "前往",
@@ -3755,6 +3779,7 @@
       quizStart: "🎯 Find the word",
       quizResultTitle: "Quiz complete", quizRetry: "Play again", quizExit: "Back to explore",
       capsuleNative: "Native", capsuleLearn: "Learning",
+      langSwapAria: "Swap native & learning language",
       esComingSoon: "coming soon",
       openPanelSuffix: "↗", goToPrefix: "Go to", goToSuffix: "🚪",
       ariaOpenPanel: "Open", ariaGoTo: "Go to",
@@ -5158,6 +5183,7 @@
   var elLangCapsuleText = document.getElementById("langCapsuleText");
   var elNativeLangSelect = document.getElementById("nativeLangSelect");
   var elLearnLangSelect = document.getElementById("learnLangSelect");
+  var elLangSwapBtn = document.getElementById("langSwapBtn");
   var elCapsuleNativeLabel = document.getElementById("capsuleNativeLabel");
   var elCapsuleLearnLabel = document.getElementById("capsuleLearnLabel");
   var langCapsuleOpen = false;
@@ -5191,6 +5217,8 @@
     elQuizExit.textContent = t("quizExit");
     elCapsuleNativeLabel.textContent = t("capsuleNative");
     elCapsuleLearnLabel.textContent = t("capsuleLearn");
+    elLangSwapBtn.setAttribute("aria-label", t("langSwapAria"));
+    elLangSwapBtn.title = t("langSwapAria");
     // 西语选项「未开发」标记跟母语走（endonym 语言名不变，状态词本地化）
     var esOptLabel = langEndonym("es") + " (" + t("esComingSoon") + ")";
     document.querySelectorAll("option[value='es']").forEach(function(o){ o.textContent = esOptLabel; });
@@ -5243,6 +5271,19 @@
     learnLang = elLearnLangSelect.value;
     saveLearnLang(learnLang);
     syncLangCapsuleUI();
+    applyLanguageChange();
+  });
+  // 一键反转：母语↔学习语言互换，不用开 popover；同语言时（退化格）交换后仍相等，天然 no-op
+  elLangSwapBtn.addEventListener("click", function(){
+    var tmp = nativeLang;
+    nativeLang = learnLang;
+    learnLang = tmp;
+    saveNativeLang(nativeLang);
+    saveLearnLang(learnLang);
+    syncLangCapsuleUI();
+    // 入场屏两个下拉是暂存态，顺带同步（若元素存在），避免下次唤出入场屏时选中态跟正文对不上
+    if(elEntryNativeSelect) elEntryNativeSelect.value = nativeLang;
+    if(elEntryLearnSelect) elEntryLearnSelect.value = learnLang;
     applyLanguageChange();
   });
   syncLangCapsuleUI(); // 页面加载时按当前 nativeLang/learnLang（已存或猜测默认）同步胶囊文案与下拉选中态
