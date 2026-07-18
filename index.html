@@ -1215,32 +1215,6 @@
   .map-close:hover{ background: var(--glow-soft); transform: scale(1.06); }
   .map-close:focus-visible{ outline: 2px solid var(--rust); outline-offset: 2px; }
 
-  /* ---------- ✨ 更新弹窗：复用 .map-overlay/.map-card/.map-close 的遮罩+卡片+关闭键结构 ---------- */
-  .whatsnew-card{
-    width: min(380px, 88vw);
-    max-height: 80vh;
-    overflow-y: auto;
-    padding: 20px 22px 18px;
-  }
-  .whatsnew-title{
-    margin: 2px 34px 14px 0;
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 1.1rem;
-    letter-spacing: 0.04em;
-    color: var(--rust-dark);
-  }
-  .whatsnew-list{
-    margin:0;
-    padding-left: 1.15em;
-    display:flex;
-    flex-direction:column;
-    gap: 11px;
-    font-size: 0.88rem;
-    line-height: 1.5;
-    color: var(--ink-soft);
-  }
-  .whatsnew-list li{ padding-left: 2px; }
-
   footer{
     text-align:center;
     margin-top: 40px;
@@ -1554,7 +1528,6 @@
       <div class="label-toggle">
         <button class="label-tab" id="mapQuickBtn">🗺 地图</button>
         <button class="label-tab" id="fullscreenBtn" hidden>⛶ 全屏</button>
-        <button class="label-tab" id="whatsNewBtn" type="button" aria-label="查看最近更新">✨ 更新</button>
       </div>
     </div>
   </div>
@@ -1642,14 +1615,6 @@
       <img id="mapImg" src="images/地图-词境小镇.jpg" alt="词境小镇地图" draggable="false">
       <div class="hotspot-layer" id="mapHotspotLayer"></div>
     </div>
-  </div>
-</div>
-
-<div class="map-overlay" id="whatsNewOverlay" hidden>
-  <div class="map-card whatsnew-card">
-    <button class="map-close" id="whatsNewClose" aria-label="关闭">✕</button>
-    <h2 class="whatsnew-title" id="whatsNewTitle">最近更新</h2>
-    <ul class="whatsnew-list" id="whatsNewList"></ul>
   </div>
 </div>
 
@@ -4073,15 +4038,7 @@
       phUnavailMsg: "这个场景的探索版还没做好", phUnavailHint: "热区数据补齐后即可点读",
       phMissingMsg: "舞台图缺失", phPanelMissingMsg: "面板舞台图缺失",
       phPanelEmptyMsg: "这个面板还没布置好", phPanelEmptyHint: "热区数据填好后就能进来点读",
-      phMissingHintFmt: function(f){ return "把 " + f + " 放进同一文件夹后刷新页面"; },
-      whatsNewBtn: "✨ 更新", whatsNewAria: "查看最近更新",
-      whatsNewTitle: "最近更新",
-      whatsNewItems: [
-        "🌍 多语言：可选母语与学习语言，一键互换方向",
-        "🔍 密集场景加「面板」：车、车库、诊所等物件多的地方，点进去看细分单词",
-        "📱 手机优化：点物体单词显示在下方；iPad / iPhone 分别适配",
-        "✨ 体验打磨：字号、注音、热区更准"
-      ]
+      phMissingHintFmt: function(f){ return "把 " + f + " 放进同一文件夹后刷新页面"; }
     },
     en: {
       labelBoth: "Both", labelLearn: "Learning", labelNative: "Native", labelHidden: "Hidden",
@@ -4106,15 +4063,7 @@
       phUnavailMsg: "This scene isn’t ready to explore yet", phUnavailHint: "It opens once its hotspots are added",
       phMissingMsg: "Stage image missing", phPanelMissingMsg: "Panel stage image missing",
       phPanelEmptyMsg: "This panel isn’t set up yet", phPanelEmptyHint: "It opens once its hotspots are added",
-      phMissingHintFmt: function(f){ return "Put " + f + " in the same folder and refresh"; },
-      whatsNewBtn: "✨ What's new", whatsNewAria: "View recent updates",
-      whatsNewTitle: "Recent updates",
-      whatsNewItems: [
-        "🌍 Multi-language: pick your native & learning language, swap direction in one tap",
-        "🔍 Panels for busy scenes: tap into car / garage / clinic clusters for detailed words",
-        "📱 Mobile: the tapped word shows at the bottom; iPad & iPhone tuned separately",
-        "✨ Polish: font size, pronunciation and hotspots refined"
-      ]
+      phMissingHintFmt: function(f){ return "Put " + f + " in the same folder and refresh"; }
     }
   };
   function t(key){
@@ -4492,7 +4441,6 @@
   // ---------------------------------------------------------------
   document.addEventListener("keydown", function(e){
     if(e.key === "Escape" && langCapsuleOpen){ closeLangCapsule(); return; } // 语言胶囊浮层最轻量，优先关
-    if(e.key === "Escape" && whatsNewOpen){ closeWhatsNew(); return; } // 更新弹窗是纯展示浮层，Esc 优先关它
     if(e.key === "Escape" && mapOpen){ closeMap(); return; } // 地图层优先级最高，开着时 Esc 只关地图，不往下传
     if(e.key === "Escape"){
       // 词卡模态已改为常驻信息条，没有"关闭"语义，Esc 链里摘掉这一档（不清空已选词）
@@ -5487,42 +5435,6 @@
   });
 
   // ---------------------------------------------------------------
-  // ✨ 更新弹窗：复用地图那套遮罩+卡片+关闭键，纯展示、不联动探索状态
-  // ---------------------------------------------------------------
-  var elWhatsNewBtn = document.getElementById("whatsNewBtn");
-  var elWhatsNewOverlay = document.getElementById("whatsNewOverlay");
-  var elWhatsNewClose = document.getElementById("whatsNewClose");
-  var elWhatsNewTitle = document.getElementById("whatsNewTitle");
-  var elWhatsNewList = document.getElementById("whatsNewList");
-  var whatsNewOpen = false;
-
-  function renderWhatsNewList(){
-    var items = t("whatsNewItems") || [];
-    elWhatsNewList.innerHTML = "";
-    items.forEach(function(text){
-      var li = document.createElement("li");
-      li.textContent = text;
-      elWhatsNewList.appendChild(li);
-    });
-  }
-  function openWhatsNew(){
-    if(quiz.active) return; // 测验进行中不打扰
-    whatsNewOpen = true;
-    renderWhatsNewList();
-    elWhatsNewOverlay.hidden = false;
-  }
-  function closeWhatsNew(){
-    whatsNewOpen = false;
-    elWhatsNewOverlay.hidden = true;
-  }
-
-  elWhatsNewBtn.addEventListener("click", openWhatsNew);
-  elWhatsNewClose.addEventListener("click", closeWhatsNew);
-  elWhatsNewOverlay.addEventListener("click", function(e){
-    if(e.target === elWhatsNewOverlay){ closeWhatsNew(); } // 点深色底关闭，点卡片本身不关闭
-  });
-
-  // ---------------------------------------------------------------
   // ⛶ 全屏切换（iPhone Safari 不支持网页元素全屏，API 缺失时按钮保持隐藏）
   // 按钮引用与文案刷新提到模块作用域，好让 applyChromeI18n 切母语时同步「全屏/退出全屏」
   // ---------------------------------------------------------------
@@ -5710,13 +5622,6 @@
     elMapQuickBtn.textContent = t("sideMap");
     syncTocToggleText();
     syncFullscreenBtnText();
-    // ✨ 更新按钮 + 弹窗标题/内容跟母语走（弹窗开着时同步刷新列表）
-    if(elWhatsNewBtn){
-      elWhatsNewBtn.textContent = t("whatsNewBtn");
-      elWhatsNewBtn.setAttribute("aria-label", t("whatsNewAria"));
-    }
-    if(elWhatsNewTitle){ elWhatsNewTitle.textContent = t("whatsNewTitle"); }
-    if(elWhatsNewList && !elWhatsNewOverlay.hidden){ renderWhatsNewList(); }
     // 动态文案（依当前状态）：底部提示、面板返回按钮
     updateFooterText();
     updatePanelBackButton();

@@ -28,6 +28,13 @@ The AI only ever draws a *clean, wordless stage*. Nothing is baked into the pixe
 
 Bake text into the image and you get a poster: it can't be tapped, hidden, quizzed, or re-translated. Keep the image wordless and the code owns everything interactive.
 
+## 🆕 Recent updates (2026-07)
+
+- **Multi-language** — pick your native and learning language (zh／en) and swap direction in one tap; pinyin on the Chinese side, phonetics on the English side
+- **Panels for busy scenes** — tap into crowded clusters (car dashboard, workbench, instrument tray…) to see their detailed words
+- **Phone / tablet tuning** — the tapped word shows at the bottom; iPhone uses a cleaner default, iPad matches desktop, landscape gets a bigger view
+- **Polish** — reading font size, pronunciation labels, and hotspot positions refined
+
 ## The factory (this is the actual project)
 
 词境 is less "a vocabulary game" and more **a workflow for mass-producing them**. The game is the proof it works. The whole pipeline and its specs live in [**`factory/`**](factory/):
