@@ -20,14 +20,7 @@
     --shadow: rgba(74,51,36,0.28);
     --glow: #eab259;
     --glow-soft: #f4d9a6;
-    /* ---------- 字号分层缩放（2026-07-17）：--fs 管词卡/信息条/页脚/UI chrome，
-       --fs-label 管图上热区标签——独立变量+更窄区间，避免密集场景标签放大到互相遮挡/误点。
-       命中区（.hotspot）尺寸按图片百分比定死，不吃这两个变量。 */
-    --fs: 1;
-    --fs-label: 1;
   }
-  body.fs-s{ --fs: 0.9;  --fs-label: 0.95; }
-  body.fs-l{ --fs: 1.25; --fs-label: 1.2; }
 
   *{ box-sizing: border-box; }
 
@@ -202,7 +195,7 @@
   .label-tab{
     border:none;
     background:transparent;
-    font-size: calc(0.78rem * var(--fs));
+    font-size: 0.78rem;
     color: var(--ink-soft);
     padding:6px 12px;
     border-radius:6px;
@@ -217,7 +210,7 @@
   .quiz-start{
     font-family: Georgia, "Times New Roman", serif;
     font-weight:700;
-    font-size: calc(0.85rem * var(--fs));
+    font-size: 0.85rem;
     background: var(--rust);
     color: var(--tag-bg);
     border: 1px solid var(--rust-dark);
@@ -241,7 +234,7 @@
     border:1px solid var(--tag-border);
     border-radius:8px;
     padding:7px 12px;
-    font-size: calc(0.78rem * var(--fs));
+    font-size: 0.78rem;
     font-weight:700;
     color: var(--rust-dark);
     cursor:pointer;
@@ -250,7 +243,7 @@
   }
   .lang-capsule-btn:hover{ background: var(--glow-soft); }
   .lang-capsule-btn:focus-visible{ outline: 2px solid var(--rust); outline-offset:2px; }
-  .lang-capsule-globe{ font-size: calc(0.85rem * var(--fs)); }
+  .lang-capsule-globe{ font-size: 0.85rem; }
   .lang-capsule-popover{
     position:absolute;
     top: calc(100% + 8px);
@@ -563,11 +556,18 @@
   .hotspot:hover .hotspot-label:not(.entry-hint),
   .hotspot:focus-within .hotspot-label:not(.entry-hint),
   .hotspot.label-front .hotspot-label:not(.entry-hint){ opacity: 1 !important; }
-  .hotspot-label .en{ display:block; font-family: Georgia, "Times New Roman", serif; font-weight:700; font-size: calc(0.68rem * var(--fs-label)); color: var(--ink); }
-  .hotspot-label .zh{ display:block; font-size: calc(0.64rem * var(--fs-label)); color: var(--rust-dark); }
+  .hotspot-label .en{ display:block; font-family: Georgia, "Times New Roman", serif; font-weight:700; font-size: 0.68rem; color: var(--ink); }
+  .hotspot-label .zh{ display:block; font-size: 0.64rem; color: var(--rust-dark); }
+  /* 点谁谁大（2026-07-17）：平时标签保持紧凑，只有被点中/激活（.label-front，见 handleHotspotClick）
+     的那一个在原位放大到约 1.5×，同时已有的 z-index:40 + opacity:1 让它置顶不被压住。
+     字号/padding 都不挂 transition（本文件唯一的 transition 是既有的 opacity 0.12s），
+     瞬时切换，避免 layoutLabels() 在放大动画中途测到过渡中间态尺寸而钳错位置。 */
+  .hotspot.label-front .hotspot-label:not(.entry-hint) .en{ font-size: 1.05rem; }
+  .hotspot.label-front .hotspot-label:not(.entry-hint) .zh{ font-size: 0.98rem; }
+  .hotspot.label-front .hotspot-label:not(.entry-hint){ padding: 5px 10px; }
 
   /* 中文拼音小字注音（2026-07-17）：跟现有拼音样式（.wib-ipa：等宽斜体+浅灰）一致；
-     用 em 相对单位随宿主元素（.wib-zh 或 .hotspot-label .zh）已经乘过 --fs/--fs-label 的字号联动缩放，
+     用 em 相对单位随宿主元素（.wib-zh 或 .hotspot-label .zh）字号联动缩放，
      不用再自己乘一遍变量 */
   .pinyin-annot{
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -668,7 +668,7 @@
     transform: rotate(-0.3deg);
   }
   .wib-empty{
-    font-size: calc(0.86rem * var(--fs));
+    font-size: 0.86rem;
     font-style: italic;
     color: var(--ink-faint);
   }
@@ -692,19 +692,19 @@
   .wib-en{
     font-family: Georgia, "Times New Roman", serif;
     font-weight:700;
-    font-size: calc(1.28rem * var(--fs));
+    font-size: 1.28rem;
     color: var(--ink);
     flex: 0 0 auto;
   }
   .wib-ipa{
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-style: italic;
-    font-size: calc(0.82rem * var(--fs));
+    font-size: 0.82rem;
     color: var(--ink-faint);
     flex: 0 0 auto;
   }
   .wib-zh{
-    font-size: calc(1.02rem * var(--fs));
+    font-size: 1.02rem;
     font-weight:700;
     color: var(--rust-dark);
     flex: 0 0 auto;
@@ -714,7 +714,7 @@
     min-width: 0;
     padding-left: 14px;
     border-left: 1px dashed var(--line);
-    font-size: calc(0.78rem * var(--fs));
+    font-size: 0.78rem;
     color: var(--ink-soft);
     white-space: nowrap;
     overflow: hidden;
@@ -741,7 +741,7 @@
     width:100%;
     padding-top: 6px;
     border-top: 1px dashed var(--line);
-    font-size: calc(0.86rem * var(--fs));
+    font-size: 0.86rem;
     line-height: 1.5;
     color: var(--ink-soft);
   }
@@ -757,7 +757,7 @@
   .wib-sen-zh{
     margin-left: 10px;
     color: var(--ink-faint);
-    font-size: calc(0.8rem * var(--fs));
+    font-size: 0.8rem;
   }
 
 
@@ -1207,7 +1207,7 @@
   footer{
     text-align:center;
     margin-top: 40px;
-    font-size: calc(0.75rem * var(--fs));
+    font-size: 0.75rem;
     color: var(--ink-faint);
     letter-spacing: 0.05em;
   }
@@ -1224,9 +1224,9 @@
     .arrow-down{ bottom:-18px; width:34px; height:34px; }
 
     .explore-controls{ gap: 8px; }
-    .label-tab{ padding: 5px 9px; font-size: calc(0.7rem * var(--fs)); }
-    .quiz-start{ padding: 7px 14px; font-size: calc(0.8rem * var(--fs)); }
-    .lang-capsule-btn{ padding: 6px 10px; font-size: calc(0.72rem * var(--fs)); }
+    .label-tab{ padding: 5px 9px; font-size: 0.7rem; }
+    .quiz-start{ padding: 7px 14px; font-size: 0.8rem; }
+    .lang-capsule-btn{ padding: 6px 10px; font-size: 0.72rem; }
     .lang-capsule-popover{ min-width: 0; width: min(260px, 84vw); padding: 12px; }
     .entry-card{ padding: 24px 20px 20px; }
     .entry-title{ font-size: 1.3rem; }
@@ -1235,12 +1235,12 @@
     .entry-row .lang-select{ min-width: 128px; font-size: 0.84rem; padding: 8px 30px 8px 12px; }
     .quiz-panel{ padding: 10px 34px 10px 14px; min-width:0; width: calc(100% - 24px); top:-16px; }
     .quiz-zh{ font-size:1.1rem; }
-    .hotspot-label{ font-size: calc(0.6rem * var(--fs-label)); padding:2px 5px; }
-    .hotspot-label .en{ font-size: calc(0.62rem * var(--fs-label)); }
-    .hotspot-label .zh{ font-size: calc(0.58rem * var(--fs-label)); }
+    .hotspot-label{ font-size: 0.6rem; padding:2px 5px; }
+    .hotspot-label .en{ font-size: 0.62rem; }
+    .hotspot-label .zh{ font-size: 0.58rem; }
     .word-info-bar{ padding: 12px 16px; margin-bottom: 22px; }
-    .wib-empty{ font-size: calc(0.8rem * var(--fs)); }
-    .wib-en{ font-size: calc(1.08rem * var(--fs)); }
+    .wib-empty{ font-size: 0.8rem; }
+    .wib-en{ font-size: 1.08rem; }
     .wib-note{
       flex-basis: 100%;
       white-space: normal;
@@ -1252,7 +1252,7 @@
       padding-top: 6px;
     }
     .wib-replay{ margin-left: 0; }
-    .wib-sen{ font-size: calc(0.8rem * var(--fs)); }
+    .wib-sen{ font-size: 0.8rem; }
     .wib-sen-zh{ display:block; margin-left:0; margin-top:2px; }
     .explore-placeholder{ min-height: 220px; padding: 22px 16px; }
 
@@ -1327,11 +1327,6 @@
       <div class="label-toggle" id="speakLangToggle" role="radiogroup" aria-label="朗读语言">
         <button class="label-tab active" data-lang="learn" role="radio" aria-checked="true">🔊 学习</button>
         <button class="label-tab" data-lang="native" role="radio" aria-checked="false">🔊 母语</button>
-      </div>
-      <div class="label-toggle" id="fontScaleToggle" role="radiogroup" aria-label="字号">
-        <button class="label-tab" data-scale="s" role="radio" aria-checked="false">小</button>
-        <button class="label-tab active" data-scale="m" role="radio" aria-checked="true">中</button>
-        <button class="label-tab" data-scale="l" role="radio" aria-checked="false">大</button>
       </div>
       <button class="quiz-start" id="quizStart" hidden>🎯 开始找词</button>
       <div class="label-toggle">
@@ -3634,7 +3629,6 @@
   var elExplorePlaceholderHint = document.getElementById("explorePlaceholderHint");
   var elLabelTabs = document.querySelectorAll("#labelModeToggle .label-tab");
   var elLangTabs = document.querySelectorAll("#speakLangToggle .label-tab");
-  var elFontScaleTabs = document.querySelectorAll("#fontScaleToggle .label-tab");
   var elQuizStart = document.getElementById("quizStart");
   var elQuizPanel = document.getElementById("quizPanel");
   var elQuizQuit = document.getElementById("quizQuit");
@@ -3753,7 +3747,6 @@
     zh: {
       labelBoth: "双显", labelLearn: "仅学习", labelNative: "仅母语", labelHidden: "隐藏",
       speakLearn: "🔊 学习", speakNative: "🔊 母语",
-      fontScaleS: "小", fontScaleM: "中", fontScaleL: "大",
       sideContents: "📖 目录", sideMap: "🗺 地图",
       drawerTitle: "场景目录",
       fullscreenEnter: "⛶ 全屏", fullscreenExit: "⛶ 退出全屏",
@@ -3776,7 +3769,6 @@
     en: {
       labelBoth: "Both", labelLearn: "Learning", labelNative: "Native", labelHidden: "Hidden",
       speakLearn: "🔊 Learning", speakNative: "🔊 Native",
-      fontScaleS: "Small", fontScaleM: "Medium", fontScaleL: "Large",
       sideContents: "📖 Contents", sideMap: "🗺 Map",
       drawerTitle: "Scenes",
       fullscreenEnter: "⛶ Fullscreen", fullscreenExit: "⛶ Exit fullscreen",
@@ -4248,26 +4240,6 @@
     try{ window.localStorage.setItem(SPEAK_LANG_KEY, mode); }catch(e){ /* 忽略存储失败 */ }
   }
   var speakLang = loadSpeakLang();   // "learn" | "native"
-
-  // 字号档位（localStorage 持久化）：分层缩放，body.fs-s/fs-l 驱动 CSS 变量 --fs/--fs-label；
-  // "m" 不挂 class，走 :root 默认值——三档同一套变量，不必分别写三份规则
-  var FONT_SCALE_KEY = "cj_font_scale_v1";
-  function loadFontScale(){
-    try{
-      var v = window.localStorage.getItem(FONT_SCALE_KEY);
-      return (v === "s" || v === "l") ? v : "m";
-    }catch(e){ return "m"; }
-  }
-  function saveFontScale(scale){
-    try{ window.localStorage.setItem(FONT_SCALE_KEY, scale); }catch(e){ /* 忽略存储失败 */ }
-  }
-  var fontScale = loadFontScale();   // "s" | "m" | "l"
-  function applyFontScale(){
-    document.body.classList.remove("fs-s", "fs-l");
-    if(fontScale === "s"){ document.body.classList.add("fs-s"); }
-    else if(fontScale === "l"){ document.body.classList.add("fs-l"); }
-  }
-  applyFontScale(); // 页面加载时按 localStorage 恢复的档位立即生效
 
   var activeRow = null;
   var activeAudio = null;
@@ -4846,26 +4818,6 @@
     });
   });
 
-  // 字号三档切换：只切 body class 驱动 --fs/--fs-label，不碰热区尺寸
-  function syncFontScaleUI(){
-    elFontScaleTabs.forEach(function(b){
-      var isActive = (b.getAttribute("data-scale") === fontScale);
-      b.classList.toggle("active", isActive);
-      b.setAttribute("aria-checked", isActive ? "true" : "false");
-    });
-  }
-  syncFontScaleUI(); // 页面加载时按 localStorage 恢复的档位同步按钮态
-  elFontScaleTabs.forEach(function(btn){
-    btn.addEventListener("click", function(){
-      var scale = btn.getAttribute("data-scale");
-      if(fontScale === scale) return;
-      fontScale = scale;
-      syncFontScaleUI();
-      applyFontScale();
-      saveFontScale(fontScale);
-    });
-  });
-
   // ---------------------------------------------------------------
   // 探索模式：舞台图下方常驻单词信息条（原中心模态词卡迁移于此）
   // ---------------------------------------------------------------
@@ -4975,6 +4927,7 @@
       for(var i=0;i<fronts.length;i++){ fronts[i].classList.remove("label-front"); }
     }
     hotspotEl.classList.add("label-front");
+    layoutLabels(); // 点谁谁大：激活标签原位放大后，立刻重新钳制防止越界裁切（字号是瞬时切换，测量不会踩过渡中间态）
     updateWordInfoBar(word);
   }
 
@@ -5257,11 +5210,6 @@
     // 朗读切换两态
     document.querySelectorAll("#speakLangToggle .label-tab").forEach(function(b){
       b.textContent = b.getAttribute("data-lang") === "learn" ? t("speakLearn") : t("speakNative");
-    });
-    // 字号三档
-    document.querySelectorAll("#fontScaleToggle .label-tab").forEach(function(b){
-      var sc = b.getAttribute("data-scale");
-      b.textContent = sc === "s" ? t("fontScaleS") : sc === "l" ? t("fontScaleL") : t("fontScaleM");
     });
     // 找词入口、词卡空态、抽屉标题、测验结果卡、胶囊浮层行标签
     elQuizStart.textContent = t("quizStart");
