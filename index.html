@@ -397,7 +397,9 @@
   @keyframes tip-in{ from{ opacity: 0; } to{ opacity: 1; } }
 
   /* ---------- 探索模式舞台 ---------- */
-  .explore-wrap{ position:relative; overflow:hidden; }
+  /* touch-action:none 让触屏滑动手势（切场景/平移视角）不被浏览器当成滚动而中断；
+     探索模式页面锁 100dvh 本就无滚动，禁掉无副作用；鼠标不受 touch-action 影响，桌面拖拽照旧 */
+  .explore-wrap{ position:relative; overflow:hidden; touch-action: none; }
 
   /* 舞台图上的场景横幅：与海报烤字横幅同款式，但由代码渲染（换语言零成本）。
      pointer-events 穿透，不挡横幅下方的热区点击；测验进行中让位给测验浮签 */
@@ -1275,6 +1277,163 @@
     .map-toggle{ top: 8px; transform: none; padding: 8px 6px; font-size: 0.72rem; }
   }
 
+  /* ============================================================
+     手机横屏沉浸模式 + 竖屏提示（2026-07-17）
+     根问题：手机竖屏下 3:2 场景图被压窄、热区又小又挤。
+     方案：横屏时场景铺满、热区随之变大；竖屏给「转横屏」轻提示（不强制旋转）。
+     ============================================================ */
+
+  /* ---- 竖屏提示：仅窄屏竖屏显示，转横屏自动消失；关闭后加 .dismissed 永久隐藏 ---- */
+  .rotate-hint{
+    display: none; /* 默认不显示，只有下面的竖屏窄屏媒体查询打开 */
+    position: fixed;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    z-index: 80;
+    align-items: center;
+    gap: 10px;
+    max-width: min(92vw, 420px);
+    padding: 9px 12px 9px 16px;
+    background: rgba(74,51,36,0.9);
+    color: var(--glow-soft);
+    border-radius: 22px;
+    box-shadow: 0 6px 18px var(--shadow);
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+  .rotate-hint.dismissed{ display: none !important; }
+  .rotate-hint .rh-text{ flex: 1 1 auto; }
+  .rotate-hint .rh-close{
+    flex: 0 0 auto;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 1px solid rgba(244,217,166,0.4);
+    background: transparent;
+    color: var(--glow-soft);
+    font-size: 0.9rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  @media (max-width: 640px) and (orientation: portrait){
+    .rotate-hint:not(.dismissed){ display: flex; animation: rh-in 0.3s ease; }
+  }
+  @keyframes rh-in{ from{ opacity: 0; transform: translate(-50%, 8px); } to{ opacity: 1; transform: translate(-50%, 0); } }
+
+  /* ---- 沉浸横屏浮动菜单按钮：默认藏起，只有沉浸横屏媒体查询里露出 ---- */
+  .imm-menu-btn{
+    display: none;
+    position: fixed;
+    top: 8px; right: 8px;
+    z-index: 70;
+    width: 40px; height: 40px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(250,243,226,0.85);
+    border: 1px solid var(--tag-border);
+    color: var(--ink);
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 3px 8px var(--shadow);
+  }
+  .imm-menu-btn:active{ transform: scale(0.94); }
+
+  /* ---- 沉浸横屏布局：判定「横屏手机」= 横屏 + 视口矮（<500px）。
+         横屏平板/桌面视口高，不触发，正好不影响它们。
+         本块在 min-width:641px 探索网格之后，靠源序覆盖那套桌宽网格。 ---- */
+  @media (orientation: landscape) and (max-height: 500px){
+    .imm-menu-btn{ display: flex; }
+
+    /* 场景铺满：收起大顶栏/页脚，网格只剩「舞台 + 底部词栏」两行 */
+    .page.mode-explore{
+      padding: 0;
+      grid-template-columns: 1fr;
+      grid-template-rows: minmax(0, 1fr) auto;
+      grid-template-areas:
+        "view"
+        "info";
+      column-gap: 0;
+    }
+    .page.mode-explore .masthead{ display: none; }
+    .page.mode-explore footer{ display: none; }
+
+    /* 顶栏控件不常驻：收进右上角浮动面板（点 ☰ 展开），功能全保留只是不占地 */
+    .page.mode-explore .control-row{
+      position: fixed;
+      top: 54px;
+      right: 8px;
+      z-index: 65;
+      margin: 0;
+      width: min(92vw, 340px);
+      max-height: calc(100dvh - 62px);
+      overflow: auto;
+      padding: 12px;
+      background: rgba(250,243,226,0.96);
+      border: 1px solid var(--tag-border);
+      border-radius: 12px;
+      box-shadow: 0 10px 28px var(--shadow);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+    .page.mode-explore.imm-menu-open .control-row{
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+    }
+    .page.mode-explore .control-row .explore-controls{
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      width: 100%;
+    }
+    .page.mode-explore .control-row .label-toggle{ justify-content: center; }
+
+    /* 舞台吃满：卡片纸框/胶带最小化，图片上限吃满 viewer（size 容器）实高 */
+    .page.mode-explore .viewer{ margin: 0; }
+    .page.mode-explore .stage{
+      padding: 0;
+      border: none;
+      box-shadow: none;
+      background: transparent;
+      border-radius: 0;
+    }
+    .page.mode-explore .stage .tape{ display: none; }
+    .page.mode-explore #exploreImg{ max-height: calc(100cqh - 2px); max-width: 100cqw; }
+    /* 沉浸横屏用滑动手势切场景/平移，方向按钮收起腾地方（桌面仍保留 ▲▼←→） */
+    .page.mode-explore .arrow{ display: none; }
+
+    /* 底部词栏常显：半透明窄条，在网格 info 行里就地占位（预留高度，不盖底部热区） */
+    .page.mode-explore .word-info-bar{
+      min-height: 0;
+      padding: 5px 14px;
+      transform: none;
+      border: none;
+      border-top: 1px solid var(--tag-border);
+      border-radius: 0;
+      background: rgba(250,243,226,0.82);
+      box-shadow: 0 -2px 10px var(--shadow);
+    }
+    .page.mode-explore .word-info-bar .wib-content{ gap: 2px; }
+    .page.mode-explore .word-info-bar .wib-main{ gap: 8px; row-gap: 2px; }
+    .page.mode-explore .word-info-bar .wib-en{ font-size: 1.02rem; }
+    .page.mode-explore .word-info-bar .wib-ipa{ font-size: 0.72rem; }
+    .page.mode-explore .word-info-bar .wib-zh{ font-size: 0.9rem; }
+    .page.mode-explore .word-info-bar .wib-empty{ font-size: 0.78rem; }
+    /* 例句紧凑单行截断，保持窄条 */
+    .page.mode-explore .word-info-bar .wib-sen{
+      font-size: 0.72rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .page.mode-explore .word-info-bar .wib-sen-zh{ display: inline; margin-left: 8px; }
+  }
+
   @media (prefers-reduced-motion: reduce){
     *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
   }
@@ -1284,6 +1443,13 @@
 
 <button class="toc-toggle" id="tocToggle" aria-expanded="false" aria-controls="tocDrawer">📖 目录</button>
 <button class="map-toggle" id="mapToggle" aria-haspopup="dialog" aria-controls="mapOverlay">🗺 地图</button>
+<!-- 沉浸横屏浮动菜单按钮：仅横屏手机显示（CSS 控制），点开右上角紧凑控制面板 -->
+<button class="imm-menu-btn" id="immMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="exploreControls" aria-label="菜单">☰</button>
+<!-- 竖屏轻提示：仅窄屏竖屏显示，可关闭（关闭态存 localStorage） -->
+<div class="rotate-hint" id="rotateHint">
+  <span class="rh-text" id="rotateHintText">🔄 横屏观看画面更大、更好点</span>
+  <button class="rh-close" id="rotateHintClose" type="button" aria-label="关闭提示">✕</button>
+</div>
 <aside class="toc-drawer" id="tocDrawer" aria-hidden="true" aria-label="场景目录">
   <div class="toc-drawer-head">
     <span class="toc-drawer-title" id="tocDrawerTitle">场景目录</span>
@@ -3757,6 +3923,8 @@
       quizResultTitle: "测验完成", quizRetry: "再来一轮", quizExit: "返回探索",
       capsuleNative: "母语", capsuleLearn: "学习",
       langSwapAria: "交换母语与学习语言",
+      rotateHint: "🔄 横屏观看画面更大、更好点",
+      immMenuAria: "菜单",
       esComingSoon: "未开发",
       openPanelSuffix: "↗", goToPrefix: "去", goToSuffix: "🚪",
       ariaOpenPanel: "打开", ariaGoTo: "前往",
@@ -3780,6 +3948,8 @@
       quizResultTitle: "Quiz complete", quizRetry: "Play again", quizExit: "Back to explore",
       capsuleNative: "Native", capsuleLearn: "Learning",
       langSwapAria: "Swap native & learning language",
+      rotateHint: "Rotate to landscape for a bigger view",
+      immMenuAria: "Menu",
       esComingSoon: "coming soon",
       openPanelSuffix: "↗", goToPrefix: "Go to", goToSuffix: "🚪",
       ariaOpenPanel: "Open", ariaGoTo: "Go to",
@@ -5165,13 +5335,122 @@
     var req = root.requestFullscreen || root.webkitRequestFullscreen;
     if(!elFullscreenBtn || !req){ return; }
     elFullscreenBtn.hidden = false;
+    // 安卓：进全屏后顺便锁横屏；退出时解锁。所有 API 都 feature-detect + try/catch，
+    // iOS Safari（无 screen.orientation.lock）或任何不支持的浏览器都静默忽略、绝不抛异常。
+    function lockLandscape(){
+      try {
+        if(screen.orientation && typeof screen.orientation.lock === "function"){
+          var r = screen.orientation.lock("landscape");
+          if(r && typeof r.catch === "function"){ r.catch(function(){}); }
+        }
+      } catch(e){ /* 不支持则忽略 */ }
+    }
+    function unlockOrientation(){
+      try {
+        if(screen.orientation && typeof screen.orientation.unlock === "function"){
+          screen.orientation.unlock();
+        }
+      } catch(e){ /* 不支持则忽略 */ }
+    }
     elFullscreenBtn.addEventListener("click", function(){
-      if(fsEl()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
-      else { req.call(root); }
+      if(fsEl()){
+        try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch(e){}
+        unlockOrientation();
+      } else {
+        var p;
+        try { p = req.call(root); } catch(e){ p = null; }
+        if(p && typeof p.then === "function"){ p.then(lockLandscape, lockLandscape); }
+        else { lockLandscape(); }
+      }
     });
     document.addEventListener("fullscreenchange", syncFullscreenBtnText);
     document.addEventListener("webkitfullscreenchange", syncFullscreenBtnText);
   })();
+
+  // ---------------------------------------------------------------
+  // 手机横屏沉浸：浮动菜单开合 + 竖屏提示关闭 + 场景滑动手势
+  // 引用提到模块作用域（applyChromeI18n 要用 elRotateHintText / elImmMenuBtn）
+  // ---------------------------------------------------------------
+  var elImmMenuBtn = document.getElementById("immMenuBtn");
+  var elRotateHint = document.getElementById("rotateHint");
+  var elRotateHintText = document.getElementById("rotateHintText");
+  var elRotateHintClose = document.getElementById("rotateHintClose");
+  var elExploreWrap = document.getElementById("exploreWrap");
+
+  // ---- 沉浸横屏浮动菜单：☰ 开合右上角紧凑控制面板（面板即 .control-row，控件全保留） ----
+  function setImmMenu(open){
+    elPage.classList.toggle("imm-menu-open", open);
+    if(elImmMenuBtn){ elImmMenuBtn.setAttribute("aria-expanded", open ? "true" : "false"); }
+  }
+  if(elImmMenuBtn){
+    elImmMenuBtn.addEventListener("click", function(e){
+      e.stopPropagation();
+      setImmMenu(!elPage.classList.contains("imm-menu-open"));
+    });
+  }
+  // 点面板外收起（含点热区/画面）；点面板内部不收
+  document.addEventListener("click", function(e){
+    if(!elPage.classList.contains("imm-menu-open")) return;
+    if(elImmMenuBtn && elImmMenuBtn.contains(e.target)) return;
+    var row = document.querySelector(".control-row");
+    if(row && row.contains(e.target)) return;
+    setImmMenu(false);
+  });
+
+  // ---- 竖屏提示：关闭态存 localStorage，避免每次都弹 ----
+  var ROTATE_HINT_KEY = "cj_rotate_hint_v1";
+  try {
+    if(elRotateHint && localStorage.getItem(ROTATE_HINT_KEY) === "dismissed"){
+      elRotateHint.classList.add("dismissed");
+    }
+  } catch(e){ /* localStorage 不可用则每次按媒体查询显示，无碍 */ }
+  if(elRotateHintClose){
+    elRotateHintClose.addEventListener("click", function(){
+      if(elRotateHint){ elRotateHint.classList.add("dismissed"); }
+      try { localStorage.setItem(ROTATE_HINT_KEY, "dismissed"); } catch(e){}
+    });
+  }
+
+  // ---- 场景滑动手势（触屏，探索模式）----
+  // 上滑→下一场景 / 下滑→上一场景；左滑→下一视角(平移) / 右滑→上一视角。
+  // 点击 vs 滑动：位移 < 阈值当点击（放行热区选词）；> 阈值当滑动（触发导航并抑制那次 click）。
+  // 只对非鼠标指针（触屏/笔）生效，桌面鼠标拖拽不劫持——桌面保留 ▲▼←→ 按钮。
+  if(elExploreWrap){
+    var SWIPE_MIN = 40; // px，小于此位移算点击
+    var ptrActive = false, ptrId = null, ptrX = 0, ptrY = 0;
+    var swipeSuppressClick = false;
+
+    // 捕获阶段拦截：滑动结束后 synthesized click 会冒到热区，这里在到达热区前吃掉
+    elExploreWrap.addEventListener("click", function(e){
+      if(swipeSuppressClick){
+        swipeSuppressClick = false;
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    }, true);
+
+    elExploreWrap.addEventListener("pointerdown", function(e){
+      if(e.pointerType === "mouse"){ ptrActive = false; return; }
+      ptrActive = true; ptrId = e.pointerId; ptrX = e.clientX; ptrY = e.clientY;
+    });
+    elExploreWrap.addEventListener("pointerup", function(e){
+      if(!ptrActive || e.pointerId !== ptrId){ return; }
+      ptrActive = false;
+      var dx = e.clientX - ptrX, dy = e.clientY - ptrY;
+      var adx = Math.abs(dx), ady = Math.abs(dy);
+      if(Math.max(adx, ady) < SWIPE_MIN){ return; } // 小位移=点击，放行热区选词
+      swipeSuppressClick = true;
+      window.setTimeout(function(){ swipeSuppressClick = false; }, 400); // 兜底复位
+      if(adx > ady){
+        // 横向为主：左滑=下一视角(右平移,=btnRight)，右滑=上一视角(=btnLeft)；单视角场景内部自守空转
+        if(dx < 0){ nextSlide(); } else { prevSlide(); }
+      } else {
+        // 纵向为主：上滑=下一场景，下滑=上一场景
+        if(dy < 0){ nextScene(); } else { prevScene(); }
+      }
+    });
+    elExploreWrap.addEventListener("pointercancel", function(){ ptrActive = false; });
+  }
 
   // ---------------------------------------------------------------
   // 顶栏语言胶囊：🌐 母语→学习语言，点开两行选择器；改任一门→存 state+localStorage+全量重渲染
@@ -5219,6 +5498,9 @@
     elCapsuleLearnLabel.textContent = t("capsuleLearn");
     elLangSwapBtn.setAttribute("aria-label", t("langSwapAria"));
     elLangSwapBtn.title = t("langSwapAria");
+    // 竖屏提示 + 沉浸横屏菜单按钮文案跟母语走
+    if(elRotateHintText){ elRotateHintText.textContent = t("rotateHint"); }
+    if(elImmMenuBtn){ elImmMenuBtn.setAttribute("aria-label", t("immMenuAria")); }
     // 西语选项「未开发」标记跟母语走（endonym 语言名不变，状态词本地化）
     var esOptLabel = langEndonym("es") + " (" + t("esComingSoon") + ")";
     document.querySelectorAll("option[value='es']").forEach(function(o){ o.textContent = esOptLabel; });
