@@ -1250,9 +1250,13 @@
     .hotspot-label{ font-size: 0.6rem; padding:2px 5px; }
     .hotspot-label .en{ font-size: 0.62rem; }
     .hotspot-label .zh{ font-size: 0.58rem; }
-    .word-info-bar{ padding: 12px 16px; margin-bottom: 22px; }
-    .wib-empty{ font-size: 0.8rem; }
-    .wib-en{ font-size: 1.08rem; }
+    .word-info-bar{ padding: 8px 14px; margin-bottom: 14px; min-height: 42px; }
+    .wib-content{ gap: 4px; }
+    .wib-main{ row-gap: 4px; }
+    .wib-empty{ font-size: 0.78rem; }
+    .wib-en{ font-size: 1rem; }
+    .wib-ipa{ font-size: 0.76rem; }
+    .wib-zh{ font-size: 0.92rem; }
     .wib-note{
       flex-basis: 100%;
       white-space: normal;
@@ -1261,11 +1265,23 @@
       border-left: none;
       padding-left: 0;
       border-top: 1px dashed var(--line);
-      padding-top: 6px;
+      padding-top: 4px;
+      font-size: 0.74rem;
+      order: 2;
     }
-    .wib-replay{ margin-left: 0; }
-    .wib-sen{ font-size: 0.8rem; }
-    .wib-sen-zh{ display:block; margin-left:0; margin-top:2px; }
+    .wib-note:empty{ border-top: none; padding-top: 0; }
+    .wib-replay{ order: 1; width: 26px; height: 26px; font-size: 0.88rem; }
+    .wib-sen{
+      font-size: 0.78rem;
+      line-height: 1.35;
+      padding-top: 4px;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .wib-sen-zh{ display:inline; margin-left:6px; margin-top:0; }
     .explore-placeholder{ min-height: 220px; padding: 22px 16px; }
 
     /* 窄屏下舞台箭头贴近视口左缘, 目录纸签挪到顶部避免打架 */
@@ -1409,7 +1425,7 @@
     /* 底部词栏常显：半透明窄条，在网格 info 行里就地占位（预留高度，不盖底部热区） */
     .page.mode-explore .word-info-bar{
       min-height: 0;
-      padding: 5px 14px;
+      padding: 3px 12px;
       transform: none;
       border: none;
       border-top: 1px solid var(--tag-border);
@@ -1417,15 +1433,18 @@
       background: rgba(250,243,226,0.82);
       box-shadow: 0 -2px 10px var(--shadow);
     }
-    .page.mode-explore .word-info-bar .wib-content{ gap: 2px; }
-    .page.mode-explore .word-info-bar .wib-main{ gap: 8px; row-gap: 2px; }
-    .page.mode-explore .word-info-bar .wib-en{ font-size: 1.02rem; }
-    .page.mode-explore .word-info-bar .wib-ipa{ font-size: 0.72rem; }
-    .page.mode-explore .word-info-bar .wib-zh{ font-size: 0.9rem; }
-    .page.mode-explore .word-info-bar .wib-empty{ font-size: 0.78rem; }
+    .page.mode-explore .word-info-bar .wib-content{ gap: 1px; }
+    .page.mode-explore .word-info-bar .wib-main{ gap: 8px; row-gap: 1px; line-height: 1.15; }
+    .page.mode-explore .word-info-bar .wib-en{ font-size: 0.92rem; }
+    .page.mode-explore .word-info-bar .wib-ipa{ font-size: 0.68rem; }
+    .page.mode-explore .word-info-bar .wib-zh{ font-size: 0.82rem; }
+    .page.mode-explore .word-info-bar .wib-empty{ font-size: 0.74rem; }
+    .page.mode-explore .word-info-bar .wib-replay{ width: 24px; height: 24px; font-size: 0.85rem; }
     /* 例句紧凑单行截断，保持窄条 */
     .page.mode-explore .word-info-bar .wib-sen{
-      font-size: 0.72rem;
+      font-size: 0.68rem;
+      line-height: 1.2;
+      padding-top: 2px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -2435,47 +2454,65 @@
       stage: "images/舞台08-车库-1.jpg",
       hotspots: [
         { w: 0, x: 14, y: 2.5, wd: 72.5, ht: 48 },
-        { w: 3, x: 28, y: 34, wd: 44.5, ht: 30 },
-        { w: 2, x: 15.5, y: 64.5, wd: 66, ht: 34.5 },
+        { panel: "garage-pegboard", x: 28, y: 34, wd: 44.5, ht: 30 },
+        { panel: "garage-workbench", x: 15.5, y: 64.5, wd: 66, ht: 34.5 },
         { w: 1, x: 9.5, y: 29, wd: 3.5, ht: 6.5 },
-        { w: 4, x: 18.5, y: 50.5, wd: 16, ht: 20 },
-        { w: 5, x: 40, y: 37.5, wd: 6, ht: 17 },
-        { w: 6, x: 47, y: 38.5, wd: 8.5, ht: 15.5 },
-        { w: 8, x: 57, y: 39, wd: 4.5, ht: 14.5 },
-        { w: 7, x: 63.5, y: 37.5, wd: 4.5, ht: 22.5 },
-        { w: 9, x: 71, y: 81, wd: 6, ht: 9.5 },
-        { w: 10, x: 0.5, y: 37.5, wd: 15, ht: 46.5 },
-        { w: 11, x: 80, y: 45, wd: 19.5, ht: 44 },
-        { w: 12, x: 32.9, y: 51.8, wd: 9.7, ht: 15.3 },
-        { w: 13, x: 33.3, y: 66.1, wd: 10.3, ht: 5.5 },
-        { w: 14, x: 45.0, y: 63.0, wd: 10.5, ht: 8.5 },
-        { w: 15, x: 51.0, y: 61.2, wd: 19.6, ht: 6.7 },
-        { w: 16, x: 56.97, y: 67.38, wd: 8.25, ht: 5.86 },
-        { w: 17, x: 65.97, y: 67.38, wd: 9.11, ht: 6.03 },
-        { w: 18, x: 70.0, y: 57.1, wd: 4.9, ht: 11.4 },
-        { w: 19, x: 74.9, y: 57.1, wd: 4.6, ht: 11.7 }
+        { w: 2, x: 18.5, y: 50.5, wd: 16, ht: 20 },
+        { w: 3, x: 71, y: 81, wd: 6, ht: 9.5 },
+        { w: 4, x: 0.5, y: 37.5, wd: 15, ht: 46.5 },
+        { w: 5, x: 80, y: 45, wd: 19.5, ht: 44 }
       ],
       words: [
         { terms: { en: "garage door", zh: "车库门" }, reading: { en: "/ɡəˈrɑːʒ ˌdɔːr/", zh: "chē kù mén" }, sen: { en: "I open the garage door before I drive out.", zh: "我开车前先打开车库门。" }, note: { zh: "garage 美音重音在后" } },
         { terms: { en: "garage door opener", zh: "车库门遥控器" }, reading: { en: "/ɡəˈrɑːʒ dɔːr ˈoʊpənər/", zh: "chē kù mén yáo kòng qì" }, sen: { en: "I press the garage door opener in my car.", zh: "我在车里按车库门遥控器。" }, note: { zh: "" } },
-        { terms: { en: "workbench", zh: "工作台" }, reading: { en: "/ˈwɜːrkbentʃ/", zh: "gōng zuò tái" }, sen: { en: "I fix the chair on my workbench.", zh: "我在工作台上修椅子。" }, note: { zh: "" } },
-        { terms: { en: "pegboard", zh: "洞洞板" }, reading: { en: "/ˈpeɡbɔːrd/", zh: "dòng dòng bǎn" }, sen: { en: "I hang my tools on the pegboard.", zh: "我把工具挂在洞洞板上。" }, note: { zh: "美式车库标配工具墙" } },
         { terms: { en: "toolbox", zh: "工具箱" }, reading: { en: "/ˈtuːlbɑːks/", zh: "gōng jù xiāng" }, sen: { en: "I keep all my tools in the toolbox.", zh: "我把所有工具都放在工具箱里。" }, note: { zh: "" } },
-        { terms: { en: "hammer", zh: "锤子" }, reading: { en: "/ˈhæmər/", zh: "chuí zi" }, sen: { en: "I hit the nail with a hammer.", zh: "我用锤子敲钉子。" }, note: { zh: "" } },
-        { terms: { en: "screwdriver", zh: "螺丝刀" }, reading: { en: "/ˈskruːdraɪvər/", zh: "luó sī dāo" }, sen: { en: "I tighten the screw with a screwdriver.", zh: "我用螺丝刀拧紧螺丝。" }, note: { zh: "Phillips=十字 flathead=一字" } },
-        { terms: { en: "saw", zh: "锯子" }, reading: { en: "/sɔː/", zh: "jù zi" }, sen: { en: "I cut the plank with a saw.", zh: "我用锯子锯这块木板。" }, note: { zh: "" } },
-        { terms: { en: "pliers", zh: "钳子" }, reading: { en: "/ˈplaɪərz/", zh: "qián zi" }, sen: { en: "I bend the wire with pliers.", zh: "我用钳子弯这根铁丝。" }, note: { zh: "恒用复数" } },
         { terms: { en: "duct tape", zh: "强力胶带" }, reading: { en: "/ˈdʌkt ˌteɪp/", zh: "qiáng lì jiāo dài" }, sen: { en: "I seal the box with duct tape.", zh: "我用强力胶带封箱子。" }, note: { zh: "美国万能银胶带" } },
         { terms: { en: "ladder", zh: "梯子" }, reading: { en: "/ˈlædər/", zh: "tī zi" }, sen: { en: "I climb the ladder to reach the shelf.", zh: "我爬梯子去够那个架子。" }, note: { zh: "" } },
-        { terms: { en: "bicycle", zh: "自行车" }, reading: { en: "/ˈbaɪsɪkl/", zh: "zì xíng chē" }, sen: { en: "I park my bicycle in the garage.", zh: "我把自行车停在车库里。" }, note: { zh: "口语 bike" } },
-        { terms: { en: "drill", zh: "电钻" }, reading: { en: "/drɪl/", zh: "diàn zuàn" }, sen: { en: "I use a drill to make a hole in the wall.", zh: "我用电钻在墙上打个孔。" }, note: { zh: "" } },
-        { terms: { en: "utility knife", zh: "美工刀" }, reading: { en: "/juːˈtɪləti ˌnaɪf/", zh: "měi gōng dāo" }, sen: { en: "I open the box with a utility knife.", zh: "我用美工刀打开箱子。" }, note: { zh: "box cutter" } },
-        { terms: { en: "tape measure", zh: "卷尺" }, reading: { en: "/ˈteɪp ˌmeʒər/", zh: "juǎn chǐ" }, sen: { en: "I measure the door with a tape measure.", zh: "我用卷尺量这扇门。" }, note: { zh: "" } },
-        { terms: { en: "level", zh: "水平尺" }, reading: { en: "/ˈlevl/", zh: "shuǐ píng chǐ" }, sen: { en: "I check the shelf with a level.", zh: "我用水平尺检查搁板是否水平。" }, note: { zh: "带气泡那种" } },
-        { terms: { en: "goggles", zh: "护目镜" }, reading: { en: "/ˈɡɑːɡlz/", zh: "hù mù jìng" }, sen: { en: "I wear goggles when I cut wood.", zh: "我锯木头时戴护目镜。" }, note: { zh: "恒用复数" } },
-        { terms: { en: "work gloves", zh: "劳保手套" }, reading: { en: "/ˈwɜːrk ˌɡlʌvz/", zh: "láo bǎo shǒu tào" }, sen: { en: "I put on work gloves before I lift the boxes.", zh: "我搬箱子前戴上劳保手套。" }, note: { zh: "" } },
-        { terms: { en: "screws", zh: "螺丝" }, reading: { en: "/skruːz/", zh: "luó sī" }, sen: { en: "I need more screws for this shelf.", zh: "我这个搁板还需要更多螺丝。" }, note: { zh: "" } },
-        { terms: { en: "nails", zh: "钉子" }, reading: { en: "/neɪlz/", zh: "dīng zi" }, sen: { en: "I hammer a few nails into the board.", zh: "我往木板上钉了几根钉子。" }, note: { zh: "" } }
+        { terms: { en: "bicycle", zh: "自行车" }, reading: { en: "/ˈbaɪsɪkl/", zh: "zì xíng chē" }, sen: { en: "I park my bicycle in the garage.", zh: "我把自行车停在车库里。" }, note: { zh: "口语 bike" } }
+      ],
+      panels: [
+        {
+          id: "garage-workbench",
+          names: { zh: "工作台", en: "Workbench" },
+          stage: "images/舞台08-车库-面板1.jpg",
+          words: [
+            { terms: { en: "drill", zh: "电钻" }, reading: { en: "/drɪl/", zh: "diàn zuàn" }, sen: { en: "I use a drill to make a hole in the wall.", zh: "我用电钻在墙上打个孔。" }, note: { zh: "" } },
+            { terms: { en: "tape measure", zh: "卷尺" }, reading: { en: "/ˈteɪp ˌmeʒər/", zh: "juǎn chǐ" }, sen: { en: "I measure the door with a tape measure.", zh: "我用卷尺量这扇门。" }, note: { zh: "" } },
+            { terms: { en: "level", zh: "水平尺" }, reading: { en: "/ˈlevl/", zh: "shuǐ píng chǐ" }, sen: { en: "I check the shelf with a level.", zh: "我用水平尺检查搁板是否水平。" }, note: { zh: "带气泡那种" } },
+            { terms: { en: "utility knife", zh: "美工刀" }, reading: { en: "/juːˈtɪləti ˌnaɪf/", zh: "měi gōng dāo" }, sen: { en: "I open the box with a utility knife.", zh: "我用美工刀打开箱子。" }, note: { zh: "box cutter" } },
+            { terms: { en: "goggles", zh: "护目镜" }, reading: { en: "/ˈɡɑːɡlz/", zh: "hù mù jìng" }, sen: { en: "I wear goggles when I cut wood.", zh: "我锯木头时戴护目镜。" }, note: { zh: "恒用复数" } },
+            { terms: { en: "work gloves", zh: "劳保手套" }, reading: { en: "/ˈwɜːrk ˌɡlʌvz/", zh: "láo bǎo shǒu tào" }, sen: { en: "I put on work gloves before I lift the boxes.", zh: "我搬箱子前戴上劳保手套。" }, note: { zh: "" } }
+          ],
+          hotspots: [
+            { w: 0, x: 3, y: 16, wd: 26, ht: 42 },
+            { w: 1, x: 33, y: 32, wd: 24, ht: 21 },
+            { w: 2, x: 57, y: 33, wd: 40, ht: 16 },
+            { w: 3, x: 8, y: 62, wd: 23, ht: 18 },
+            { w: 4, x: 36, y: 60, wd: 25, ht: 22 },
+            { w: 5, x: 66, y: 58, wd: 28, ht: 27 }
+          ]
+        },
+        {
+          id: "garage-pegboard",
+          names: { zh: "洞洞板", en: "Pegboard" },
+          stage: "images/舞台08-车库-面板2.jpg",
+          words: [
+            { terms: { en: "hammer", zh: "锤子" }, reading: { en: "/ˈhæmər/", zh: "chuí zi" }, sen: { en: "I hit the nail with a hammer.", zh: "我用锤子敲钉子。" }, note: { zh: "" } },
+            { terms: { en: "screwdriver", zh: "螺丝刀" }, reading: { en: "/ˈskruːdraɪvər/", zh: "luó sī dāo" }, sen: { en: "I tighten the screw with a screwdriver.", zh: "我用螺丝刀拧紧螺丝。" }, note: { zh: "Phillips=十字 flathead=一字" } },
+            { terms: { en: "saw", zh: "锯子" }, reading: { en: "/sɔː/", zh: "jù zi" }, sen: { en: "I cut the plank with a saw.", zh: "我用锯子锯这块木板。" }, note: { zh: "" } },
+            { terms: { en: "pliers", zh: "钳子" }, reading: { en: "/ˈplaɪərz/", zh: "qián zi" }, sen: { en: "I bend the wire with pliers.", zh: "我用钳子弯这根铁丝。" }, note: { zh: "恒用复数" } },
+            { terms: { en: "screws", zh: "螺丝" }, reading: { en: "/skruːz/", zh: "luó sī" }, sen: { en: "I need more screws for this shelf.", zh: "我这个搁板还需要更多螺丝。" }, note: { zh: "" } },
+            { terms: { en: "nails", zh: "钉子" }, reading: { en: "/neɪlz/", zh: "dīng zi" }, sen: { en: "I hammer a few nails into the board.", zh: "我往木板上钉了几根钉子。" }, note: { zh: "" } }
+          ],
+          hotspots: [
+            { w: 0, x: 16, y: 6, wd: 16, ht: 51 },
+            { w: 1, x: 46, y: 6, wd: 8, ht: 48 },
+            { w: 2, x: 71, y: 6, wd: 16, ht: 61 },
+            { w: 3, x: 15, y: 61, wd: 11, ht: 35 },
+            { w: 4, x: 42, y: 66, wd: 15, ht: 27 },
+            { w: 5, x: 68, y: 67, wd: 16, ht: 26 }
+          ]
+        }
       ]
     },
     {
@@ -2543,21 +2580,21 @@
       stage: "images/舞台13-房屋外观-1.jpg",
       hotspots: [
         { w: 17, x: 1, y: 70, wd: 98, ht: 29 },
-        { w: 0, x: 18, y: 8, wd: 61, ht: 17.5 },
+        { w: 0, x: 19, y: 14, wd: 14, ht: 8 },
         { w: 6, x: 14, y: 40, wd: 61.5, ht: 31.5 },
         { w: 11, x: 79, y: 70.5, wd: 20.5, ht: 29 },
         { w: 10, x: 38.5, y: 78, wd: 19, ht: 21.5 },
-        { w: 1, x: 55, y: 12, wd: 20, ht: 10 },
+        { w: 1, x: 60, y: 13, wd: 17, ht: 9 },
         { w: 2, x: 19, y: 4, wd: 5.5, ht: 9 },
-        { w: 3, x: 19, y: 22.5, wd: 59, ht: 3.5 },
+        { w: 3, x: 50, y: 24, wd: 19, ht: 3 },
         { w: 4, x: 74.5, y: 26, wd: 3, ht: 47 },
-        { w: 5, x: 47, y: 14, wd: 5, ht: 7 },
+        { w: 5, x: 46, y: 19, wd: 6, ht: 7 },
         { w: 7, x: 53, y: 51.5, wd: 3, ht: 7 },
         { w: 8, x: 17.5, y: 62.5, wd: 21, ht: 7.5 },
         { w: 9, x: 41.5, y: 70, wd: 15.5, ht: 8 },
         { w: 12, x: 86.5, y: 70.5, wd: 10.5, ht: 28.5 },
-        { w: 13, x: 38.5, y: 27.5, wd: 7, ht: 14 },
-        { w: 14, x: 44.5, y: 27, wd: 3, ht: 13 },
+        { w: 13, x: 20, y: 35, wd: 7, ht: 7 },
+        { w: 14, x: 35.5, y: 29, wd: 3.5, ht: 10 },
         { w: 15, x: 28, y: 55.5, wd: 10.5, ht: 9 },
         { w: 16, x: 59, y: 60, wd: 10.5, ht: 7.5 },
         { w: 18, x: 33.5, y: 79, wd: 6.5, ht: 18 },
@@ -2633,68 +2670,116 @@
       alt: "驾驶位第一人称视角图，标注30个部件名称",
       stage: "images/舞台01-汽车-2.jpg",
       hotspots: [
-        { w: 20, x: 20, y: 29, wd: 27, ht: 46 },
-        { w: 23, x: 74, y: 33, wd: 19, ht: 13 },
-        { w: 28, x: 75, y: 54, wd: 16, ht: 10 },
-        { w: 14, x: 16, y: 0.5, wd: 32, ht: 17 },
-        { w: 18, x: 88, y: 22, wd: 12, ht: 22 },
-        { w: 15, x: 0.5, y: 28, wd: 12.5, ht: 16 },
-        { w: 12, x: 57, y: 75.5, wd: 16, ht: 24 },
-        { w: 13, x: 58, y: 76, wd: 14, ht: 10 },
-        { w: 19, x: 22, y: 78, wd: 24, ht: 21 },
-        { w: 4, x: 55.5, y: 35.5, wd: 14, ht: 13 },
-        { w: 5, x: 57, y: 37.5, wd: 11.5, ht: 10 },
-        { w: 6, x: 54, y: 52, wd: 16.5, ht: 6.5 },
-        { w: 8, x: 54, y: 59, wd: 16.5, ht: 7 },
-        { w: 7, x: 50, y: 36.5, wd: 5, ht: 13 },
-        { w: 0, x: 27.5, y: 36, wd: 8.5, ht: 12 },
-        { w: 1, x: 37.5, y: 38.5, wd: 6, ht: 10 },
-        { w: 2, x: 30, y: 44.5, wd: 4.5, ht: 3.5 },
-        { w: 3, x: 40.5, y: 63.5, wd: 3, ht: 4.5 },
-        { w: 9, x: 55.5, y: 67.5, wd: 4, ht: 5 },
-        { w: 10, x: 40.5, y: 59, wd: 5, ht: 4.5 },
-        { w: 11, x: 51.5, y: 74, wd: 6, ht: 24 },
-        { w: 16, x: 8.5, y: 60, wd: 6, ht: 14.5 },
-        { w: 17, x: 7, y: 48, wd: 7, ht: 8.5 },
-        { w: 22, x: 53, y: 7, wd: 14, ht: 9 },
-        { w: 21, x: 93.5, y: 13, wd: 5.5, ht: 22 },
-        { w: 26, x: 38, y: 73, wd: 5.5, ht: 11 },
-        { w: 25, x: 43.5, y: 73, wd: 5.5, ht: 11 },
-        { w: 29, x: 55, y: 72, wd: 5, ht: 15 },
-        { w: 27, x: 60, y: 73, wd: 5.5, ht: 19 },
-        { w: 24, x: 29, y: 49, wd: 8, ht: 13 }
+        { w: 11, x: 20, y: 29, wd: 27, ht: 46 },
+        { w: 14, x: 74, y: 33, wd: 19, ht: 13 },
+        { w: 16, x: 75, y: 54, wd: 16, ht: 10 },
+        { w: 6, x: 16, y: 0.5, wd: 32, ht: 17 },
+        { w: 10, x: 88, y: 22, wd: 12, ht: 22 },
+        { w: 7, x: 0.5, y: 28, wd: 12.5, ht: 16 },
+        { w: 1, x: 55.5, y: 35.5, wd: 14, ht: 13 },
+        { w: 2, x: 57, y: 37.5, wd: 11.5, ht: 10 },
+        { w: 3, x: 54, y: 52, wd: 16.5, ht: 6.5 },
+        { w: 5, x: 54, y: 59, wd: 16.5, ht: 7 },
+        { w: 4, x: 50, y: 36.5, wd: 5, ht: 13 },
+        { w: 0, x: 40.5, y: 63.5, wd: 3, ht: 4.5 },
+        { w: 8, x: 8.5, y: 60, wd: 6, ht: 14.5 },
+        { w: 9, x: 7, y: 48, wd: 7, ht: 8.5 },
+        { w: 13, x: 53, y: 7, wd: 14, ht: 9 },
+        { w: 12, x: 93.5, y: 13, wd: 5.5, ht: 22 },
+        { w: 15, x: 29, y: 49, wd: 8, ht: 13 },
+        { panel: "car-dashboard", x: 25, y: 34, wd: 18, ht: 15 },
+        { panel: "car-console", x: 50, y: 66, wd: 22, ht: 33 },
+        { panel: "car-pedals", x: 22, y: 75, wd: 26, ht: 24 }
       ],
       words: [
-        { terms: { en: "speedometer", zh: "时速表" }, reading: { en: "/spiːˈdɑːmɪtər/", zh: "shí sù biǎo" }, sen: { en: "I watch the speedometer on the highway.", zh: "我在高速上盯着时速表。" }, note: { zh: "重音在 -dom-" } },
-        { terms: { en: "fuel gauge", zh: "油量表" }, reading: { en: "/ˈfjuːəl ɡeɪdʒ/", zh: "yóu liàng biǎo" }, sen: { en: "I check the fuel gauge before a long trip.", zh: "我长途出行前检查油量表。" }, note: { zh: "gauge 拼写易错" } },
-        { terms: { en: "odometer", zh: "里程表" }, reading: { en: "/oʊˈdɑːmɪtər/", zh: "lǐ chéng biǎo" }, sen: { en: "The odometer shows a hundred thousand miles.", zh: "里程表显示十万英里。" }, note: { zh: "" } },
         { terms: { en: "ignition", zh: "点火开关" }, reading: { en: "/ɪɡˈnɪʃn/", zh: "diǎn huǒ kāi guān" }, sen: { en: "I turn the key in the ignition.", zh: "我转动点火开关的钥匙。" }, note: { zh: "turn on the ignition" } },
         { terms: { en: "touchscreen", zh: "中控屏" }, reading: { en: "/ˈtʌtʃskriːn/", zh: "zhōng kòng píng" }, sen: { en: "I tap the touchscreen to change the music.", zh: "我点一下中控屏换音乐。" }, note: { zh: "" } },
         { terms: { en: "navigation", zh: "导航" }, reading: { en: "/ˌnævɪˈɡeɪʃn/", zh: "dǎo háng" }, sen: { en: "I type the address into the navigation.", zh: "我把地址输进导航。" }, note: { zh: "口语常说 GPS" } },
         { terms: { en: "radio", zh: "收音机" }, reading: { en: "/ˈreɪdioʊ/", zh: "shōu yīn jī" }, sen: { en: "I turn on the radio during my commute.", zh: "我通勤时打开收音机。" }, note: { zh: "" } },
         { terms: { en: "air vent", zh: "出风口" }, reading: { en: "/ˈer vent/", zh: "chū fēng kǒu" }, sen: { en: "I aim the air vent toward my face.", zh: "我把出风口对准自己的脸。" }, note: { zh: "" } },
         { terms: { en: "A/C", zh: "空调" }, reading: { en: "/ˌeɪ ˈsiː/", zh: "kōng tiáo" }, sen: { en: "I turn on the A/C in summer.", zh: "我夏天开车里的空调。" }, note: { zh: "air conditioning 缩写" } },
-        { terms: { en: "hazard lights", zh: "双闪灯" }, reading: { en: "/ˈhæzərd laɪts/", zh: "shuāng shǎn dēng" }, sen: { en: "I switch on the hazard lights when I stop.", zh: "我停车时打开双闪灯。" }, note: { zh: "也叫 flashers" } },
-        { terms: { en: "cruise control", zh: "定速巡航" }, reading: { en: "/ˈkruːz kənˌtroʊl/", zh: "dìng sù xún háng" }, sen: { en: "I set the cruise control on the highway.", zh: "我在高速上设置定速巡航。" }, note: { zh: "" } },
-        { terms: { en: "parking brake", zh: "手刹" }, reading: { en: "/ˈpɑːrkɪŋ breɪk/", zh: "shǒu shā" }, sen: { en: "I pull the parking brake on the hill.", zh: "我在坡上拉起手刹。" }, note: { zh: "也叫 emergency brake / e-brake" } },
-        { terms: { en: "center console", zh: "中央扶手箱" }, reading: { en: "/ˈsentər ˈkɑːnsoʊl/", zh: "zhōng yāng fú shǒu xiāng" }, sen: { en: "I store my sunglasses in the center console.", zh: "我把墨镜放在中央扶手箱里。" }, note: { zh: "" } },
-        { terms: { en: "armrest", zh: "扶手" }, reading: { en: "/ˈɑːrmrest/", zh: "fú shǒu" }, sen: { en: "I rest my elbow on the armrest.", zh: "我把胳膊肘搭在扶手上。" }, note: { zh: "" } },
         { terms: { en: "sun visor", zh: "遮阳板" }, reading: { en: "/ˈsʌn ˌvaɪzər/", zh: "zhē yáng bǎn" }, sen: { en: "I pull down the sun visor against the glare.", zh: "我拉下遮阳板挡强光。" }, note: { zh: "" } },
         { terms: { en: "side mirror", zh: "侧后视镜" }, reading: { en: "/ˈsaɪd ˌmɪrər/", zh: "cè hòu shì jìng" }, sen: { en: "I adjust the side mirror before I drive.", zh: "我开车前调整侧后视镜。" }, note: { zh: "英式 wing mirror" } },
         { terms: { en: "window switch", zh: "车窗开关" }, reading: { en: "/ˈwɪndoʊ swɪtʃ/", zh: "chē chuāng kāi guān" }, sen: { en: "I press the window switch to let in air.", zh: "我按车窗开关让空气进来。" }, note: { zh: "power windows = 电动车窗" } },
         { terms: { en: "door handle", zh: "车门把手" }, reading: { en: "/ˈdɔːr ˌhændl/", zh: "chē mén bǎ shǒu" }, sen: { en: "I pull the door handle to get in.", zh: "我拉车门把手上车。" }, note: { zh: "" } },
         { terms: { en: "headrest", zh: "头枕" }, reading: { en: "/ˈhedrest/", zh: "tóu zhěn" }, sen: { en: "I adjust the headrest for my neck.", zh: "我调整头枕的高度护住脖子。" }, note: { zh: "" } },
-        { terms: { en: "floor mat", zh: "脚垫" }, reading: { en: "/ˈflɔːr mæt/", zh: "jiǎo diàn" }, sen: { en: "I shake the dirt off the floor mat.", zh: "我把脚垫上的泥抖掉。" }, note: { zh: "" } },
         { terms: { en: "steering wheel", zh: "方向盘" }, reading: { en: "/ˈstɪrɪŋ wiːl/", zh: "fāng xiàng pán" }, sen: { en: "I hold the steering wheel with both hands.", zh: "我双手握着方向盘。" }, note: { zh: "" } },
         { terms: { en: "seat belt", zh: "安全带" }, reading: { en: "/ˈsiːt belt/", zh: "ān quán dài" }, sen: { en: "I buckle my seat belt before I drive.", zh: "我开车前系好安全带。" }, note: { zh: "buckle up = 系好安全带" } },
         { terms: { en: "rearview mirror", zh: "后视镜" }, reading: { en: "/ˈrɪrvjuː ˈmɪrər/", zh: "hòu shì jìng" }, sen: { en: "I check the rearview mirror before I back up.", zh: "我倒车前看一下后视镜。" }, note: { zh: "" } },
         { terms: { en: "dashboard", zh: "仪表盘" }, reading: { en: "/ˈdæʃbɔːrd/", zh: "yí biǎo pán" }, sen: { en: "I glance at the dashboard for the speed.", zh: "我瞄一眼仪表盘看车速。" }, note: { zh: "" } },
         { terms: { en: "horn", zh: "喇叭" }, reading: { en: "/hɔːrn/", zh: "lǎ bā" }, sen: { en: "I honk the horn at the crossing.", zh: "我在路口按喇叭。" }, note: { zh: "honk the horn = 按喇叭" } },
-        { terms: { en: "gas pedal", zh: "油门" }, reading: { en: "/ˈɡæs ˌpedl/", zh: "yóu mén" }, sen: { en: "I press the gas pedal to speed up.", zh: "我踩油门加速。" }, note: { zh: "美式 gas = 汽油；step on the gas" } },
-        { terms: { en: "brake", zh: "刹车" }, reading: { en: "/breɪk/", zh: "shā chē" }, sen: { en: "I hit the brake at the red light.", zh: "我在红灯前踩刹车。" }, note: { zh: "和 break 同音" } },
-        { terms: { en: "gear shift", zh: "换挡杆" }, reading: { en: "/ˈɡɪr ʃɪft/", zh: "huàn dǎng gān" }, sen: { en: "I move the gear shift into reverse.", zh: "我把换挡杆推到倒挡。" }, note: { zh: "" } },
-        { terms: { en: "glove compartment", zh: "副驾储物箱" }, reading: { en: "/ˈɡlʌv kəmˌpɑːrtmənt/", zh: "fù jià chǔ wù xiāng" }, sen: { en: "I keep the manual in the glove compartment.", zh: "我把说明书放在副驾储物箱里。" }, note: { zh: "也叫 glove box" } },
-        { terms: { en: "cup holder", zh: "杯架" }, reading: { en: "/ˈkʌp ˌhoʊldər/", zh: "bēi jià" }, sen: { en: "I set my coffee in the cup holder.", zh: "我把咖啡放在杯架里。" }, note: { zh: "" } }
+        { terms: { en: "glove compartment", zh: "副驾储物箱" }, reading: { en: "/ˈɡlʌv kəmˌpɑːrtmənt/", zh: "fù jià chǔ wù xiāng" }, sen: { en: "I keep the manual in the glove compartment.", zh: "我把说明书放在副驾储物箱里。" }, note: { zh: "也叫 glove box" } }
+      ],
+      panels: [
+        {
+          id: "car-dashboard",
+          names: { zh: "仪表盘", en: "Dashboard" },
+          stage: "images/舞台01-汽车-面板1.jpg",
+          words: [
+            { terms: { en: "speedometer", zh: "时速表" }, reading: { en: "/spiːˈdɑːmɪtər/", zh: "shí sù biǎo" }, sen: { en: "I watch the speedometer on the highway.", zh: "我在高速上盯着时速表。" }, note: { zh: "重音在 -dom-" } },
+            { terms: { en: "tachometer", zh: "转速表" }, reading: { en: "/tæˈkɑːmɪtər/", zh: "zhuǎn sù biǎo" }, sen: { en: "The tachometer climbs toward the red line as I accelerate.", zh: "我加速时转速表指针冲向红线。" }, note: { zh: "显示发动机每分钟转速(RPM)；红区别踩" } },
+            { terms: { en: "fuel gauge", zh: "油量表" }, reading: { en: "/ˈfjuːəl ɡeɪdʒ/", zh: "yóu liàng biǎo" }, sen: { en: "I check the fuel gauge before a long trip.", zh: "我长途出行前检查油量表。" }, note: { zh: "gauge 拼写易错" } },
+            { terms: { en: "temperature gauge", zh: "水温表" }, reading: { en: "/ˈtemprətʃər ɡeɪdʒ/", zh: "shuǐ wēn biǎo" }, sen: { en: "The temperature gauge rises when the engine gets hot.", zh: "发动机变热时水温表会往上升。" }, note: { zh: "显示冷却液温度；指针偏高要停车" } },
+            { terms: { en: "odometer", zh: "里程表" }, reading: { en: "/oʊˈdɑːmɪtər/", zh: "lǐ chéng biǎo" }, sen: { en: "The odometer shows a hundred thousand miles.", zh: "里程表显示十万英里。" }, note: { zh: "" } },
+            { terms: { en: "turn signal", zh: "转向灯" }, reading: { en: "/ˈtɜːrn ˌsɪɡnəl/", zh: "zhuǎn xiàng dēng" }, sen: { en: "The green turn signal blinks when I change lanes.", zh: "我变道时绿色转向灯会闪烁。" }, note: { zh: "仪表上的箭头指示灯；英式 indicator" } },
+            { terms: { en: "high beam", zh: "远光灯" }, reading: { en: "/ˈhaɪ biːm/", zh: "yuǎn guāng dēng" }, sen: { en: "The blue high beam light comes on when I flick the lever.", zh: "我拨一下拨杆，蓝色远光灯指示灯就亮了。" }, note: { zh: "远光开启时亮蓝色指示灯；会车记得关" } },
+            { terms: { en: "check engine light", zh: "发动机故障灯" }, reading: { en: "/ˈtʃek ˈendʒɪn laɪt/", zh: "fā dòng jī gù zhàng dēng" }, sen: { en: "The check engine light means I should get the car looked at.", zh: "发动机故障灯亮了，说明该去检查一下车。" }, note: { zh: "黄色发动机形图标；亮起尽快检修" } },
+            { terms: { en: "seat belt light", zh: "安全带指示灯" }, reading: { en: "/ˈsiːt belt laɪt/", zh: "ān quán dài zhǐ shì dēng" }, sen: { en: "The seat belt light stays on until I buckle up.", zh: "在我系好安全带之前，安全带指示灯一直亮着。" }, note: { zh: "红色系安全带小人图标；不系会亮并报警" } }
+          ],
+          hotspots: [
+            { w: 0, x: 17, y: 17, wd: 27, ht: 40 },
+            { w: 1, x: 55, y: 17, wd: 27, ht: 40 },
+            { w: 2, x: 11, y: 59, wd: 13, ht: 18 },
+            { w: 3, x: 76, y: 59, wd: 14, ht: 18 },
+            { w: 4, x: 37, y: 63, wd: 25, ht: 9 },
+            { w: 5, x: 30.5, y: 77, wd: 7, ht: 7 },
+            { w: 6, x: 40, y: 77, wd: 7.5, ht: 7 },
+            { w: 7, x: 50.5, y: 77, wd: 7.5, ht: 7 },
+            { w: 8, x: 61, y: 77, wd: 7, ht: 7 }
+          ]
+        },
+        {
+          id: "car-console",
+          names: { zh: "中控换挡", en: "Center Console" },
+          stage: "images/舞台01-汽车-面板2.jpg",
+          words: [
+            { terms: { en: "gear shift", zh: "换挡杆" }, reading: { en: "/ˈɡɪr ʃɪft/", zh: "huàn dǎng gān" }, sen: { en: "I move the gear shift into reverse.", zh: "我把换挡杆推到倒挡。" }, note: { zh: "" } },
+            { terms: { en: "start button", zh: "启动按钮" }, reading: { en: "/ˈstɑːrt ˌbʌtn/", zh: "qǐ dòng àn niǔ" }, sen: { en: "I press the start button to turn on the engine.", zh: "我按下启动按钮发动汽车。" }, note: { zh: "一键启动；常踩着刹车按下，无钥匙点火" } },
+            { terms: { en: "cruise control", zh: "定速巡航" }, reading: { en: "/ˈkruːz kənˌtroʊl/", zh: "dìng sù xún háng" }, sen: { en: "I set the cruise control on the highway.", zh: "我在高速上设置定速巡航。" }, note: { zh: "" } },
+            { terms: { en: "hazard lights", zh: "双闪灯" }, reading: { en: "/ˈhæzərd laɪts/", zh: "shuāng shǎn dēng" }, sen: { en: "I switch on the hazard lights when I stop.", zh: "我停车时打开双闪灯。" }, note: { zh: "也叫 flashers" } },
+            { terms: { en: "cup holder", zh: "杯架" }, reading: { en: "/ˈkʌp ˌhoʊldər/", zh: "bēi jià" }, sen: { en: "I set my coffee in the cup holder.", zh: "我把咖啡放在杯架里。" }, note: { zh: "" } },
+            { terms: { en: "center console", zh: "中央扶手箱" }, reading: { en: "/ˈsentər ˈkɑːnsoʊl/", zh: "zhōng yāng fú shǒu xiāng" }, sen: { en: "I store my sunglasses in the center console.", zh: "我把墨镜放在中央扶手箱里。" }, note: { zh: "" } },
+            { terms: { en: "armrest", zh: "扶手" }, reading: { en: "/ˈɑːrmrest/", zh: "fú shǒu" }, sen: { en: "I rest my elbow on the armrest.", zh: "我把胳膊肘搭在扶手上。" }, note: { zh: "" } },
+            { terms: { en: "parking brake", zh: "手刹" }, reading: { en: "/ˈpɑːrkɪŋ breɪk/", zh: "shǒu shā" }, sen: { en: "I pull the parking brake on the hill.", zh: "我在坡上拉起手刹。" }, note: { zh: "也叫 emergency brake / e-brake" } }
+          ],
+          hotspots: [
+            { w: 0, x: 49, y: 34, wd: 14, ht: 33 },
+            { w: 1, x: 27, y: 36, wd: 9, ht: 11 },
+            { w: 2, x: 5, y: 15, wd: 23, ht: 15 },
+            { w: 3, x: 57.5, y: 21, wd: 7, ht: 9 },
+            { w: 4, x: 66, y: 40, wd: 16, ht: 15 },
+            { w: 5, x: 67, y: 71, wd: 29, ht: 19 },
+            { w: 6, x: 67, y: 56, wd: 29, ht: 14 },
+            { w: 7, x: 31, y: 52, wd: 12, ht: 34 }
+          ]
+        },
+        {
+          id: "car-pedals",
+          names: { zh: "踏板", en: "Pedals" },
+          stage: "images/舞台01-汽车-面板3.jpg",
+          words: [
+            { terms: { en: "gas pedal", zh: "油门" }, reading: { en: "/ˈɡæs ˌpedl/", zh: "yóu mén" }, sen: { en: "I press the gas pedal to speed up.", zh: "我踩油门加速。" }, note: { zh: "美式 gas = 汽油；step on the gas" } },
+            { terms: { en: "brake", zh: "刹车" }, reading: { en: "/breɪk/", zh: "shā chē" }, sen: { en: "I hit the brake at the red light.", zh: "我在红灯前踩刹车。" }, note: { zh: "和 break 同音" } },
+            { terms: { en: "clutch", zh: "离合器" }, reading: { en: "/klʌtʃ/", zh: "lí hé qì" }, sen: { en: "I press the clutch before I shift gears.", zh: "换挡前我先踩下离合器。" }, note: { zh: "手动挡最左边的踏板；换挡时踩下" } },
+            { terms: { en: "floor mat", zh: "脚垫" }, reading: { en: "/ˈflɔːr mæt/", zh: "jiǎo diàn" }, sen: { en: "I shake the dirt off the floor mat.", zh: "我把脚垫上的泥抖掉。" }, note: { zh: "" } }
+          ],
+          hotspots: [
+            { w: 0, x: 74, y: 19, wd: 9, ht: 48 },
+            { w: 1, x: 41, y: 26, wd: 22, ht: 19 },
+            { w: 2, x: 16, y: 27, wd: 11, ht: 17 },
+            { w: 3, x: 8, y: 48, wd: 56, ht: 50 }
+          ]
+        }
       ]
     },
     {
@@ -3258,7 +3343,7 @@
         { w: 6, x: 25, y: 8, wd: 18, ht: 22 },
         { w: 3, x: 17, y: 59.5, wd: 19, ht: 25 },
         { w: 2, x: 46.5, y: 15, wd: 15, ht: 22 },
-        { panel: "tray", x: 68, y: 68, wd: 29, ht: 24 }
+        { panel: "tray", x: 68, y: 49, wd: 28, ht: 16 }
       ],
       words: [
         { terms: { en: "exam table", zh: "检查床" }, reading: { en: "/ɪɡˈzæm ˈteɪbl/", zh: "jiǎn chá chuáng" }, sen: { en: "I sit on the exam table.", zh: "我坐在检查床上。" }, note: { zh: "" } },
@@ -3836,12 +3921,26 @@
   var elSbView = document.getElementById("sbView");
 
   var mode = "explore";     // 海报模式已砍（2026-07-16），唯一模式=探索；变量保留供既有守卫判断
-  // 手机端默认「隐藏模式」：场景标签又小又挤，手机默认全隐藏更干净，点物体照样在下方单词栏出词（见 updateWordInfoBar）
-  // 判定手机 = 触屏设备（pointer: coarse，最可靠信号），窄屏兜底；labelMode 当前不持久化，故每次加载都按此规则判定
+  // 手机端首次访问默认「双显」：让新用户一眼看懂这是「场景标英文单词」的学习工具；
+  // 之后的访问再默认「隐藏模式」：场景标签又小又挤，回访用户默认全隐藏更干净，点物体照样在下方单词栏出词（见 updateWordInfoBar）
+  // 判定手机 = 触屏设备（pointer: coarse，最可靠信号），窄屏兜底；首次/回访用 localStorage 标记区分，桌面端不受影响、恒为 both
   var isMobileDefault = !!(window.matchMedia && (
     window.matchMedia("(pointer: coarse)").matches || window.matchMedia("(max-width: 640px)").matches
   ));
-  var labelMode = isMobileDefault ? "none" : "both";   // "both" | "learn" | "native" | "none"
+  var VISITED_KEY = "cj_visited_v1";
+  var labelMode;   // "both" | "learn" | "native" | "none"
+  if(isMobileDefault){
+    var hasVisitedMobile = false;
+    try{ hasVisitedMobile = window.localStorage.getItem(VISITED_KEY) === "1"; }catch(e){ /* 读取失败按首次处理 */ }
+    if(hasVisitedMobile){
+      labelMode = "none";
+    } else {
+      labelMode = "both";
+      try{ window.localStorage.setItem(VISITED_KEY, "1"); }catch(e){ /* 存储失败不影响本次展示 */ }
+    }
+  } else {
+    labelMode = "both";
+  }
   var activePanel = null;        // 当前进入的子场景面板对象（null = 在主舞台）
   var panelEntryHotspot = null;  // 进入面板时的入口热区（用于返回时反向 zoom）
 
