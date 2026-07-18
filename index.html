@@ -3923,9 +3923,11 @@
   var mode = "explore";     // 海报模式已砍（2026-07-16），唯一模式=探索；变量保留供既有守卫判断
   // 手机端首次访问默认「双显」：让新用户一眼看懂这是「场景标英文单词」的学习工具；
   // 之后的访问再默认「隐藏模式」：场景标签又小又挤，回访用户默认全隐藏更干净，点物体照样在下方单词栏出词（见 updateWordInfoBar）
-  // 判定手机 = 触屏设备（pointer: coarse，最可靠信号），窄屏兜底；首次/回访用 localStorage 标记区分，桌面端不受影响、恒为 both
+  // 判定手机 = 触屏 且 小屏（设备短边<600px 区分 iPhone 与 iPad：iPhone 短边≈375-430、iPad≈744+）。
+  // iPad 屏大、标签不挤，不算手机 → 走桌面 both 分支恒双显；max-width:640 兜底捕捉窄屏窗口。首次/回访用 localStorage 区分。
+  var shortSide = Math.min(window.screen && window.screen.width || 9999, window.screen && window.screen.height || 9999);
   var isMobileDefault = !!(window.matchMedia && (
-    window.matchMedia("(pointer: coarse)").matches || window.matchMedia("(max-width: 640px)").matches
+    (window.matchMedia("(pointer: coarse)").matches && shortSide < 600) || window.matchMedia("(max-width: 640px)").matches
   ));
   var VISITED_KEY = "cj_visited_v1";
   var labelMode;   // "both" | "learn" | "native" | "none"
