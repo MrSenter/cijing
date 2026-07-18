@@ -1447,7 +1447,7 @@
 <button class="imm-menu-btn" id="immMenuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="exploreControls" aria-label="菜单">☰</button>
 <!-- 竖屏轻提示：仅窄屏竖屏显示，可关闭（关闭态存 localStorage） -->
 <div class="rotate-hint" id="rotateHint">
-  <span class="rh-text" id="rotateHintText">🔄 横屏观看画面更大、更好点</span>
+  <span class="rh-text" id="rotateHintText">📱 点画面中的物体，单词显示在下方 · 想看标签可切「双显」</span>
   <button class="rh-close" id="rotateHintClose" type="button" aria-label="关闭提示">✕</button>
 </div>
 <aside class="toc-drawer" id="tocDrawer" aria-hidden="true" aria-label="场景目录">
@@ -3836,7 +3836,12 @@
   var elSbView = document.getElementById("sbView");
 
   var mode = "explore";     // 海报模式已砍（2026-07-16），唯一模式=探索；变量保留供既有守卫判断
-  var labelMode = "both";   // "both" | "learn" | "native" | "none"
+  // 手机端默认「隐藏模式」：场景标签又小又挤，手机默认全隐藏更干净，点物体照样在下方单词栏出词（见 updateWordInfoBar）
+  // 判定手机 = 触屏设备（pointer: coarse，最可靠信号），窄屏兜底；labelMode 当前不持久化，故每次加载都按此规则判定
+  var isMobileDefault = !!(window.matchMedia && (
+    window.matchMedia("(pointer: coarse)").matches || window.matchMedia("(max-width: 640px)").matches
+  ));
+  var labelMode = isMobileDefault ? "none" : "both";   // "both" | "learn" | "native" | "none"
   var activePanel = null;        // 当前进入的子场景面板对象（null = 在主舞台）
   var panelEntryHotspot = null;  // 进入面板时的入口热区（用于返回时反向 zoom）
 
@@ -3923,7 +3928,7 @@
       quizResultTitle: "测验完成", quizRetry: "再来一轮", quizExit: "返回探索",
       capsuleNative: "母语", capsuleLearn: "学习",
       langSwapAria: "交换母语与学习语言",
-      rotateHint: "🔄 横屏观看画面更大、更好点",
+      rotateHint: "📱 点画面中的物体，单词显示在下方 · 想看标签可切「双显」",
       immMenuAria: "菜单",
       esComingSoon: "未开发",
       openPanelSuffix: "↗", goToPrefix: "去", goToSuffix: "🚪",
@@ -3948,7 +3953,7 @@
       quizResultTitle: "Quiz complete", quizRetry: "Play again", quizExit: "Back to explore",
       capsuleNative: "Native", capsuleLearn: "Learning",
       langSwapAria: "Swap native & learning language",
-      rotateHint: "Rotate to landscape for a bigger view",
+      rotateHint: "Tap objects to see the word below · switch to “Both” for labels",
       immMenuAria: "Menu",
       esComingSoon: "coming soon",
       openPanelSuffix: "↗", goToPrefix: "Go to", goToSuffix: "🚪",
@@ -4967,6 +4972,13 @@
       if(quiz.active){ cancelQuizSilently(); }
       updateQuizButtonVisibility();
     });
+  });
+  // 手机端 labelMode 初始值可能被上面的 isMobileDefault 判定改成 "none"，
+  // 而 HTML 静态标记的 active 态是「双显」——这里按实际初始 labelMode 同步一次 tab 视觉态，避免"标签显示隐藏、按钮却显示双显"的不一致
+  elLabelTabs.forEach(function(b){
+    var isActive = (b.getAttribute("data-mode") === labelMode);
+    b.classList.toggle("active", isActive);
+    b.setAttribute("aria-checked", isActive ? "true" : "false");
   });
 
   // 朗读语言两态切换：只切 speak() 播放/回落用的语言，不影响标签显示逻辑
