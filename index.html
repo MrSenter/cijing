@@ -566,18 +566,6 @@
   .hotspot.label-front .hotspot-label:not(.entry-hint) .zh{ font-size: 0.98rem; }
   .hotspot.label-front .hotspot-label:not(.entry-hint){ padding: 5px 10px; }
 
-  /* 中文拼音小字注音（2026-07-17）：跟现有拼音样式（.wib-ipa：等宽斜体+浅灰）一致；
-     用 em 相对单位随宿主元素（.wib-zh 或 .hotspot-label .zh）字号联动缩放，
-     不用再自己乘一遍变量 */
-  .pinyin-annot{
-    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    font-style: italic;
-    font-weight: 400;
-    font-size: 0.72em;
-    color: var(--ink-faint);
-    margin-left: 4px;
-  }
-
   .explore-placeholder{
     display:flex;
     flex-direction:column;
@@ -3699,18 +3687,6 @@
   function wordSen(w, lang){ return (w && w.sen && w.sen[lang]) || ""; }
   function wordNote(w, lang){ return (w && w.note && w.note[lang]) || ""; }
 
-  // 中文拼音随挂（2026-07-17）：任何渲染中文的地方（释义/图上标签母语侧），只要那侧语言=zh
-  // 就挂上 reading.zh 小字注音；学习语言=中文时汉字本身已经在词卡 IPA 位（wib-ipa）带过拼音了，
-  // 这个函数只管「显示为中文的那一侧」，不会跟 wib-ipa 重复挂（各管各的元素）
-  function appendPinyinIfZh(el, lang, word){
-    if(lang !== "zh") return;
-    var py = wordReading(word, "zh");
-    if(!py) return;
-    var pySpan = document.createElement("span");
-    pySpan.className = "pinyin-annot";
-    pySpan.textContent = py;
-    el.appendChild(pySpan);
-  }
   // 视角名标识：优先取 zh（与迁移前 viewName 的历史取值一致，known-map key 沿用旧格式不炸档）；
   // 4 个无 viewNames 的 slide（postoffice/gym/barbershop/park）返回空串
   function viewKey(s){ return (s.viewNames && (s.viewNames.zh || s.viewNames.en)) || ""; }
@@ -4497,7 +4473,6 @@
         var zhSpan = document.createElement("span");
         zhSpan.className = "zh";
         zhSpan.textContent = nativeTerm;
-        appendPinyinIfZh(zhSpan, nativeLang, word);
         label.appendChild(enSpan);
         label.appendChild(zhSpan);
         hotspot.appendChild(label);
@@ -4849,12 +4824,7 @@
     elWibEn.textContent = wordTerm(word, learnLang);
     elWibIpa.textContent = wordReading(word, learnLang);
     // 释义 = 母语词形；退化格（学习=母语）与词本身重复，不显示（picture-dictionary 模式）
-    // 释义侧若正是中文（native=zh），挂上拼音小字；与 learn=zh 时的 wib-ipa 拼音各管各的元素，不重复
-    while(elWibZh.firstChild){ elWibZh.removeChild(elWibZh.firstChild); }
-    if(!degenerate){
-      elWibZh.appendChild(document.createTextNode(wordTerm(word, nativeLang)));
-      appendPinyinIfZh(elWibZh, nativeLang, word);
-    }
+    elWibZh.textContent = degenerate ? "" : wordTerm(word, nativeLang);
     elWibZh.hidden = degenerate;
     elWibNote.textContent = wordNote(word, nativeLang);
     if(wordSen(word, learnLang)){
