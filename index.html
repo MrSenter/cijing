@@ -1652,7 +1652,7 @@
   // 数据：来自 场景01-汽车.md / 场景02-厨房.md 的「单词库」表
   // ---------------------------------------------------------------
   var slides = [
-    {
+{
       sceneCode: "03",
       sceneNames: { zh: "卧室", en: "Bedroom" },
       sceneId: "bedroom",
@@ -1706,7 +1706,7 @@
         { terms: { en: "night light", zh: "小夜灯" }, reading: { en: "/ˈnaɪt ˌlaɪt/", zh: "xiǎo yè dēng" }, sen: { en: "I leave the night light on for my child.", zh: "我给孩子留着小夜灯。" }, note: { zh: "" } }
       ]
     },
-    {
+{
       sceneCode: "04",
       sceneNames: { zh: "浴室", en: "Bathroom" },
       sceneId: "bathroom",
@@ -1814,7 +1814,7 @@
         { terms: { en: "body wash", zh: "沐浴液" }, reading: { en: "/ˈbɑːdi wɑːʃ/", zh: "mù yù yè" }, note: { zh: "也叫 shower gel" } }
       ]
     },
-    {
+{
       sceneCode: "09",
       sceneNames: { zh: "书房", en: "Home Office" },
       sceneId: "office",
@@ -1869,6 +1869,39 @@
       ]
     },
     {
+      sceneCode: "28",
+      sceneNames: { zh: "走廊楼梯", en: "Hallway & Stairs" },
+      sceneId: "hallway",
+      section: "房子",
+      viewNames: { zh: "全景", en: "Full view" },
+      alt: "走廊楼梯场景，标注8个物体名称",
+      stage: "images/舞台28-走廊楼梯-1.jpg",
+      hotspots: [
+        { w: 0, x: 0.5, y: 30, wd: 45, ht: 68 },
+        { w: 1, x: 60, y: 80, wd: 27, ht: 19 },
+        { w: 2, x: 44, y: 27, wd: 22, ht: 60 },
+        { w: 3, x: 78, y: 76, wd: 21, ht: 16 },
+        { w: 4, x: 64, y: 42, wd: 14, ht: 11 },
+        { w: 5, x: 12, y: 48, wd: 33, ht: 50 },
+        { w: 6, x: 47, y: 2, wd: 14, ht: 40 },
+        { w: 7, x: 65.5, y: 7, wd: 6.5, ht: 12 },
+        { portal: "bedroom", x: 0.3, y: 1, wd: 12.5, ht: 72 },
+        { portal: "bathroom", x: 30, y: 2, wd: 11, ht: 50 },
+        { portal: "office", x: 79, y: 1, wd: 17, ht: 62 },
+        { portal: "entryway", x: 66, y: 57, wd: 14, ht: 24 }
+      ],
+      words: [
+        { terms: { en: "hallway", zh: "走廊" }, reading: { en: "/ˈhɔːlweɪ/", zh: "zǒu láng" }, sen: { en: "The hallway upstairs connects the bedroom, the bathroom, and the study.", zh: "楼上的走廊连接着卧室、浴室和书房。" }, note: { zh: "二楼走廊，连接卧室/浴室/书房三个房间" } },
+        { terms: { en: "staircase", zh: "楼梯" }, reading: { en: "/ˈsterkeɪs/", zh: "lóu tī" }, sen: { en: "I walked down the staircase to the front hall.", zh: "我沿着楼梯走下去，到了一层门厅。" }, note: { zh: "通往一层门厅的整段楼梯" } },
+        { terms: { en: "banister", zh: "楼梯栏杆" }, reading: { en: "/ˈbænɪstər/", zh: "lóu tī lán gān" }, sen: { en: "He slid his hand along the banister as he went down.", zh: "他下楼时手沿着楼梯栏杆滑动。" }, note: { zh: "楼梯侧边的木质护栏，与墙侧的 handrail 配套" } },
+        { terms: { en: "handrail", zh: "扶手" }, reading: { en: "/ˈhændreɪl/", zh: "fú shǒu" }, sen: { en: "Hold the handrail so you don't slip on the stairs.", zh: "扶好扶手，别在楼梯上滑倒。" }, note: { zh: "贴墙固定的扶手条，与楼梯栏杆 banister 相对" } },
+        { terms: { en: "landing", zh: "楼梯平台" }, reading: { en: "/ˈlændɪŋ/", zh: "lóu tī píng tái" }, sen: { en: "I paused on the landing to catch my breath.", zh: "我在楼梯平台上停下来喘口气。" }, note: { zh: "楼梯转角的缓冲平台" } },
+        { terms: { en: "runner", zh: "走廊长毯" }, reading: { en: "/ˈrʌnər/", zh: "zǒu láng cháng tǎn" }, sen: { en: "A long runner covers the hallway floor.", zh: "一条长毯铺满了走廊地面。" }, note: { zh: "hallway runner 走廊长条毯" } },
+        { terms: { en: "linen closet", zh: "被服柜" }, reading: { en: "/ˈlɪnən ˈklɑːzɪt/", zh: "bèi fú guì" }, sen: { en: "I keep the towels and sheets in the linen closet.", zh: "我把毛巾和床单都放在被服柜里。" }, note: { zh: "存放毛巾床单的壁柜，柜门微开" } },
+        { terms: { en: "wall sconce", zh: "壁灯" }, reading: { en: "/ˈwɔːl skɑːns/", zh: "bì dēng" }, sen: { en: "A soft wall sconce lights the hallway at night.", zh: "一盏柔和的壁灯在夜里照亮走廊。" }, note: { zh: "固定装在墙上的灯具" } }
+      ]
+    },
+{
       sceneCode: "05",
       sceneNames: { zh: "客厅", en: "Living Room" },
       sceneId: "livingroom",
@@ -1974,7 +2007,7 @@
         { terms: { en: "thermostat", zh: "温控器" }, reading: { en: "/ˈθɜːrməstæt/", zh: "wēn kòng qì" }, sen: { en: "I adjust the thermostat when it gets cold.", zh: "天冷时我调节温控器。" }, note: { zh: "美国家家墙上都有" } }
       ]
     },
-    {
+{
       sceneCode: "02",
       sceneNames: { zh: "厨房", en: "Kitchen" },
       sceneId: "kitchen",
@@ -2280,7 +2313,7 @@
         { terms: { en: "dish soap", zh: "洗洁精" }, reading: { en: "/ˈdɪʃ soʊp/", zh: "xǐ jié jīng" }, sen: { en: "I squeeze some dish soap onto the sponge.", zh: "我往海绵上挤点洗洁精。" }, note: { zh: "英式 washing-up liquid" } }
       ]
     },
-    {
+{
       sceneCode: "06",
       sceneNames: { zh: "洗衣房", en: "Laundry Room" },
       sceneId: "laundry",
@@ -2334,7 +2367,7 @@
         { terms: { en: "shelf", zh: "搁板" }, reading: { en: "/ʃelf/", zh: "gē bǎn" }, sen: { en: "I stack the towels on the shelf.", zh: "我把毛巾叠放在搁板上。" }, note: { zh: "复数 shelves" } }
       ]
     },
-    {
+{
       sceneCode: "14",
       sceneNames: { zh: "水电系统", en: "Utility Room" },
       sceneId: "utilities",
@@ -2388,7 +2421,7 @@
         { terms: { en: "crawl space", zh: "检修矮空间" }, reading: { en: "/ˈkrɔːl ˌspeɪs/", zh: "jiǎn xiū ǎi kōng jiān" }, sen: { en: "The plumber checks the pipes in the crawl space.", zh: "水管工在检修矮空间检查管道。" }, note: { zh: "房底管线检修用" } }
       ]
     },
-    {
+{
       sceneCode: "11",
       sceneNames: { zh: "玄关", en: "Entryway" },
       sceneId: "entryway",
@@ -2443,7 +2476,7 @@
         { terms: { en: "leash", zh: "狗绳" }, reading: { en: "/liːʃ/", zh: "gǒu shéng" }, sen: { en: "I clip the leash onto the dog's collar.", zh: "我把狗绳扣在狗的项圈上。" }, note: { zh: "遛狗牵引绳" } }
       ]
     },
-    {
+{
       sceneCode: "08",
       sceneNames: { zh: "车库", en: "Garage" },
       sceneId: "garage",
@@ -2515,7 +2548,7 @@
         }
       ]
     },
-    {
+{
       sceneCode: "12",
       sceneNames: { zh: "后院", en: "Backyard" },
       sceneId: "backyard",
@@ -2569,7 +2602,7 @@
         { terms: { en: "doghouse", zh: "狗屋" }, reading: { en: "/ˈdɔːɡhaʊs/", zh: "gǒu wū" }, sen: { en: "The dog sleeps in the doghouse outside.", zh: "狗睡在外面的狗屋里。" }, note: { zh: "in the doghouse = 被冷落" } }
       ]
     },
-    {
+{
       sceneCode: "13",
       sceneNames: { zh: "房屋外观", en: "House Exterior" },
       sceneId: "exterior",
@@ -2625,7 +2658,7 @@
         { terms: { en: "flag", zh: "旗帜" }, reading: { en: "/flæɡ/", zh: "qí zhì" }, sen: { en: "We fly a flag on the porch.", zh: "我们在门廊挂了一面旗帜。" }, note: { zh: "美国家门口常见" } }
       ]
     },
-    {
+{
       sceneCode: "01",
       sceneNames: { zh: "汽车", en: "Car" },
       sceneId: "car",
@@ -2660,7 +2693,7 @@
         { terms: { en: "key fob", zh: "车钥匙遥控" }, reading: { en: "/ˈkiː fɑːb/", zh: "chē yào shi yáo kòng" }, sen: { en: "I unlock the car with the key fob.", zh: "我用车钥匙遥控解锁车子。" }, note: { zh: "日常也直接说 car keys" } }
       ]
     },
-    {
+{
       sceneCode: "01",
       sceneNames: { zh: "汽车", en: "Car" },
       sceneId: "car",
@@ -2782,7 +2815,7 @@
         }
       ]
     },
-    {
+{
       sceneCode: "01",
       sceneNames: { zh: "汽车", en: "Car" },
       sceneId: "car",
@@ -2836,7 +2869,7 @@
         { terms: { en: "hood latch", zh: "引擎盖锁扣" }, reading: { en: "/ˈhʊd lætʃ/", zh: "yǐn qíng gài suǒ kòu" }, sen: { en: "The hood latch pops the hood open.", zh: "引擎盖锁扣一按引擎盖就弹开。" }, note: { zh: "" } }
       ]
     },
-    {
+{
       sceneCode: "01",
       sceneNames: { zh: "汽车", en: "Car" },
       sceneId: "car",
@@ -2891,110 +2924,37 @@
       ]
     },
     {
-      sceneCode: "17",
-      sceneNames: { zh: "机场", en: "The Airport" },
-      sceneId: "airport",
+      sceneCode: "29",
+      sceneNames: { zh: "住宅街", en: "Neighborhood Street" },
+      sceneId: "neighborhood",
       section: "交通",
-      viewNames: { zh: "值机", en: "Check-in" },
-      image: "images/场景17-机场-1.jpg",
-      alt: "机场·值机场景，标注7个物体名称",
-      stage: "images/舞台17-机场-1.jpg",
+      viewNames: { zh: "全景", en: "Full view" },
+      alt: "住宅街场景，标注8个物体名称",
+      stage: "images/舞台29-住宅街-1.jpg",
       hotspots: [
-        { w: 0, x: 60, y: 33, wd: 32, ht: 32 },
-        { w: 1, x: 48, y: 76, wd: 12, ht: 12 },
-        { w: 2, x: 58, y: 40, wd: 12, ht: 8 },
-        { w: 3, x: 30, y: 40, wd: 11, ht: 15 },
-        { w: 4, x: 34, y: 68, wd: 8, ht: 13 },
-        { w: 5, x: 0, y: 55, wd: 38, ht: 38 },
-        { w: 6, x: 24, y: 3, wd: 63, ht: 20 }
+        { w: 0, x: 0.5, y: 56, wd: 42, ht: 43 },
+        { w: 1, x: 14, y: 29, wd: 14, ht: 17 },
+        { w: 2, x: 20.5, y: 15, wd: 6.5, ht: 16 },
+        { w: 3, x: 15, y: 44.5, wd: 6, ht: 14 },
+        { w: 4, x: 3.5, y: 43, wd: 8.5, ht: 18 },
+        { w: 5, x: 72, y: 60, wd: 16, ht: 30 },
+        { w: 6, x: 77, y: 52, wd: 23, ht: 9 },
+        { w: 7, x: 41, y: 64, wd: 12, ht: 22 },
+        { portal: "exterior", x: 29.5, y: 19, wd: 7.5, ht: 26 },
+        { portal: "street", x: 83, y: 11, wd: 16, ht: 30 }
       ],
       words: [
-        { terms: { en: "check-in counter", zh: "值机柜台" }, reading: { en: "/ˈtʃek ɪn ˈkaʊntər/", zh: "zhí jī guì tái" }, sen: { en: "We dropped our bags at the check-in counter and got our seat assignments.", zh: "我们在值机柜台托运了行李，拿到了座位号。" }, note: { zh: "办票托运的柜台;常简称 check-in,旁边多有自助值机机" } },
-        { terms: { en: "baggage scale", zh: "行李秤" }, reading: { en: "/ˈbæɡɪdʒ skeɪl/", zh: "xíng lǐ chèng" }, sen: { en: "The agent set my suitcase on the baggage scale to check if it was overweight.", zh: "工作人员把我的行李箱放上行李秤，看看有没有超重。" }, note: { zh: "称托运行李重量;超重要另加钱。scale 在别处已用,此为专指行李的复合词" } },
-        { terms: { en: "boarding pass", zh: "登机牌" }, reading: { en: "/ˈbɔːrdɪŋ pæs/", zh: "dēng jī pái" }, sen: { en: "Keep your boarding pass handy—you'll need it at security and the gate.", zh: "登机牌随身带好，过安检和登机口都要用。" }, note: { zh: "印有登机口和座位号,可纸质或存手机;过安检和登机都要用" } },
-        { terms: { en: "passport", zh: "护照" }, reading: { en: "/ˈpæspɔːrt/", zh: "hù zhào" }, sen: { en: "Have your passport and boarding pass ready before you reach the counter.", zh: "到柜台前先把护照和登机牌准备好。" }, note: { zh: "国际航班必备的身份证件" } },
-        { terms: { en: "luggage tag", zh: "行李牌" }, reading: { en: "/ˈlʌɡɪdʒ tæɡ/", zh: "xíng lǐ pái" }, sen: { en: "She tied a bright red luggage tag on her bag so it was easy to spot.", zh: "她在包上系了个鲜红的行李牌，方便一眼认出。" }, note: { zh: "挂在箱子上写姓名联系方式;托运时也会贴条形码标签" } },
-        { terms: { en: "stanchion", zh: "排队围栏立柱" }, reading: { en: "/ˈstæntʃən/", zh: "pái duì wéi lán lì zhù" }, sen: { en: "The line snaked back and forth between the stanchions toward the counter.", zh: "队伍在一根根围栏立柱之间来回绕，通向柜台。" }, note: { zh: "带伸缩带引导排队的立柱;整套也叫 belt barrier" } },
-        { terms: { en: "departure board", zh: "航班信息大屏" }, reading: { en: "/dɪˈpɑːrtʃər bɔːrd/", zh: "háng bān xìn xī dà píng" }, sen: { en: "I checked the departure board and saw our flight was delayed an hour.", zh: "我看了航班信息大屏，发现我们的航班晚点了一小时。" }, note: { zh: "大厅里列出所有出发航班的大屏;英式也说 departures board。生图无字只画色块" } }
+        { terms: { en: "picket fence", zh: "尖桩栅栏" }, reading: { en: "/ˈpɪkɪt fens/", zh: "jiān zhuāng zhà lán" }, sen: { en: "A white picket fence runs along the neighbor's yard.", zh: "一道白色尖桩栅栏沿着邻居家的院子延伸。" }, note: { zh: "邻居院子常见的白色尖桩栅栏" } },
+        { terms: { en: "porch swing", zh: "门廊秋千" }, reading: { en: "/ˈpɔːrtʃ swɪŋ/", zh: "mén láng qiū qiān" }, sen: { en: "They like to rock on the porch swing in the evening.", zh: "傍晚他们喜欢坐在门廊秋千上摇一摇。" }, note: { zh: "挂在门廊顶下的秋千式座椅" } },
+        { terms: { en: "wind chime", zh: "风铃" }, reading: { en: "/ˈwɪnd tʃaɪm/", zh: "fēng líng" }, sen: { en: "The wind chime tinkles softly whenever a breeze passes.", zh: "微风吹过，风铃就发出轻轻的响声。" }, note: { zh: "风吹发声的悬挂装饰" } },
+        { terms: { en: "garden gnome", zh: "花园地精" }, reading: { en: "/ˈɡɑːrdn noʊm/", zh: "huā yuán dì jīng" }, sen: { en: "A little garden gnome stands beside the flower bed.", zh: "一个小小的花园地精立在花坛旁边。" }, note: { zh: "花园里的装饰小矮人摆件" } },
+        { terms: { en: "birdbath", zh: "鸟浴盆" }, reading: { en: "/ˈbɜːrdbæθ/", zh: "niǎo yù pén" }, sen: { en: "Sparrows splash around in the birdbath every morning.", zh: "每天早上麻雀都在鸟浴盆里扑腾洗澡。" }, note: { zh: "供鸟饮水洗浴的立柱式浅盆" } },
+        { terms: { en: "recycling bin", zh: "回收桶" }, reading: { en: "/riːˈsaɪklɪŋ bɪn/", zh: "huí shōu tǒng" }, sen: { en: "We put the bottles and cans in the recycling bin.", zh: "我们把瓶子和罐子都放进回收桶。" }, note: { zh: "路缘可回收垃圾桶" } },
+        { terms: { en: "speed bump", zh: "减速带" }, reading: { en: "/ˈspiːd bʌmp/", zh: "jiǎn sù dài" }, sen: { en: "The car slowed down to cross the speed bump.", zh: "汽车放慢速度通过了减速带。" }, note: { zh: "路面隆起的减速设施" } },
+        { terms: { en: "dog", zh: "狗" }, reading: { en: "/dɔːɡ/", zh: "gǒu" }, sen: { en: "They walk their dog around the block every evening.", zh: "他们每天傍晚都牵着狗绕街区散步。" }, note: { zh: "图中热区=柯基犬 Biscuit，用户 & Vera 牵绳散步" } }
       ]
     },
-    {
-      sceneCode: "17",
-      sceneNames: { zh: "机场", en: "The Airport" },
-      sceneId: "airport",
-      section: "交通",
-      viewNames: { zh: "安检", en: "Security" },
-      image: "images/场景17-机场-2.jpg",
-      alt: "机场·安检场景，标注6个物体名称",
-      stage: "images/舞台17-机场-2.jpg",
-      hotspots: [
-        { w: 0, x: 1, y: 60, wd: 36, ht: 38 },
-        { w: 1, x: 26, y: 50, wd: 40, ht: 30 },
-        { w: 2, x: 49, y: 19, wd: 15, ht: 52 },
-        { w: 3, x: 33, y: 52, wd: 13, ht: 9 },
-        { w: 4, x: 71, y: 14, wd: 23, ht: 52 },
-        { w: 5, x: 17, y: 60, wd: 11, ht: 24 }
-      ],
-      words: [
-        { terms: { en: "security checkpoint", zh: "安检口" }, reading: { en: "/sɪˈkjʊrəti ˈtʃekpɔɪnt/", zh: "ān jiǎn kǒu" }, sen: { en: "Take off your belt and shoes before you go through the security checkpoint.", zh: "过安检口前把腰带和鞋脱掉。" }, note: { zh: "过安检的关卡;口语常简称 security 或 checkpoint" } },
-        { terms: { en: "X-ray belt", zh: "X光传送带" }, reading: { en: "/ˈeks reɪ belt/", zh: "X guāng chuán sòng dài" }, sen: { en: "Put your laptop in a bin and place it on the X-ray belt.", zh: "把笔记本放进托盘，再放到 X 光传送带上。" }, note: { zh: "把托盘送入 X 光机扫描的传送带;整机也叫 X-ray machine" } },
-        { terms: { en: "metal detector", zh: "金属探测门" }, reading: { en: "/ˈmetl dɪˈtektər/", zh: "jīn shǔ tàn cè mén" }, sen: { en: "The metal detector beeped, so the officer waved me aside.", zh: "金属探测门响了，安检员示意我到旁边。" }, note: { zh: "走过去检测身上金属的门框;区别于旁边的全身扫描仪" } },
-        { terms: { en: "security bin", zh: "安检托盘" }, reading: { en: "/sɪˈkjʊrəti bɪn/", zh: "ān jiǎn tuō pán" }, sen: { en: "Empty your pockets and put everything in a security bin.", zh: "把口袋清空，所有东西都放进安检托盘。" }, note: { zh: "放随身物品过 X 光的灰色塑料托盘" } },
-        { terms: { en: "body scanner", zh: "全身扫描仪" }, reading: { en: "/ˈbɑːdi ˈskænər/", zh: "quán shēn sǎo miáo yí" }, sen: { en: "Step into the body scanner and raise your arms over your head.", zh: "走进全身扫描仪，把手举过头顶。" }, note: { zh: "举手站进去做全身扫描的那台;scanner 在别处已用,此为复合词" } },
-        { terms: { en: "boarding pass scanner", zh: "登机牌扫描仪" }, reading: { en: "/ˈbɔːrdɪŋ pæs ˈskænər/", zh: "dēng jī pái sǎo miáo yí" }, sen: { en: "The officer held my phone up to the boarding pass scanner.", zh: "安检员把我的手机凑到登机牌扫描仪上扫。" }, note: { zh: "安检口验登机牌的小扫描器,扫条形码或手机" } }
-      ]
-    },
-    {
-      sceneCode: "17",
-      sceneNames: { zh: "机场", en: "The Airport" },
-      sceneId: "airport",
-      section: "交通",
-      viewNames: { zh: "登机口", en: "Gate" },
-      image: "images/场景17-机场-3.jpg",
-      alt: "机场·登机口场景，标注6个物体名称",
-      stage: "images/舞台17-机场-3.jpg",
-      hotspots: [
-        { w: 0, x: 73, y: 27, wd: 16, ht: 52 },
-        { w: 1, x: 43, y: 24, wd: 29, ht: 26 },
-        { w: 2, x: 65, y: 35, wd: 11, ht: 32 },
-        { w: 3, x: 1, y: 49, wd: 52, ht: 37 },
-        { w: 4, x: 71, y: 11, wd: 19, ht: 15 },
-        { w: 5, x: 54, y: 44, wd: 17, ht: 34 }
-      ],
-      words: [
-        { terms: { en: "boarding gate", zh: "登机口" }, reading: { en: "/ˈbɔːrdɪŋ ɡeɪt/", zh: "dēng jī kǒu" }, sen: { en: "Our boarding gate is all the way at the end of the terminal.", zh: "我们的登机口在航站楼最尽头。" }, note: { zh: "登机的门,常简称 gate 加编号(Gate 22);gate 在别处已用,此为复合词" } },
-        { terms: { en: "jet bridge", zh: "登机廊桥" }, reading: { en: "/ˈdʒet brɪdʒ/", zh: "dēng jī láng qiáo" }, sen: { en: "We walked down the jet bridge and stepped onto the plane.", zh: "我们走过登机廊桥，踏上飞机。" }, note: { zh: "连接登机口与飞机舱门的活动通道;也叫 jetway" } },
-        { terms: { en: "gate agent", zh: "检票员(登机口地勤)" }, reading: { en: "/ˈɡeɪt ˌeɪdʒənt/", zh: "jiǎn piào yuán (dēng jī kǒu dì qín)" }, sen: { en: "The gate agent scanned our passes and wished us a good flight.", zh: "检票员扫了我们的登机牌，祝我们旅途愉快。" }, note: { zh: "人=热区;负责检票、登机广播、处理改签" } },
-        { terms: { en: "waiting area seats", zh: "候机座椅" }, reading: { en: "/ˈweɪtɪŋ ˈeriə siːts/", zh: "hòu jī zuò yǐ" }, sen: { en: "We found two waiting area seats near the window and sat down.", zh: "我们在靠窗找到两个候机座椅坐下。" }, note: { zh: "登机口前成排的连椅;机场标识常写 gate seating" } },
-        { terms: { en: "flight information screen", zh: "航显屏(登机口)" }, reading: { en: "/ˈflaɪt ˌɪnfərˈmeɪʃn skriːn/", zh: "háng xiǎn píng (dēng jī kǒu)" }, sen: { en: "The flight information screen at the gate showed 'Now Boarding.'", zh: "登机口的航显屏上显示\"正在登机\"。" }, note: { zh: "登机口旁显示本航班状态的屏,区别于大厅的 departure board。生图无字只画色块" } },
-        { terms: { en: "podium", zh: "检票台" }, reading: { en: "/ˈpoʊdiəm/", zh: "jiǎn piào tái" }, sen: { en: "The gate agent stood at the podium and called our boarding group.", zh: "检票员站在检票台后，叫到了我们这组登机。" }, note: { zh: "登机口检票员站的斜面台;也叫 gate podium/counter" } }
-      ]
-    },
-    {
-      sceneCode: "17",
-      sceneNames: { zh: "机场", en: "The Airport" },
-      sceneId: "airport",
-      section: "交通",
-      viewNames: { zh: "行李转盘", en: "Baggage claim" },
-      image: "images/场景17-机场-4.jpg",
-      alt: "机场·行李转盘场景，标注5个物体名称",
-      stage: "images/舞台17-机场-4.jpg",
-      hotspots: [
-        { w: 0, x: 25, y: 42, wd: 68, ht: 38 },
-        { w: 1, x: 32, y: 49, wd: 13, ht: 19 },
-        { w: 2, x: 76, y: 52, wd: 21, ht: 39 },
-        { w: 3, x: 16, y: 65, wd: 12, ht: 25 },
-        { w: 4, x: 53, y: 15, wd: 33, ht: 15 }
-      ],
-      words: [
-        { terms: { en: "baggage carousel", zh: "行李转盘" }, reading: { en: "/ˈbæɡɪdʒ ˌkærəˈsel/", zh: "xíng lǐ zhuàn pán" }, sen: { en: "We waited at the baggage carousel for our suitcases to come out.", zh: "我们守在行李转盘边，等自己的行李箱出来。" }, note: { zh: "转圈送出托运行李的环形传送带;也叫 baggage claim belt" } },
-        { terms: { en: "suitcase", zh: "行李箱" }, reading: { en: "/ˈsuːtkeɪs/", zh: "xíng lǐ xiāng" }, sen: { en: "My black suitcase looks like everyone else's on the carousel.", zh: "转盘上我的黑色行李箱跟别人的长得一样。" }, note: { zh: "托运的大箱子;带轮子的叫 rolling suitcase" } },
-        { terms: { en: "baggage cart", zh: "行李手推车" }, reading: { en: "/ˈbæɡɪdʒ kɑːrt/", zh: "xíng lǐ shǒu tuī chē" }, sen: { en: "He loaded three bags onto a baggage cart and pushed it to the exit.", zh: "他把三件行李装上行李手推车，推向出口。" }, note: { zh: "机场推行李的小推车;有些机场要投币租用" } },
-        { terms: { en: "carry-on", zh: "登机箱(随身行李)" }, reading: { en: "/ˈkæri ɑːn/", zh: "dēng jī xiāng (suí shēn xíng lǐ)" }, sen: { en: "My carry-on fit in the overhead bin, so I didn't check any bags.", zh: "我的登机箱塞得进头顶行李舱，所以没托运。" }, note: { zh: "不托运、带上飞机的小箱,要放进头顶行李舱" } },
-        { terms: { en: "baggage claim sign", zh: "行李提取指示牌" }, reading: { en: "/ˈbæɡɪdʒ kleɪm saɪn/", zh: "xíng lǐ tí qǔ zhǐ shì pái" }, sen: { en: "Follow the baggage claim sign downstairs to pick up your luggage.", zh: "顺着行李提取指示牌下楼去取行李。" }, note: { zh: "指向取行李区的标识牌。生图无字只画色块,词库照常收词" } }
-      ]
-    },
-    {
+{
       sceneCode: "15",
       sceneNames: { zh: "街道路口", en: "Street Corner" },
       sceneId: "street",
@@ -3048,7 +3008,7 @@
         { terms: { en: "billboard", zh: "广告牌" }, reading: { en: "/ˈbɪlbɔːrd/", zh: "guǎng gào pái" }, sen: { en: "A huge billboard advertises a new movie.", zh: "一块巨大的广告牌在宣传新电影。" }, note: { zh: "图中为空白牌" } }
       ]
     },
-    {
+{
       sceneCode: "16",
       sceneNames: { zh: "加油站", en: "Gas Station" },
       sceneId: "gasstation",
@@ -3125,6 +3085,35 @@
       ]
     },
     {
+      sceneCode: "30",
+      sceneNames: { zh: "商业街北", en: "Main Street" },
+      sceneId: "mainstreet",
+      section: "外出",
+      viewNames: { zh: "全景", en: "Full view" },
+      alt: "商业街北场景，标注6个物体名称",
+      stage: "images/舞台30-商业街北-1.jpg",
+      hotspots: [
+        { w: 0, x: 76, y: 49, wd: 8, ht: 14 },
+        { w: 1, x: 0.5, y: 49, wd: 13.5, ht: 30 },
+        { w: 2, x: 29.5, y: 33.5, wd: 11, ht: 19.5 },
+        { w: 3, x: 66, y: 21, wd: 9, ht: 15 },
+        { w: 4, x: 52, y: 77, wd: 46, ht: 22 },
+        { w: 5, x: 52, y: 60, wd: 34, ht: 30 },
+        { portal: "supermarket", x: 16.5, y: 33, wd: 11, ht: 24 },
+        { portal: "diner", x: 54.5, y: 33, wd: 8, ht: 26 },
+        { portal: "coffeeshop", x: 83.5, y: 35, wd: 7, ht: 22 },
+        { portal: "street", x: 0, y: 84, wd: 14, ht: 16 }
+      ],
+      words: [
+        { terms: { en: "sandwich board", zh: "A字广告板" }, reading: { en: "/ˈsænwɪtʃ bɔːrd/", zh: "A zì guǎng gào bǎn" }, sen: { en: "A sandwich board outside the café shows today's specials.", zh: "咖啡店门口的A字广告板写着今日特饮。" }, note: { zh: "咖啡店门口人字形广告牌，板面画色块无字" } },
+        { terms: { en: "newsstand", zh: "报刊亭" }, reading: { en: "/ˈnuːzstænd/", zh: "bào kān tíng" }, sen: { en: "I bought a magazine at the newsstand on the corner.", zh: "我在街角的报刊亭买了一本杂志。" }, note: { zh: "街边卖报纸杂志的小亭，封面画色块" } },
+        { terms: { en: "window display", zh: "橱窗陈列" }, reading: { en: "/ˈwɪndoʊ dɪˈspleɪ/", zh: "chú chuāng chén liè" }, sen: { en: "The grocery store's window display is full of fresh fruit.", zh: "超市的橱窗陈列摆满了新鲜水果。" }, note: { zh: "超市橱窗里的商品陈列，罐头果蔬色块堆头" } },
+        { terms: { en: "hanging basket", zh: "吊花篮" }, reading: { en: "/ˈhæŋɪŋ ˈbæskɪt/", zh: "diào huā lán" }, sen: { en: "A hanging basket of flowers sways from the lamppost.", zh: "一只吊花篮挂在灯柱上轻轻摇晃。" }, note: { zh: "挂在灯柱上的悬挂花篮" } },
+        { terms: { en: "parking space", zh: "路侧车位" }, reading: { en: "/ˈpɑːrkɪŋ speɪs/", zh: "lù cè chē wèi" }, sen: { en: "We finally found a parking space in front of the store.", zh: "我们终于在店门前找到一个路侧车位。" }, note: { zh: "路边一格停车位" } },
+        { terms: { en: "delivery van", zh: "送货车" }, reading: { en: "/dɪˈlɪvəri væn/", zh: "sòng huò chē" }, sen: { en: "A delivery van is parked outside the supermarket.", zh: "一辆送货车停在超市外面。" }, note: { zh: "停在路侧的白色送货车，车身无字" } }
+      ]
+    },
+{
       sceneCode: "07",
       sceneNames: { zh: "超市", en: "Supermarket" },
       sceneId: "supermarket",
@@ -3190,7 +3179,7 @@
         { terms: { en: "deli counter", zh: "熟食柜台" }, reading: { en: "/ˈdeli ˌkaʊntər/", zh: "shú shí guì tái" }, sen: { en: "I order sliced turkey at the deli counter.", zh: "我在熟食柜台点了切片火鸡肉。" }, note: { zh: "" } }
       ]
     },
-    {
+{
       sceneCode: "10",
       sceneNames: { zh: "餐厅", en: "Diner" },
       sceneId: "diner",
@@ -3244,7 +3233,7 @@
         { terms: { en: "jukebox", zh: "点唱机" }, reading: { en: "/ˈdʒuːkbɑːks/", zh: "diǎn chàng jī" }, sen: { en: "The old jukebox plays songs in the corner.", zh: "那台旧点唱机在角落里放着歌。" }, note: { zh: "老式 diner 标配" } }
       ]
     },
-    {
+{
       sceneCode: "18",
       sceneNames: { zh: "咖啡店", en: "Coffee Shop" },
       sceneId: "coffeeshop",
@@ -3299,6 +3288,35 @@
       ]
     },
     {
+      sceneCode: "31",
+      sceneNames: { zh: "商业街南", en: "Market Street" },
+      sceneId: "marketstreet",
+      section: "外出",
+      viewNames: { zh: "全景", en: "Full view" },
+      alt: "商业街南场景，标注5个物体名称",
+      stage: "images/舞台31-商业街南-1.jpg",
+      hotspots: [
+        { w: 0, x: 37.5, y: 4, wd: 8, ht: 62 },
+        { w: 1, x: 49.5, y: 41, wd: 9, ht: 37 },
+        { w: 2, x: 52, y: 64, wd: 34, ht: 35 },
+        { w: 3, x: 58.5, y: 51.5, wd: 7, ht: 10 },
+        { w: 4, x: 79.5, y: 1, wd: 14, ht: 37 },
+        { portal: "pharmacy", x: 9, y: 48, wd: 5.5, ht: 17 },
+        { portal: "postoffice", x: 40.5, y: 36, wd: 6.5, ht: 20 },
+        { portal: "gym", x: 63, y: 37, wd: 4.5, ht: 19 },
+        { portal: "barbershop", x: 83, y: 50, wd: 5.5, ht: 18 },
+        { portal: "mall", x: 0.5, y: 1, wd: 18, ht: 20 },
+        { portal: "clinic", x: 54, y: 1, wd: 18, ht: 12 }
+      ],
+      words: [
+        { terms: { en: "flagpole", zh: "旗杆" }, reading: { en: "/ˈflæɡpoʊl/", zh: "qí gān" }, sen: { en: "A flag flutters on the flagpole outside the post office.", zh: "邮局门前的旗杆上飘着一面旗子。" }, note: { zh: "邮局门前竖立的旗杆" } },
+        { terms: { en: "street clock", zh: "街钟" }, reading: { en: "/ˈstriːt klɑːk/", zh: "jiē zhōng" }, sen: { en: "We agreed to meet by the street clock at noon.", zh: "我们约好中午在街钟旁碰面。" }, note: { zh: "立柱式街钟，钟面只画刻度不画数字" } },
+        { terms: { en: "food truck", zh: "餐车" }, reading: { en: "/ˈfuːd trʌk/", zh: "cān chē" }, sen: { en: "A food truck sells lunch on the corner every day.", zh: "一辆餐车每天都在街角卖午餐。" }, note: { zh: "路边餐车，车身色块涂装无字" } },
+        { terms: { en: "scooter", zh: "滑板车" }, reading: { en: "/ˈskuːtər/", zh: "huá bǎn chē" }, sen: { en: "He left his scooter leaning against the wall.", zh: "他把滑板车靠在墙边停好。" }, note: { zh: "靠墙停放的滑板车" } },
+        { terms: { en: "fire escape", zh: "防火梯" }, reading: { en: "/ˈfaɪər ɪˌskeɪp/", zh: "fáng huǒ tī" }, sen: { en: "A metal fire escape runs down the side of the building.", zh: "一道金属防火梯沿着大楼的侧墙而下。" }, note: { zh: "二层砖墙外挂的金属防火梯" } }
+      ]
+    },
+{
       sceneCode: "20",
       sceneNames: { zh: "诊所", en: "Clinic" },
       sceneId: "clinic",
@@ -3326,7 +3344,7 @@
         { terms: { en: "potted plant", zh: "盆栽" }, reading: { en: "/ˌpɑːtɪd ˈplænt/", zh: "pén zāi" }, sen: { en: "A potted plant sits by the window.", zh: "一盆盆栽放在窗边。" }, note: { zh: "" } }
       ]
     },
-    {
+{
       sceneCode: "20",
       sceneNames: { zh: "诊所", en: "Clinic" },
       sceneId: "clinic",
@@ -3384,7 +3402,7 @@
         }
       ]
     },
-    {
+{
       sceneCode: "19",
       sceneNames: { zh: "药房", en: "Pharmacy" },
       sceneId: "pharmacy",
@@ -3428,7 +3446,7 @@
         { terms: { en: "humidifier", zh: "加湿器" }, reading: { en: "/hjuːˈmɪdɪfaɪər/", zh: "jiā shī qì" }, sen: { en: "The humidifier keeps the air moist at night.", zh: "加湿器让夜里的空气保持湿润。" }, note: { zh: "" } }
       ]
     },
-    {
+{
       sceneCode: "27",
       sceneNames: { zh: "商场", en: "Mall" },
       sceneId: "mall",
@@ -3473,7 +3491,7 @@
         { terms: { en: "information desk", zh: "服务台" }, reading: { en: "/ˌɪnfərˈmeɪʃn desk/", zh: "fú wù tái" }, sen: { en: "I ask directions at the information desk.", zh: "我在服务台问路。" }, note: { zh: "" } }
       ]
     },
-    {
+{
       sceneCode: "22",
       sceneNames: { zh: "服装店", en: "Clothing Store" },
       sceneId: "clothingstore",
@@ -3541,7 +3559,7 @@
         }
       ]
     },
-    {
+{
       sceneCode: "21",
       sceneNames: { zh: "邮局", en: "Post Office" },
       sceneId: "postoffice",
@@ -3588,7 +3606,7 @@
         { terms: { en: "postal worker", zh: "邮政员工" }, reading: { en: "/ˈpoʊstl ˌwɜːrkər/", zh: "yóu zhèng yuán gōng" }, sen: { en: "The postal worker helped me fill out the customs form.", zh: "邮政员工帮我填了海关申报单。" }, note: { zh: "柜台后办理业务的邮局职员，也叫 postal clerk（人物本身即热区）" } }
       ]
     },
-    {
+{
       sceneCode: "23",
       sceneNames: { zh: "健身房", en: "The Gym" },
       sceneId: "gym",
@@ -3661,7 +3679,7 @@
         }
       ]
     },
-    {
+{
       sceneCode: "24",
       sceneNames: { zh: "理发店", en: "The Barbershop" },
       sceneId: "barbershop",
@@ -3726,7 +3744,7 @@
         }
       ]
     },
-    {
+{
       sceneCode: "25",
       sceneNames: { zh: "公园", en: "Park & Playground" },
       sceneId: "park",
@@ -3779,7 +3797,7 @@
         { terms: { en: "climbing wall", zh: "攀岩墙" }, reading: { en: "/ˈklaɪmɪŋ wɔːl/", zh: "pān yán qiáng" }, sen: { en: "She gripped the colorful holds and scaled the climbing wall.", zh: "她抓住彩色的抓点，爬上了攀岩墙。" }, note: { zh: "游乐场的小型攀岩板，带彩色抓点 holds" } }
       ]
     },
-    {
+{
       sceneCode: "26",
       sceneNames: { zh: "酒店", en: "The Hotel" },
       sceneId: "hotel",
@@ -3813,7 +3831,7 @@
         { terms: { en: "key drop", zh: "钥匙投递口" }, reading: { en: "/kiː drɑːp/", zh: "yào shi tóu dì kǒu" }, sen: { en: "Leave your key in the key drop when you check out.", zh: "退房时把钥匙投进钥匙投递口即可。" }, note: { zh: "退房时投还钥匙的投口/箱；也叫 key drop box" } }
       ]
     },
-    {
+{
       sceneCode: "26",
       sceneNames: { zh: "酒店", en: "The Hotel" },
       sceneId: "hotel",
@@ -3845,6 +3863,110 @@
         { terms: { en: "do not disturb sign", zh: "请勿打扰牌" }, reading: { en: "/duː nɑːt dɪˈstɜːrb saɪn/", zh: "qǐng wù dǎ rǎo pái" }, sen: { en: "He hung the do not disturb sign on the doorknob.", zh: "他把请勿打扰牌挂在了门把上。" }, note: { zh: "挂门把上示意别来打扰的牌子；常简称 DND sign" } },
         { terms: { en: "coffee maker", zh: "咖啡机" }, reading: { en: "/ˈkɔːfi ˌmeɪkər/", zh: "kā fēi jī" }, sen: { en: "There's a small coffee maker on the counter.", zh: "台面上有一台小咖啡机。" }, note: { zh: "客房内煮咖啡的小机器；也叫 coffee machine" } },
         { terms: { en: "ice bucket", zh: "冰桶" }, reading: { en: "/aɪs ˈbʌkɪt/", zh: "bīng tǒng" }, sen: { en: "She filled the ice bucket from the machine down the hall.", zh: "她去走廊尽头的制冰机装满了冰桶。" }, note: { zh: "装冰块的桶，常配夹子；美式酒店走廊多有制冰机取冰" } }
+      ]
+    },
+{
+      sceneCode: "17",
+      sceneNames: { zh: "机场", en: "The Airport" },
+      sceneId: "airport",
+      section: "交通",
+      viewNames: { zh: "值机", en: "Check-in" },
+      image: "images/场景17-机场-1.jpg",
+      alt: "机场·值机场景，标注7个物体名称",
+      stage: "images/舞台17-机场-1.jpg",
+      hotspots: [
+        { w: 0, x: 60, y: 33, wd: 32, ht: 32 },
+        { w: 1, x: 48, y: 76, wd: 12, ht: 12 },
+        { w: 2, x: 58, y: 40, wd: 12, ht: 8 },
+        { w: 3, x: 30, y: 40, wd: 11, ht: 15 },
+        { w: 4, x: 34, y: 68, wd: 8, ht: 13 },
+        { w: 5, x: 0, y: 55, wd: 38, ht: 38 },
+        { w: 6, x: 24, y: 3, wd: 63, ht: 20 }
+      ],
+      words: [
+        { terms: { en: "check-in counter", zh: "值机柜台" }, reading: { en: "/ˈtʃek ɪn ˈkaʊntər/", zh: "zhí jī guì tái" }, sen: { en: "We dropped our bags at the check-in counter and got our seat assignments.", zh: "我们在值机柜台托运了行李，拿到了座位号。" }, note: { zh: "办票托运的柜台;常简称 check-in,旁边多有自助值机机" } },
+        { terms: { en: "baggage scale", zh: "行李秤" }, reading: { en: "/ˈbæɡɪdʒ skeɪl/", zh: "xíng lǐ chèng" }, sen: { en: "The agent set my suitcase on the baggage scale to check if it was overweight.", zh: "工作人员把我的行李箱放上行李秤，看看有没有超重。" }, note: { zh: "称托运行李重量;超重要另加钱。scale 在别处已用,此为专指行李的复合词" } },
+        { terms: { en: "boarding pass", zh: "登机牌" }, reading: { en: "/ˈbɔːrdɪŋ pæs/", zh: "dēng jī pái" }, sen: { en: "Keep your boarding pass handy—you'll need it at security and the gate.", zh: "登机牌随身带好，过安检和登机口都要用。" }, note: { zh: "印有登机口和座位号,可纸质或存手机;过安检和登机都要用" } },
+        { terms: { en: "passport", zh: "护照" }, reading: { en: "/ˈpæspɔːrt/", zh: "hù zhào" }, sen: { en: "Have your passport and boarding pass ready before you reach the counter.", zh: "到柜台前先把护照和登机牌准备好。" }, note: { zh: "国际航班必备的身份证件" } },
+        { terms: { en: "luggage tag", zh: "行李牌" }, reading: { en: "/ˈlʌɡɪdʒ tæɡ/", zh: "xíng lǐ pái" }, sen: { en: "She tied a bright red luggage tag on her bag so it was easy to spot.", zh: "她在包上系了个鲜红的行李牌，方便一眼认出。" }, note: { zh: "挂在箱子上写姓名联系方式;托运时也会贴条形码标签" } },
+        { terms: { en: "stanchion", zh: "排队围栏立柱" }, reading: { en: "/ˈstæntʃən/", zh: "pái duì wéi lán lì zhù" }, sen: { en: "The line snaked back and forth between the stanchions toward the counter.", zh: "队伍在一根根围栏立柱之间来回绕，通向柜台。" }, note: { zh: "带伸缩带引导排队的立柱;整套也叫 belt barrier" } },
+        { terms: { en: "departure board", zh: "航班信息大屏" }, reading: { en: "/dɪˈpɑːrtʃər bɔːrd/", zh: "háng bān xìn xī dà píng" }, sen: { en: "I checked the departure board and saw our flight was delayed an hour.", zh: "我看了航班信息大屏，发现我们的航班晚点了一小时。" }, note: { zh: "大厅里列出所有出发航班的大屏;英式也说 departures board。生图无字只画色块" } }
+      ]
+    },
+{
+      sceneCode: "17",
+      sceneNames: { zh: "机场", en: "The Airport" },
+      sceneId: "airport",
+      section: "交通",
+      viewNames: { zh: "安检", en: "Security" },
+      image: "images/场景17-机场-2.jpg",
+      alt: "机场·安检场景，标注6个物体名称",
+      stage: "images/舞台17-机场-2.jpg",
+      hotspots: [
+        { w: 0, x: 1, y: 60, wd: 36, ht: 38 },
+        { w: 1, x: 26, y: 50, wd: 40, ht: 30 },
+        { w: 2, x: 49, y: 19, wd: 15, ht: 52 },
+        { w: 3, x: 33, y: 52, wd: 13, ht: 9 },
+        { w: 4, x: 71, y: 14, wd: 23, ht: 52 },
+        { w: 5, x: 17, y: 60, wd: 11, ht: 24 }
+      ],
+      words: [
+        { terms: { en: "security checkpoint", zh: "安检口" }, reading: { en: "/sɪˈkjʊrəti ˈtʃekpɔɪnt/", zh: "ān jiǎn kǒu" }, sen: { en: "Take off your belt and shoes before you go through the security checkpoint.", zh: "过安检口前把腰带和鞋脱掉。" }, note: { zh: "过安检的关卡;口语常简称 security 或 checkpoint" } },
+        { terms: { en: "X-ray belt", zh: "X光传送带" }, reading: { en: "/ˈeks reɪ belt/", zh: "X guāng chuán sòng dài" }, sen: { en: "Put your laptop in a bin and place it on the X-ray belt.", zh: "把笔记本放进托盘，再放到 X 光传送带上。" }, note: { zh: "把托盘送入 X 光机扫描的传送带;整机也叫 X-ray machine" } },
+        { terms: { en: "metal detector", zh: "金属探测门" }, reading: { en: "/ˈmetl dɪˈtektər/", zh: "jīn shǔ tàn cè mén" }, sen: { en: "The metal detector beeped, so the officer waved me aside.", zh: "金属探测门响了，安检员示意我到旁边。" }, note: { zh: "走过去检测身上金属的门框;区别于旁边的全身扫描仪" } },
+        { terms: { en: "security bin", zh: "安检托盘" }, reading: { en: "/sɪˈkjʊrəti bɪn/", zh: "ān jiǎn tuō pán" }, sen: { en: "Empty your pockets and put everything in a security bin.", zh: "把口袋清空，所有东西都放进安检托盘。" }, note: { zh: "放随身物品过 X 光的灰色塑料托盘" } },
+        { terms: { en: "body scanner", zh: "全身扫描仪" }, reading: { en: "/ˈbɑːdi ˈskænər/", zh: "quán shēn sǎo miáo yí" }, sen: { en: "Step into the body scanner and raise your arms over your head.", zh: "走进全身扫描仪，把手举过头顶。" }, note: { zh: "举手站进去做全身扫描的那台;scanner 在别处已用,此为复合词" } },
+        { terms: { en: "boarding pass scanner", zh: "登机牌扫描仪" }, reading: { en: "/ˈbɔːrdɪŋ pæs ˈskænər/", zh: "dēng jī pái sǎo miáo yí" }, sen: { en: "The officer held my phone up to the boarding pass scanner.", zh: "安检员把我的手机凑到登机牌扫描仪上扫。" }, note: { zh: "安检口验登机牌的小扫描器,扫条形码或手机" } }
+      ]
+    },
+{
+      sceneCode: "17",
+      sceneNames: { zh: "机场", en: "The Airport" },
+      sceneId: "airport",
+      section: "交通",
+      viewNames: { zh: "登机口", en: "Gate" },
+      image: "images/场景17-机场-3.jpg",
+      alt: "机场·登机口场景，标注6个物体名称",
+      stage: "images/舞台17-机场-3.jpg",
+      hotspots: [
+        { w: 0, x: 73, y: 27, wd: 16, ht: 52 },
+        { w: 1, x: 43, y: 24, wd: 29, ht: 26 },
+        { w: 2, x: 65, y: 35, wd: 11, ht: 32 },
+        { w: 3, x: 1, y: 49, wd: 52, ht: 37 },
+        { w: 4, x: 71, y: 11, wd: 19, ht: 15 },
+        { w: 5, x: 54, y: 44, wd: 17, ht: 34 }
+      ],
+      words: [
+        { terms: { en: "boarding gate", zh: "登机口" }, reading: { en: "/ˈbɔːrdɪŋ ɡeɪt/", zh: "dēng jī kǒu" }, sen: { en: "Our boarding gate is all the way at the end of the terminal.", zh: "我们的登机口在航站楼最尽头。" }, note: { zh: "登机的门,常简称 gate 加编号(Gate 22);gate 在别处已用,此为复合词" } },
+        { terms: { en: "jet bridge", zh: "登机廊桥" }, reading: { en: "/ˈdʒet brɪdʒ/", zh: "dēng jī láng qiáo" }, sen: { en: "We walked down the jet bridge and stepped onto the plane.", zh: "我们走过登机廊桥，踏上飞机。" }, note: { zh: "连接登机口与飞机舱门的活动通道;也叫 jetway" } },
+        { terms: { en: "gate agent", zh: "检票员(登机口地勤)" }, reading: { en: "/ˈɡeɪt ˌeɪdʒənt/", zh: "jiǎn piào yuán (dēng jī kǒu dì qín)" }, sen: { en: "The gate agent scanned our passes and wished us a good flight.", zh: "检票员扫了我们的登机牌，祝我们旅途愉快。" }, note: { zh: "人=热区;负责检票、登机广播、处理改签" } },
+        { terms: { en: "waiting area seats", zh: "候机座椅" }, reading: { en: "/ˈweɪtɪŋ ˈeriə siːts/", zh: "hòu jī zuò yǐ" }, sen: { en: "We found two waiting area seats near the window and sat down.", zh: "我们在靠窗找到两个候机座椅坐下。" }, note: { zh: "登机口前成排的连椅;机场标识常写 gate seating" } },
+        { terms: { en: "flight information screen", zh: "航显屏(登机口)" }, reading: { en: "/ˈflaɪt ˌɪnfərˈmeɪʃn skriːn/", zh: "háng xiǎn píng (dēng jī kǒu)" }, sen: { en: "The flight information screen at the gate showed 'Now Boarding.'", zh: "登机口的航显屏上显示\"正在登机\"。" }, note: { zh: "登机口旁显示本航班状态的屏,区别于大厅的 departure board。生图无字只画色块" } },
+        { terms: { en: "podium", zh: "检票台" }, reading: { en: "/ˈpoʊdiəm/", zh: "jiǎn piào tái" }, sen: { en: "The gate agent stood at the podium and called our boarding group.", zh: "检票员站在检票台后，叫到了我们这组登机。" }, note: { zh: "登机口检票员站的斜面台;也叫 gate podium/counter" } }
+      ]
+    },
+{
+      sceneCode: "17",
+      sceneNames: { zh: "机场", en: "The Airport" },
+      sceneId: "airport",
+      section: "交通",
+      viewNames: { zh: "行李转盘", en: "Baggage claim" },
+      image: "images/场景17-机场-4.jpg",
+      alt: "机场·行李转盘场景，标注5个物体名称",
+      stage: "images/舞台17-机场-4.jpg",
+      hotspots: [
+        { w: 0, x: 25, y: 42, wd: 68, ht: 38 },
+        { w: 1, x: 32, y: 49, wd: 13, ht: 19 },
+        { w: 2, x: 76, y: 52, wd: 21, ht: 39 },
+        { w: 3, x: 16, y: 65, wd: 12, ht: 25 },
+        { w: 4, x: 53, y: 15, wd: 33, ht: 15 }
+      ],
+      words: [
+        { terms: { en: "baggage carousel", zh: "行李转盘" }, reading: { en: "/ˈbæɡɪdʒ ˌkærəˈsel/", zh: "xíng lǐ zhuàn pán" }, sen: { en: "We waited at the baggage carousel for our suitcases to come out.", zh: "我们守在行李转盘边，等自己的行李箱出来。" }, note: { zh: "转圈送出托运行李的环形传送带;也叫 baggage claim belt" } },
+        { terms: { en: "suitcase", zh: "行李箱" }, reading: { en: "/ˈsuːtkeɪs/", zh: "xíng lǐ xiāng" }, sen: { en: "My black suitcase looks like everyone else's on the carousel.", zh: "转盘上我的黑色行李箱跟别人的长得一样。" }, note: { zh: "托运的大箱子;带轮子的叫 rolling suitcase" } },
+        { terms: { en: "baggage cart", zh: "行李手推车" }, reading: { en: "/ˈbæɡɪdʒ kɑːrt/", zh: "xíng lǐ shǒu tuī chē" }, sen: { en: "He loaded three bags onto a baggage cart and pushed it to the exit.", zh: "他把三件行李装上行李手推车，推向出口。" }, note: { zh: "机场推行李的小推车;有些机场要投币租用" } },
+        { terms: { en: "carry-on", zh: "登机箱(随身行李)" }, reading: { en: "/ˈkæri ɑːn/", zh: "dēng jī xiāng (suí shēn xíng lǐ)" }, sen: { en: "My carry-on fit in the overhead bin, so I didn't check any bags.", zh: "我的登机箱塞得进头顶行李舱，所以没托运。" }, note: { zh: "不托运、带上飞机的小箱,要放进头顶行李舱" } },
+        { terms: { en: "baggage claim sign", zh: "行李提取指示牌" }, reading: { en: "/ˈbæɡɪdʒ kleɪm saɪn/", zh: "xíng lǐ tí qǔ zhǐ shì pái" }, sen: { en: "Follow the baggage claim sign downstairs to pick up your luggage.", zh: "顺着行李提取指示牌下楼去取行李。" }, note: { zh: "指向取行李区的标识牌。生图无字只画色块,词库照常收词" } }
       ]
     }
   ];
