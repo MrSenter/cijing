@@ -1,131 +1,107 @@
 <div align="center">
 
-**简体中文** · [English](README.en.md)
+**English** · [简体中文](README.zh.md)
 
 # 词境 · Cíjìng
 
-**把生活场景变成可点读的英语学习游戏**
+**An open, reproducible pipeline for building point-and-read language worlds — plus a playable demo it produced.**
 
-一图一境，点物体 → 单词 + 发音 + 中文。像大人的点读笔。
+### ▶️ [**Play the demo — no download, just click**](https://mrsenter.github.io/cijing/)
 
-*"你身边那些叫不出名字的东西。"*
+<img src="docs/screenshots/car-driver.jpg" width="680" alt="A driver's-view scene: tap any object for its English name, phonetics, Chinese, and audio">
 
-<br>
-
-<img src="docs/screenshots/map.jpg" width="720" alt="词境小镇全景地图">
-
-<sub>一座完整的小城市 · 点任意建筑直达场景</sub>
-
-<br><br>
-
-### ▶️ [**在线试玩 —— 点开就玩，不用下载**](https://mrsenter.github.io/cijing/)
-
-<sub>或 [下载单文件版](https://github.com/MrSenter/cijing/releases/latest) 双击离线玩（一个 html，图和发音全打包）· 手机/平板见下方</sub>
+<sub>Tap any object → English + phonetics + Chinese + example sentence + audio. Switch label modes, or hide them all to quiz yourself.</sub>
 
 </div>
 
 ---
 
-> **这个仓库两种用法** 👇
-> - 🎮 **想玩** → [**在线试玩**](https://mrsenter.github.io/cijing/)（点开即玩）或 [下载单文件](https://github.com/MrSenter/cijing/releases/latest) 离线玩
-> - 🛠️ **想复刻 / 加场景 / 换语言** → 看 [**`factory/` 目录**](factory/)，那里是**完整生产工作流**（角色库/场景库、生图任务书、视觉审计、发音管线、海报管线 + 全套规范）
+## The one idea that makes it work
 
-## 这是什么
+> **The scene images contain zero text. Every word, phonetic, and translation is overlaid by the code layer at runtime.**
 
-词境是一套**场景点读英语学习游戏**。每一张图是一个生活场景（厨房、汽车、超市、机场……），画面里的每个物体都能点——点一下，弹出它的英文名、音标、中文和例句，还会读给你听。
+The AI only ever draws a *clean, wordless stage*. Nothing is baked into the pixels. That single constraint is what turns a picture into a language tool:
 
-- **47 个场景 · ~860 个单词**：从家里（卧室/厨房/浴室）到出门（超市/咖啡店/诊所/机场/酒店），一座完整的小城市
-- **四种玩法**：中英双显 / 只看英文 / 只看中文 / 全部隐藏（变成"找词"测验）
-- **一张全镇地图**：点建筑直达对应场景
-- **纯本地运行**：打开即用，不联网、不上传、无广告、无追踪
+- **One image, many languages** — the artwork is generated once; swapping languages only swaps the word layer.
+- **Hotspots, not hand-labels** — a vision model reads the image and emits percentage-coordinate boxes; the runtime draws the labels.
+- **One hotspot set, four modes** — show both languages / English only / Chinese only / hide-all (which becomes a find-the-word quiz).
 
-<p align="center">
-  <img src="docs/screenshots/car-driver.jpg" width="49%" alt="汽车驾驶位视角">
-  <img src="docs/screenshots/supermarket.jpg" width="49%" alt="超市">
-  <img src="docs/screenshots/airport.jpg" width="49%" alt="机场">
-  <img src="docs/screenshots/park.jpg" width="49%" alt="公园">
-</p>
+Bake text into the image and you get a poster: it can't be tapped, hidden, quizzed, or re-translated. Keep the image wordless and the code owns everything interactive.
 
-<sub>点物体 → 英文 + 音标 + 中文 + 例句 + 发音。上图是「中英双显」模式，还可切成只看英文/只看中文/全隐藏考自己。</sub>
+## 🆕 Recent updates
 
-## 🆕 最近更新
+**2026-07 · Big scene expansion + navigation overhaul**
+- **16 new scenes at once** — the full airport line (terminal → check-in → security → boarding → baggage claim + gift shop), the supermarket split into 5 aisles (produce / meat / snacks / household / condiments), a mall food court, the hotel (game room / corridor / guest room), a dog park, the train station, the mall hall… scene count **27 → 47**
+- **Navigation fully reworked** — loop around the residential street (← → brings you back), one ⬇️ from any room / backyard returns to the street, the airport follows a real check-in flow; entrances that used to be "hidden" (mall / clinic / food court) now have clear markers on the map
+- **Taps land better** — fixed the old "the porch label covered the flower box / window screen / TV cabinet behind it" problem; smaller objects now win the tap, so dense scenes stay clickable
+- **Phone / tablet** — the same directional-arrow routing as desktop, consistent across devices
 
-**2026-07 · 场景大扩建 + 动线重构**
-- **一口气加 16 个新场景**：完整机场线（航站楼 → 值机 → 安检 → 登机 → 取行李 + 纪念品店）、超市细分 5 个区（蔬菜 / 肉 / 零食 / 生活用品 / 调料）、商场美食广场、酒店（娱乐室 / 走廊 / 客房）、宠物公园、车站、商场大厅…… 场景数 **27 → 47**
-- **动线彻底理顺**：住宅街环形逛（← → 一路绕回来）、房间 / 后院一个 ⬇️ 回街、机场内部按真实流程走；商场 / 诊所 / 美食广场这些原本"藏"起来的入口，现在地图上都有明显标记
-- **点击更跟手**：修掉"门廊挡住后面的花箱 / 纱窗 / 电视柜点不到"的老毛病——小的物件优先响应，密集处也点得到
-- **手机 / 平板**：走线沿用桌面那套方向箭头，跨端一致
+**2026-07 · Multi-language + panels + mobile**
+- **Multi-language** — pick your native and learning language (zh／en) and swap direction in one tap; pinyin on the Chinese side, phonetics on the English side
+- **Panels for busy scenes** — tap into crowded clusters (car dashboard, workbench, instrument tray…) to see their detailed words
+- **Phone / tablet tuning** — the tapped word shows at the bottom; iPhone uses a cleaner default, iPad matches desktop, landscape gets a bigger view
+- **Polish** — reading font size, pronunciation labels, and hotspot positions refined
 
-**2026-07 · 多语言 + 面板 + 移动端**
-- **多语言**：可选母语和学习语言（中／英），一键互换方向；中文侧带拼音、英文侧带音标
-- **密集场景加「面板」**：车、车库、诊所等物件挤在一起的地方，点进去看细分单词（仪表盘、工作台、器械托盘…）
-- **手机 / 平板适配**：点物体单词显示在下方；iPhone 走简洁默认、iPad 与桌面一致，横屏画面更大
-- **一批体验打磨**：点读字号、发音标注、热区位置更准
+## The factory (this is the actual project)
 
-## 给谁玩
+词境 is less "a vocabulary game" and more **a workflow for mass-producing them**. The game is the proof it works. The whole pipeline and its specs live in [**`factory/`**](factory/):
 
-- **想学地道生活词的人**（在国外生活的留学生 / 新移民 / 海外华人，或国内想补"课本不教的生活词"的人）——这是词境的主场。你能聊 economy、politics，却不一定知道家里那根"落水管 downspout"、洗漱台"vanity"、汽车"挡泥板 mud flap"叫什么。词境跟着真实生活动线走，学的都是**下次真会用到**的词；看病、租房水电、修车这些"关键时刻卡壳"的场景也专门做了。
-- **小朋友的英语启蒙 / 亲子共学**——绘本画风 + 点读 + 发音，适合陪孩子边看边认物、学英文。内容整体偏**日常生活**，孩子最容易上手的是厨房、卧室、公园、超市这些贴近他们的场景（汽车维修、水电系统这类偏专业，大点或跟着大人玩更合适）。
+```
+① Word list     decide the tappable objects in a scene (new words, no dupes)
+     ↓
+② Image task    → a wordless stage image        factory/templates/生图任务书模板.md
+     ↓            (unified art spec + "no text" rule + physical-plausibility rule)
+③ Visual audit   check every word is present, zero text, plausible   factory/pipeline/审计员岗位.md
+     ↓            (missing object → local inpaint fix, not a full redraw)
+④ Hotspots       read the image, box each word in % coords   factory/docs/场景数据格式.md
+     ↓
+⑤ Assemble       word list + hotspots + image → one slide object
+     ↓
+⑥ Audio          English via Kokoro / Chinese via edge-tts   factory/pipeline/发音管线/
+     ↓            (+ whisper machine-ear QA to catch TTS failures)
+⑦ Ship           browser smoke-test → single-file build      factory/pipeline/发音管线/打包便携版.py
+```
 
-## 怎么玩
+Two "libraries" hold a whole town together:
+- **Character library** — a fixed cast with written appearance anchors + a reference sheet, fed to the image gen so the same people stay consistent across every scene. (So *you* can be the protagonist.)
+- **Scene library** — each scene is a slide; their order encodes a spatial route through the town (↑↓ = change scene, ←→ = pan views within a scene). So it's a *city*, not a pile of loose pictures.
 
-**电脑（Mac / Windows）**：下载后双击 `index.html`，用浏览器打开即可。
+## Build your own — honestly
 
-**iPad / iPhone**（两条路，任选）：
+This is a **human-in-the-loop, multi-step workflow, not a one-click generator.** You direct each stage; the tools do the heavy lifting. Bring your own:
 
-> ⚠️ iOS 有个坑：把 html 传到「文件」App 后，**直接点开只是预览、进不去游戏**（Safari/Chrome 甚至不出现在"打开方式"里，这是 iOS 系统限制）。用下面任一方法：
+- **Image generation** — any `image_gen` agent (the author uses Codex CLI). You supply the API/model.
+- **English TTS** — [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) + [mlx-audio](https://github.com/Blaizzy/mlx-audio) (Apache-2.0, redistributable).
+- **Chinese TTS** — [edge-tts](https://github.com/rany2/edge-tts) (Microsoft online voices).
+- **QA** — [whisper.cpp](https://github.com/ggerganov/whisper.cpp) to grade the generated audio.
+- **Posters** — Node + Playwright.
 
-- **方法 A · 装 Edge 浏览器**：把文件夹传到设备 → 「文件」App 里分享 → 用 **Edge** 打开 `index.html`（Edge 注册了本地 html 处理器，能正常进入，体验完整）
-- **方法 B · 局域网直连（不用传文件）**：电脑上把这个文件夹起个本地服务，手机/平板连同一 Wi-Fi（或直接连电脑开的热点），浏览器输入链接就能玩：
-  ```bash
-  # 电脑上（在 cijing 文件夹里）跑：
-  python3 -m http.server 8000
-  # 然后手机/平板浏览器打开： http://<电脑局域网IP>:8000
-  #（电脑IP：Mac 看「系统设置→网络」，或终端 ipconfig getifaddr en0）
-  ```
-  电脑开个人热点、手机连上，同样输 `http://<电脑IP>:8000` 即可——出门没 Wi-Fi 也能玩。
+A minimal one-command example (one scene image + a tiny word list → one playable HTML) is in [`factory/quickstart/`](factory/quickstart/).
 
-**操作**：
-- **点画面里的物体** → 听发音、看单词卡
-- **↑ ↓** 换场景　**← →** 场景内切换视角（如汽车的四个视角、机场的值机→安检→登机口→取行李）
-- 顶部 **中英双显 / 仅英文 / 仅中文 / 全部隐藏** 切换标签；切到「全部隐藏」可开始**找词测验**
-- 左边 **📖 目录** 按 🏠房子 / 🚗交通 / 🛒外出 分层；右边 **🗺 地图** 点建筑跳场景
-- 单词标签**默认半透明、点一下浮到最上层**，密集场景也点得到
+## Limitations (read before you get excited)
 
-## 发音说明
+- **This started as a workflow experiment, not a polished product.** The whole point was building the *factory*; the game is a sample of what it produces. So expect rough edges and unfinished details in the game itself — the polish went into the pipeline, not the app.
+- **No one-click.** Generating a scene is human-directed: write the task-book, generate, audit, fix missing objects by local inpainting, hand-place hotspots. The auditing and hotspotting still need a human in the loop.
+- **Bring your own image model.** No image weights are shipped; you wire in your own `image_gen`.
+- **Chinese audio isn't bundled.** edge-tts uses Microsoft's online voices — redistributing the generated mp3s is a legal gray area, so the shipped build has no Chinese audio (it falls back to the browser's Web Speech voice). English audio (Kokoro, Apache-2.0) *is* bundled.
+- **Coverage is partial.** ~47 everyday scenes so far — nowhere near exhaustive. It's meant to grow, or to be rebuilt as your own town.
+- **The art is AI-generated.** Occasional synthesis glitches; a whisper QA pass has been run, but trust your ears/eyes.
 
-- **英文发音**已内置（本地音频，[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) 神经语音，Apache-2.0）
-- **中文发音**未内置（见下方许可证说明），点中文时会调用浏览器自带的中文语音朗读。想要离线中文发音，可自行生成 —— 方法见[`factory/pipeline/发音管线`](factory/pipeline/发音管线) 
+## The demo, briefly
 
-> **发音是 AI 生成的**，绝大多数准确，但个别单词可能有合成瑕疵（发音略糊/吞音）。词境已经用机器验耳（whisper 对账）跑过一轮质检修复，但仍以人耳为准。想自己复查/重修发音，工作流仓库有整套**质检模式**（`发音质检.py`）——它需要额外下载一个开源语音识别模型（[whisper.cpp](https://github.com/ggerganov/whisper.cpp)）来给发音"判卷"。
+- **47 scenes · ~860 words** — home (bedroom / kitchen / bathroom) → out (supermarket / café / clinic / barbershop) → travel (airport / hotel), plus a town map you tap to enter scenes.
+- **Fully local** — open and play; no login, no network, no ads, no tracking.
+- Play online above, or [download a single self-contained html](https://github.com/MrSenter/cijing/releases/latest) to run offline. (iPad/iPhone: the Files app only previews it — open with Edge, or serve it over your LAN. Details in [简体中文 README](README.zh.md).)
 
-## 许可证
+## License
 
-词境把**代码**和**素材**分开授权：
+| Part | License |
+|------|---------|
+| Code (`index.html`, the `factory/` scripts) | **MIT** |
+| Assets (illustrations, audio, vocabulary) | **CC BY-NC 4.0** — credit "词境 / Cíjìng", non-commercial |
 
-| 部分 | 许可证 | 你能做什么 |
-|------|--------|-----------|
-| 代码（`index.html` 及脚本逻辑） | **MIT** | 随便用、改、商用，保留版权声明即可 |
-| 素材（插画 / 音频 / 词库） | **CC BY-NC 4.0** | 可自由学习、传播、二次创作，**须署名「词境」、不得商用** |
+See [`LICENSE`](LICENSE) and [`LICENSE-assets.md`](LICENSE-assets.md). The cartoon characters are residents of the town — please don't use them commercially.
 
-完整条款见 [`LICENSE`](LICENSE)（代码）与 [`LICENSE-assets.md`](LICENSE-assets.md)（素材）。
+## Credits
 
-> 插画里的卡通角色是词境这座城市的居民。素材禁止商用，请勿将角色形象或场景用于盈利用途。
-
-## 场景还在长大 · 做一座你自己的城
-
-> **说明**：这个项目**重点是打造背后那套工作流（`factory/`）**，游戏本身只是"证明工厂能出活"的样品。所以游戏里难免有些细节没打磨到位——精力主要花在流水线上，不在把 app 做完美。见谅，也欢迎提问题。
-
-词境的生活场景**还没铺满**——邮局、学校、医院病房、菜市场、五金店……想加的还有很多。这是一座持续生长的城，也欢迎你一起添砖。
-
-整套生产流水线就在本仓库的 [`factory/`](factory/) 目录，但它能做的不只是"加个场景"：
-
-> **你可以把地图换成你自己的城镇，把你（和你在意的人）当作主角**，做一座只属于你的点读城。
-
-这正是词境两个"库"的用处——**角色库**让固定角色跨场景长成同一个人（所以主角可以是你），**场景库**让一座城长出连贯的空间动线（所以那是"你的城"而不是散图）。换一门语言、加一个场景、造一整座新城，都从 `factory/` 开始。
-
----
-
-<div align="center">
-用 ❤️ 做给想边玩边学的人
-</div>
+Built on [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), [mlx-audio](https://github.com/Blaizzy/mlx-audio), [edge-tts](https://github.com/rany2/edge-tts), [whisper.cpp](https://github.com/ggerganov/whisper.cpp), and Playwright.
