@@ -1,103 +1,105 @@
 <div align="center">
 
-**简体中文** · [English](README.en.md)
+**English** · [简体中文](README.zh.md)
 
-# 词境工厂 · Cíjìng Factory
+# 词境 Factory · Cíjìng Factory
 
-**词境的生产流水线** —— 从"想一个场景"到"能点读的一张图"的全套工具与规范。
+**The production line behind 词境** — the full toolkit and specs for turning "an idea for a scene" into "a tappable, point-and-read image."
 
-想给词境加场景、换一门语言，或**把地图换成你自己的城镇、把你自己当作主角**、复刻一座只属于你的点读城？从这里开始。
+Want to add a scene, switch languages, or **swap the map for your own town and cast yourself as the protagonist** — building a point-and-read city that's entirely yours? Start here.
 
 </div>
 
-> 词境的生活场景还没铺满，本就是一座持续生长的城——你不必等它完整，直接拿这套工作流造你自己的那座。角色库让主角固定成同一个人（可以是你），场景库让一座城长出连贯动线。
-
-> 成品（能直接玩的那个）在**仓库根目录**（`index.html` + 图 + 音）。这个 `factory/` 目录是**它怎么造出来的**。
-
-> 🚀 **想先跑一个看看？** [`quickstart/`](quickstart/) 里一条命令、一张图 + 一份词表 → 一个可玩的单场景 HTML：
-> `python3 build_scene.py example/words.json example/scene.jpg -o output.html`
+> The playable product (the "just play it" one) is in the [repo root](https://github.com/MrSenter/cijing). This `factory/` directory is **how it's made**.
+>
+> 词境's everyday scenes are far from complete — it's a city meant to keep growing. You don't have to wait for it to be finished; take this workflow and build your own.
 
 ---
 
-## 核心哲学：美术层与交互层彻底分离
+## The core idea: art layer and interaction layer, fully separated
 
-词境能"点读"的秘密，是一条铁律：
+The secret to "point-and-read" is one rule:
 
-> **舞台图只画干净、无一个字的场景；单词、发音、翻译全部由代码层在运行时叠加。**
+> **The stage image only ever draws a clean, wordless scene. Words, pronunciation, and translation are all overlaid by the code layer at runtime.**
 
-绝不把文字烤进图片像素。一旦烤进去，就退化成一张海报——点不响、藏不掉、考不了、改不动。分离之后：
+Never bake text into the pixels. Once you do, it degrades into a poster — un-tappable, un-hideable, un-quizzable, un-editable. With the separation:
 
-- **一图多语言**：图只生成一次，换语言只换词库层
-- **零人工标注**：热区由视觉模型读图自动标（百分比坐标）
-- **四态一套热区四种玩法**：全显 / 仅英 / 仅中 / 全隐（=找词测验）
+- **One image, many languages** — the art is generated once; a new language only swaps the word layer.
+- **No hand-labeling** — a vision model reads the image and emits percentage-coordinate hotspots.
+- **One hotspot set, four modes** — show both / English only / Chinese only / hide-all (a find-the-word quiz).
 
-## 两个"库"：角色库 & 场景库
+## The two "libraries": characters & scenes
 
-词境靠两个库撑起"一座连贯的城"：
+Two libraries hold a coherent town together:
 
-**🎭 角色库**——为什么每个场景里的人看起来是同一批人
-一组**固定角色**（主角情侣 + 配角一家 + 一只柯基），每个角色有：①一段**文字外貌锚点**（发型/衣着/配饰逐条写死）②一张**角色设定图**。新场景生图时，把设定图作为 `image_gen` 参考输入、外貌锚点文字照抄进任务书——**双保险锁人物跨场景一致**。没有角色库，同一个人在超市和加油站会长成两个样。角色本身若是词库词（barista / bellhop…），人物即热区。
+**🎭 Character library** — why the people look like the same people across scenes.
+A fixed cast (a couple, a family, a dog) each has: (1) a written **appearance anchor** (hair / clothes / accessories pinned down in text) and (2) a **reference sheet**. When generating a new scene, the sheet goes in as an `image_gen` reference and the anchor text is copied into the task-book — **a double lock keeping characters consistent scene to scene.** Without it, the same person becomes two different people in the supermarket vs. the gas station. If a character is itself a vocabulary word (barista / bellhop…), the person *is* the hotspot.
 
-**🏙 场景库**——一座城怎么长出来
-每个**场景 = 一个 slide**（词库 + 热区 + 舞台图 + 可选面板），按**板块**分组（🏠房子 / 🚗交通 / 🛒外出）。关键：**slides 的排列顺序 = 空间动线**（起床→下楼→出门→上路→到店），↑↓ 换场景就是在城里走动；多视角场景（汽车/机场）共享 `sceneId`，←→ 平移。加一个场景 = 往这个库里加一项（结构见 `docs/场景数据格式.md`）。场景之间还能设**传送门**（点这个场景里的门/车，跳到目标场景）。
+**🏙 Scene library** — how a city grows.
+Each **scene = one slide** (word list + hotspots + stage image + optional panels), grouped into **sections** (🏠home / 🚗transit / 🛒out). The key: **the order of the slides encodes a spatial route** through town (wake up → go downstairs → head out → hit the road → arrive), so ↑↓ = walking around the city; multi-view scenes (car / airport) share a `sceneId`, and ←→ pans between views. Adding a scene = adding one item to this library (structure in [`docs/场景数据格式.md`](docs/场景数据格式.md)). Scenes can also hold **portals** (tap a door/car in one scene to jump to another).
 
-> 一句话：**角色库锁"人"跨场景一致，场景库锁"城"的空间连贯**。这俩是词境不像"一堆散图"、而像"一座城"的原因。
+> In short: **the character library keeps *people* consistent across scenes; the scene library keeps the *city* spatially coherent.** These are why 词境 reads like a city, not a pile of loose pictures.
 
-## 流水线全景
+## The pipeline
 
 ```
-① 词库          想清楚一个场景有哪些"看得见、点得着"的物体（主词全新、不撞库）
+① Word list       decide the tappable objects in a scene (new words, no dupes)
      ↓
-② 生图任务书 →  无字舞台图        templates/生图任务书模板.md
-     ↓          （画风统一 + 无字条款 + 构成逻辑 + 角色/装修锁一致性）
-③ 视觉审计       逐词核验在场、零文字、构成逻辑    pipeline/审计员岗位.md
-     ↓          （缺物用局部改图 i2i 补，别整图重画）
-④ 热区标注       读图为每个词标百分比框            docs/场景数据格式.md
+② Image task-book → wordless stage image        templates/生图任务书模板.md
+     ↓              (unified art spec + "no text" rule + physical-plausibility rule + char/decor consistency lock)
+③ Visual audit     verify each word present, zero text, plausible construction   pipeline/审计员岗位.md
+     ↓              (missing object → local inpaint fix, not a full redraw)
+④ Hotspots         read the image, box each word in % coords            docs/场景数据格式.md
      ↓
-⑤ 组装 slide     词库 + 热区 + 图 → slides 数组一项
+⑤ Assemble slide   word list + hotspots + image → one entry in the slides array
      ↓
-⑥ 发音生成       英文 Kokoro / 中文 edge-tts      pipeline/发音管线/
-     ↓          （+ whisper 机器验耳质检）
-⑦ 实测 & 打包    浏览器冒烟 → 单文件便携版         pipeline/发音管线/打包便携版.py
+⑥ Audio            English via Kokoro / Chinese via edge-tts      pipeline/发音管线/
+     ↓              (+ whisper machine-ear QA)
+⑦ Test & pack      browser smoke-test → single-file build         pipeline/发音管线/打包便携版.py
      ↓
-（可选）代码海报管线：舞台图 + 词库 → 带标签印刷海报   pipeline/海报管线/
+(optional) Poster pipeline: stage image + word list → labeled printable poster   pipeline/海报管线/
 ```
 
-## 项目管理层：聊 → 卡 → 派 → 审
+## Try it in one command
 
-流水线之外，词境用**任务卡**驱动每个场景的推进（作者用 **Notion** 建卡，任何任务工具都行——Trello / Linear / 飞书 / 一个 Markdown checklist 都可以）。每个场景开工前：
+The smallest runnable slice — one wordless image + a tiny word list → one playable HTML — is in [`quickstart/`](quickstart/):
 
-1. **聊**：先把这个场景要哪些词、什么事件、几个视角聊清楚（不写文件）
-2. **卡**：开一张任务卡，写明**验收标准**（怎么算做完：词全新不撞库 / 舞台图过审 / 热区数=词数 / 发音上线……）
-3. **派**：按卡执行——生图派生图 Agent、审计派审计岗、热区标注主循环做
-4. **审**：验收对照卡上的标准逐条过，收尾把进度写回卡的交接说明
+```bash
+cd quickstart
+python3 build_scene.py example/words.json example/scene.jpg -o output.html
+# open output.html and tap the objects
+```
 
-任务卡管的是**立项 / 验收标准 / 交接**这一层（"做什么、算不算做完"）；过程执行细节跟着工作对象走（改哪个文件、勾哪个 checkbox）。两层分开，卡不被过程噪音淹没。
+## The task-card layer: talk → card → assign → review
 
-## 目录
+Beyond the pipeline, 词境 drives each scene with a **task card** (the author uses **Notion**; any task tool works — Trello / Linear / a Markdown checklist). Per scene: **talk** it through (which words, what event, how many views), open a **card** with clear acceptance criteria, **assign** the work (image-gen agent, audit role, hotspotting), then **review** against the card. The card owns *scope / acceptance / handoff*; execution details follow the work object.
 
-| 路径 | 是什么 |
-|------|--------|
-| `templates/生图任务书模板.md` | 生图 Agent 的任务书模板（画风/无字/构成逻辑/局部改图） |
-| `pipeline/审计员岗位.md` | 视觉审计岗位定义——逐词核验、两档制（致命文字 vs 备注级小图标） |
-| `pipeline/发音管线/` | 英文（Kokoro）+ 中文（edge-tts）发音生成 + whisper 质检 + 便携版打包 |
-| `pipeline/海报管线/` | 舞台图 + 词库 → DOM 排版 → Playwright 截图印刷海报（拼写零错、改词零成本） |
-| `docs/场景数据格式.md` | slide / 热区 / 面板 / 传送门 数据结构 + 加场景完整步骤 |
+## Contents
 
-## 依赖
+| Path | What it is |
+|------|-----------|
+| `templates/生图任务书模板.md` | The task-book template for the image-gen agent (art spec / no-text / plausibility / local-inpaint) |
+| `pipeline/审计员岗位.md` | The visual-audit role definition — per-word verification, two-tier (fatal text vs. note-level icons) |
+| `pipeline/发音管线/` | English (Kokoro) + Chinese (edge-tts) audio generation + whisper QA + single-file packaging |
+| `pipeline/海报管线/` | Stage image + word list → DOM layout → Playwright screenshot poster (zero spelling errors, free re-render) |
+| `docs/场景数据格式.md` | slide / hotspot / panel / portal data structures + the full add-a-scene steps |
+| `docs/开源前清洁清单.md` | Pre-open-source checklist for stripping personal info |
+| `quickstart/` | One-command minimal single-scene demo |
 
-- **生图**：任意 image_gen Agent（作者用 Codex CLI）
-- **英文发音**：[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) + [mlx-audio](https://github.com/Blaizzy/mlx-audio)（Apache-2.0，可自由分发生成的音频）
-- **中文发音**：[edge-tts](https://github.com/rany2/edge-tts)（免费无 key）—— ⚠️ 见下方许可说明
-- **质检**：[whisper.cpp](https://github.com/ggerganov/whisper.cpp)（机器验耳，抓 TTS 翻车词）
-- **海报**：Node + Playwright
+## Dependencies
 
-## ⚠️ 中文发音的许可提醒
+- **Image generation** — any `image_gen` agent (the author uses Codex CLI). You supply the model.
+- **English TTS** — [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) + [mlx-audio](https://github.com/Blaizzy/mlx-audio) (Apache-2.0, redistributable).
+- **Chinese TTS** — [edge-tts](https://github.com/rany2/edge-tts) (free, no key) — ⚠️ see below.
+- **QA** — [whisper.cpp](https://github.com/ggerganov/whisper.cpp) (machine-ear, catches TTS failures).
+- **Posters** — Node + Playwright.
 
-英文发音（Kokoro，Apache-2.0）可随成品自由分发。**中文发音 edge-tts 调用的是微软 Edge 在线语音，把生成的 mp3 打包再分发处于法律灰色地带**——所以官方成品仓 **不内置中文音频**，点中文时走浏览器自带的 Web Speech 朗读。
+## ⚠️ Honest limitations
 
-你自己本地用、或自己承担合规判断时，`pipeline/发音管线/生成中文发音.py` 能一键生成中文音频。想要"离线中文发音又干净"，可以把中文也换成 Kokoro 的中文声线（`zf_/zm_`，同样 Apache-2.0）重生成。
+- **This is a human-in-the-loop, multi-step workflow, not a one-click generator.** You direct each stage; auditing and hotspotting still need a human.
+- **Bring your own image model** — no weights are shipped.
+- **Chinese audio & redistribution**: English (Kokoro, Apache-2.0) is freely redistributable. **edge-tts uses Microsoft's online voices — bundling the generated mp3s is a legal gray area**, so the official build ships no Chinese audio (it falls back to the browser's Web Speech). For clean offline Chinese, regenerate with Kokoro's Chinese voices (`zf_/zm_`, also Apache-2.0).
 
-## 许可证
+## License
 
-代码/脚本/文档 MIT，生成素材 CC BY-NC 4.0——见仓库根目录 [`LICENSE`](../LICENSE) 与 [`LICENSE-assets.md`](../LICENSE-assets.md)。
+Code / scripts / docs are **MIT**; generated assets (images / audio / vocabulary) are **CC BY-NC 4.0** — see [`LICENSE`](../LICENSE) and [`LICENSE-assets.md`](../LICENSE-assets.md) in the repo root.
