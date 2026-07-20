@@ -2036,7 +2036,7 @@
       sceneId: "livingroom",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "entryway", view: "大厅" } }, // 2026-07-19 房间回程改单⬇️：仿商店⬇回街约定，回程走箭头不走 portal
+      nav: { down: { scene: "entryway", view: "大厅" } },
       image: "images/场景05-客厅-1.jpg",
       alt: "美式客厅全景图，标注20个物品名称",
       stage: "images/舞台05-客厅-1.jpg",
@@ -2143,7 +2143,7 @@
       sceneId: "kitchen",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "entryway", view: "大厅" } }, // 2026-07-19 房间回程改单⬇️：仿商店⬇回街约定，回程走箭头不走 portal；后院连接已撤销(已定)
+      nav: { down: { scene: "entryway", view: "大厅" } },
       image: "images/场景02-厨房-1.jpg",
       alt: "美式家庭厨房全景图，标注20个物品名称",
       stage: "images/舞台02-厨房-1.jpg",
@@ -2450,7 +2450,7 @@
       sceneId: "laundry",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "entryway", view: "大厅" } }, // 2026-07-19 房间回程改单⬇️：仿商店⬇回街约定，回程走箭头不走 portal
+      nav: { down: { scene: "entryway", view: "大厅" } },
       image: "images/场景06-洗衣房-1.jpg",
       alt: "美式洗衣房全景图，标注20个物品名称",
       stage: "images/舞台06-洗衣房-1.jpg",
@@ -2647,7 +2647,7 @@
       sceneId: "garage",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "entryway", view: "大厅" } }, // 2026-07-19 房间回程改单⬇️：仿商店⬇回街约定，回程走箭头不走 portal；汽车仍走 portal
+      nav: { down: { scene: "entryway", view: "大厅" } },
       image: "images/场景08-车库-1.jpg",
       alt: "美式车库全景图，标注20个物品名称",
       stage: "images/舞台08-车库-1.jpg",
@@ -2721,7 +2721,7 @@
       sceneId: "backyard",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "exterior" } }, // 2026-07-19 已定：后院不连厨房，双向断开，只留↓回房屋外观
+      nav: { down: { scene: "exterior" } },
       image: "images/场景12-后院-1.jpg",
       alt: "美式后院全景图，标注20个物品名称",
       stage: "images/舞台12-后院-1.jpg",
@@ -2776,7 +2776,7 @@
       sceneId: "exterior",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "neighborhood" } }, // 2026-07-19 户外主干改环：⬇回住宅街走箭头不走 portal；玄关/汽车/后院仍走 portal
+      nav: { down: { scene: "neighborhood" } },
       image: "images/场景13-房屋外观-1.jpg",
       alt: "美式独栋住宅正面全景图，标注20个部件名称",
       stage: "images/舞台13-房屋外观-1.jpg",
@@ -3104,7 +3104,7 @@
       sceneId: "neighborhood",
       section: "交通",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { left: { scene: "southplaza" }, right: { scene: "street" } }, // 2026-07-19 户外主干改5节点←→循环环
+      nav: { left: { scene: "southplaza" }, right: { scene: "street" } },
       alt: "住宅街场景，标注8个物体名称",
       stage: "images/舞台29-住宅街-1.jpg",
       hotspots: [
@@ -3136,7 +3136,7 @@
       sceneId: "street",
       section: "交通",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { left: { scene: "neighborhood" }, right: { scene: "mainstreet" } }, // 2026-07-19 户外主干改5节点←→循环环
+      nav: { left: { scene: "neighborhood" }, right: { scene: "mainstreet" } },
       image: "images/场景15-街道路口-1.jpg",
       alt: "美式小镇十字路口全景图，标注20个物品名称",
       stage: "images/舞台15-街道路口-1.jpg",
@@ -3192,7 +3192,7 @@
       sceneId: "gasstation",
       section: "交通",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "neighborhood" } }, // 2026-07-19 加⬇回住宅街，入口 portal(neighborhood→gasstation)不动
+      nav: { down: { scene: "neighborhood" } },
       image: "images/场景16-加油站-1.jpg",
       alt: "美式自助加油站全景图，标注20个物品名称",
       stage: "images/舞台16-加油站-1.jpg",
@@ -3269,7 +3269,7 @@
       sceneId: "mainstreet",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { left: { scene: "street" }, right: { scene: "marketstreet" } }, // 2026-07-19 户外主干改5节点←→循环环
+      nav: { left: { scene: "street" }, right: { scene: "marketstreet" } },
       alt: "商业街北场景，标注6个物体名称",
       stage: "images/舞台30-商业街北-1.jpg",
       hotspots: [
@@ -3298,7 +3298,7 @@
       sceneId: "supermarket",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "mainstreet" } }, // 2026-07-19 商店单⬇️回街：隐藏 ↑ 和乱跳的店间 ←→，只留一个⬇️
+      nav: { down: { scene: "mainstreet" } },
       image: "images/场景07-超市-1.jpg",
       alt: "美式超市全景图，标注20个商品名称",
       stage: "images/舞台07-超市-1.jpg",
@@ -3365,7 +3365,7 @@
       sceneId: "supermarket",
       section: "外出",
       viewNames: { zh: "蔬菜区", en: "Produce" },
-      nav: {}, // 2026-07-19 超市分区：空 nav 隐藏⬆⬇；←→ 走同 sceneId 视角循环（全景→蔬菜区→肉区→零食区→生活用品区→调料区）
+      nav: {},
       alt: "超市蔬菜区场景，标注7个物体名称",
       stage: "images/舞台42-超市蔬菜区-1.jpg",
       hotspots: [
@@ -3393,7 +3393,7 @@
       sceneId: "supermarket",
       section: "外出",
       viewNames: { zh: "肉区", en: "Meat" },
-      nav: {}, // 2026-07-19 超市分区：空 nav 隐藏⬆⬇；←→ 走同 sceneId 视角循环
+      nav: {},
       alt: "超市肉区场景，标注7个物体名称",
       stage: "images/舞台43-超市肉区-1.jpg",
       hotspots: [
@@ -3421,7 +3421,7 @@
       sceneId: "supermarket",
       section: "外出",
       viewNames: { zh: "零食区", en: "Snacks" },
-      nav: {}, // 2026-07-19 超市分区：空 nav 隐藏⬆⬇；←→ 走同 sceneId 视角循环
+      nav: {},
       alt: "超市零食区场景，标注6个物体名称",
       stage: "images/舞台44-超市零食区-1.jpg",
       hotspots: [
@@ -3447,7 +3447,7 @@
       sceneId: "supermarket",
       section: "外出",
       viewNames: { zh: "生活用品区", en: "Household" },
-      nav: {}, // 2026-07-19 超市分区：空 nav 隐藏⬆⬇；←→ 走同 sceneId 视角循环
+      nav: {},
       alt: "超市生活用品区场景，标注7个物体名称",
       stage: "images/舞台45-超市生活用品区-1.jpg",
       hotspots: [
@@ -3475,7 +3475,7 @@
       sceneId: "supermarket",
       section: "外出",
       viewNames: { zh: "调料区", en: "Condiments" },
-      nav: {}, // 2026-07-19 超市分区：空 nav 隐藏⬆⬇；←→ 走同 sceneId 视角循环
+      nav: {},
       alt: "超市调料区场景，标注7个物体名称",
       stage: "images/舞台46-超市调料区-1.jpg",
       hotspots: [
@@ -3503,7 +3503,7 @@
       sceneId: "diner",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "mainstreet" } }, // 2026-07-19 商店单⬇️回街
+      nav: { down: { scene: "mainstreet" } },
       image: "images/场景10-餐厅-1.jpg",
       alt: "美式 diner 餐厅全景图，标注20个物品名称",
       stage: "images/舞台10-餐厅-1.jpg",
@@ -3558,7 +3558,7 @@
       sceneId: "coffeeshop",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "mainstreet" } }, // 2026-07-19 商店单⬇️回街
+      nav: { down: { scene: "mainstreet" } },
       image: "images/场景18-咖啡店-1.jpg",
       alt: "美式街角咖啡店全景图，标注20个物品名称",
       stage: "images/舞台18-咖啡店-1.jpg",
@@ -3613,7 +3613,7 @@
       sceneId: "marketstreet",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { left: { scene: "mainstreet" }, right: { scene: "southplaza" } }, // 2026-07-19 户外主干改5节点←→循环环
+      nav: { left: { scene: "mainstreet" }, right: { scene: "southplaza" } },
       alt: "商业街南场景，标注5个物体名称",
       stage: "images/舞台31-商业街南-1.jpg",
       hotspots: [
@@ -3729,7 +3729,7 @@
       sceneId: "pharmacy",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "marketstreet" } }, // 2026-07-19 商店单⬇️回街
+      nav: { down: { scene: "marketstreet" } },
       image: "images/场景19-药房-1.jpg",
       alt: "美式药房图，标注15个物品名称",
       stage: "images/舞台19-药房-1.jpg",
@@ -3774,7 +3774,7 @@
       sceneId: "mall",
       section: "外出",
       viewNames: { zh: "中庭", en: "Atrium" },
-      nav: { down: { scene: "marketstreet" } }, // 2026-07-19 商店单⬇️回街
+      nav: { down: { scene: "marketstreet" } },
       image: "images/场景27-商场-1.jpg",
       alt: "商场中庭图，标注15个物品名称",
       stage: "images/舞台27-商场-1.jpg",
@@ -3821,7 +3821,7 @@
       sceneId: "clothingstore",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "mall" } }, // 2026-07-19 商店单⬇️回街：服装店在商场里，退回商场层
+      nav: { down: { scene: "mall" } },
       image: "images/场景22-服装店-1.jpg",
       alt: "服装店内景图，标注13个物品名称",
       stage: "images/舞台22-服装店-1.jpg",
@@ -3889,7 +3889,7 @@
       sceneNames: { zh: "邮局", en: "Post Office" },
       sceneId: "postoffice",
       section: "外出",
-      nav: { down: { scene: "marketstreet" } }, // 2026-07-19 商店单⬇️回街
+      nav: { down: { scene: "marketstreet" } },
       image: "images/场景21-邮局-1.jpg",
       alt: "邮局场景，标注17个物体名称",
       stage: "images/舞台21-邮局-1.jpg",
@@ -3937,7 +3937,7 @@
       sceneNames: { zh: "健身房", en: "The Gym" },
       sceneId: "gym",
       section: "外出",
-      nav: { down: { scene: "marketstreet" } }, // 2026-07-19 商店单⬇️回街
+      nav: { down: { scene: "marketstreet" } },
       image: "images/场景23-健身房-1.jpg",
       alt: "健身房场景，标注18个物体名称",
       stage: "images/舞台23-健身房-1.jpg",
@@ -4011,7 +4011,7 @@
       sceneNames: { zh: "理发店", en: "The Barbershop" },
       sceneId: "barbershop",
       section: "外出",
-      nav: { down: { scene: "marketstreet" } }, // 2026-07-19 商店单⬇️回街
+      nav: { down: { scene: "marketstreet" } },
       image: "images/场景24-理发店-1.jpg",
       alt: "理发店场景，标注12个物体名称",
       stage: "images/舞台24-理发店-1.jpg",
@@ -4077,7 +4077,7 @@
       sceneNames: { zh: "公园", en: "Park & Playground" },
       sceneId: "park",
       section: "外出",
-      nav: { down: { scene: "southplaza" }, right: { scene: "dogpark" } }, // 2026-07-19 ⬇回南区广场；➡去宠物公园（与dogpark的⬅相互切换）
+      nav: { down: { scene: "southplaza" }, right: { scene: "dogpark" } },
       image: "images/场景25-公园-1.jpg",
       alt: "公园场景，标注20个物体名称",
       stage: "images/舞台25-公园-1.jpg",
@@ -4132,7 +4132,7 @@
       sceneId: "dogpark",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { left: { scene: "park" } }, // 2026-07-19 改⬅回公园，与 park 的➡构成相互切换；不接southplaza，只有公园能回南区广场
+      nav: { left: { scene: "park" } },
       alt: "宠物公园场景，10只不同品种的狗在草地上玩耍，围栏入口处3人在闲聊",
       stage: "images/舞台37-宠物公园-1.jpg",
       hotspots: [
@@ -4166,7 +4166,7 @@
       sceneId: "hotel",
       section: "外出",
       viewNames: { zh: "大堂", en: "Lobby" },
-      nav: { up: { scene: "southplaza" }, left: { scene: "hotelrec" }, right: { scene: "hotelcorridor" } }, // 2026-07-20 动线理顺：娱乐室⇄大堂⇄走廊左右切换，↑仍去南区广场；客房只从走廊房门进
+      nav: { up: { scene: "southplaza" }, left: { scene: "hotelrec" }, right: { scene: "hotelcorridor" } },
       image: "images/场景26-酒店-1.jpg",
       alt: "酒店·大堂场景，标注10个物体名称",
       stage: "images/舞台26-酒店-1.jpg",
@@ -4201,7 +4201,7 @@
       sceneId: "hotelroom",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "hotelcorridor" } }, // 2026-07-20 客房独立成新场景：只能从走廊房门进，⬇️退回走廊，不再挂大堂
+      nav: { down: { scene: "hotelcorridor" } },
       image: "images/场景26-酒店-2.jpg",
       alt: "酒店·客房场景，标注10个物体名称",
       stage: "images/舞台26-酒店-2.jpg",
@@ -4236,7 +4236,7 @@
       sceneId: "southplaza",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { left: { scene: "marketstreet" }, right: { scene: "neighborhood" } }, // 2026-07-19 户外主干改5节点←→循环环
+      nav: { left: { scene: "marketstreet" }, right: { scene: "neighborhood" } },
       alt: "南区广场场景，左侧藤架绿拱门步道通向公园，中间是酒店楼与门廊车道，右侧是带雨棚的车站站台与列车",
       stage: "images/舞台36-南区广场-1.jpg",
       hotspots: [
@@ -4265,11 +4265,11 @@
       sceneId: "station",
       section: "交通",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { left: { scene: "southplaza" } }, // 2026-07-19 加⬅回南区广场，去冗余portal；airport门保留
+      nav: { left: { scene: "southplaza" } },
       alt: "车站站台场景，两人拖着行李箱在站台等候，一旁停靠着列车",
       stage: "images/舞台33-车站-1.jpg",
       hotspots: [
-        { portal: "airportexterior", x: 82, y: 15, wd: 18, ht: 55 }, // 2026-07-19 改指机场外观（原直连airport值机）
+        { portal: "airportexterior", x: 82, y: 15, wd: 18, ht: 55 },
         { w: 0, x: 0, y: 85, wd: 44, ht: 13 },
         { w: 1, x: 25, y: 32, wd: 14, ht: 47 },
         { w: 2, x: 5, y: 26, wd: 19, ht: 33 },
@@ -4296,7 +4296,7 @@
       sceneId: "airportexterior",
       section: "交通",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: {}, // 2026-07-20 撤←箭头；出租车候车站牌改传送门直接回车站
+      nav: {},
       alt: "机场外观场景，航站楼落客区正面，一排自动玻璃门入口，落客区停着行李推车，远处天际线有塔台",
       stage: "images/舞台38-机场外观-1.jpg",
       hotspots: [
@@ -4305,7 +4305,7 @@
         { w: 1, x: 85.7, y: 27, wd: 6.3, ht: 22.9 },
         { w: 2, x: 18.3, y: 35, wd: 33, ht: 25.5 },
         { w: 3, x: 0, y: 56, wd: 39, ht: 41 },
-        { portal: "station", x: 60, y: 25.7, wd: 12.2, ht: 51.3 }, // 2026-07-20 出租车候车站牌→传送门回车站
+        { portal: "station", x: 60, y: 25.7, wd: 12.2, ht: 51.3 },
         { w: 4, x: 66, y: 38, wd: 34, ht: 60 }
       ],
       words: [
@@ -4322,7 +4322,7 @@
       sceneId: "airport",
       section: "交通",
       viewNames: { zh: "大厅", en: "Hall" },
-      nav: { down: { scene: "airportexterior" } }, // 2026-07-19 机场大厅：↓出机场；←→ 走同 sceneId 视角循环（大厅→值机→安检→登机口→行李转盘）
+      nav: { down: { scene: "airportexterior" } },
       alt: "机场大厅场景，自助值机机排、问询处、行李秤、排队护栏、扶梯与航班动态屏",
       stage: "images/舞台39-机场大厅-1.jpg",
       hotspots: [
@@ -4348,7 +4348,7 @@
       sceneId: "airport",
       section: "交通",
       viewNames: { zh: "纪念品店", en: "Gift Shop" },
-      nav: {}, // 2026-07-20 纪念品店改为机场自有视角（原靠portal进），紧接大厅之后：←→走视角循环 大厅→纪念品店→值机→安检→登机口→行李转盘
+      nav: {},
       alt: "机场大厅里的纪念品店，货架上摆着钥匙扣、雪景球、冰箱贴、毛绒玩具和帆布袋",
       stage: "images/舞台40-机场纪念品店-1.jpg",
       hotspots: [
@@ -4374,7 +4374,7 @@
       sceneId: "airport",
       section: "交通",
       viewNames: { zh: "值机", en: "Check-in" },
-      nav: {}, // 2026-07-19 修bug：原无nav导致↑↓线性wrap到卧室；空nav隐藏⬆⬇，←→走视角循环
+      nav: {},
       image: "images/场景17-机场-1.jpg",
       alt: "机场·值机场景，标注7个物体名称",
       stage: "images/舞台17-机场-1.jpg",
@@ -4403,7 +4403,7 @@
       sceneId: "airport",
       section: "交通",
       viewNames: { zh: "安检", en: "Security" },
-      nav: {}, // 2026-07-19 修bug：原无nav导致↑↓线性wrap到卧室；空nav隐藏⬆⬇，←→走视角循环
+      nav: {},
       image: "images/场景17-机场-2.jpg",
       alt: "机场·安检场景，标注6个物体名称",
       stage: "images/舞台17-机场-2.jpg",
@@ -4430,7 +4430,7 @@
       sceneId: "airport",
       section: "交通",
       viewNames: { zh: "登机口", en: "Gate" },
-      nav: {}, // 2026-07-19 修bug：原无nav导致↑↓线性wrap到卧室；空nav隐藏⬆⬇，←→走视角循环
+      nav: {},
       image: "images/场景17-机场-3.jpg",
       alt: "机场·登机口场景，标注6个物体名称",
       stage: "images/舞台17-机场-3.jpg",
@@ -4457,7 +4457,7 @@
       sceneId: "airport",
       section: "交通",
       viewNames: { zh: "行李转盘", en: "Baggage claim" },
-      nav: {}, // 2026-07-19 修bug：原无nav导致↑↓线性wrap到卧室；空nav隐藏⬆⬇，←→走视角循环
+      nav: {},
       image: "images/场景17-机场-4.jpg",
       alt: "机场·行李转盘场景，标注5个物体名称",
       stage: "images/舞台17-机场-4.jpg",
@@ -4482,7 +4482,7 @@
       sceneId: "foodcourt",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { down: { scene: "mall", view: "中庭" } }, // 2026-07-19 商场中庭子铺：商店单⬇️回中庭
+      nav: { down: { scene: "mall", view: "中庭" } },
       alt: "商场美食广场，一圈快餐档口围着公共餐座，近景有自助饮料机和调料台",
       stage: "images/舞台41-商场美食广场-1.jpg",
       hotspots: [
@@ -4508,7 +4508,7 @@
       sceneId: "hotelrec",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { right: { scene: "hotel", view: "大堂" } }, // 2026-07-20 酒店娱乐室：→回大堂（娱乐室在大堂左边）
+      nav: { right: { scene: "hotel", view: "大堂" } },
       alt: "酒店娱乐室场景，台球桌居中，墙上挂着台球杆架和飞镖靶，一旁是配着高脚凳的吧台和皮沙发休息区",
       stage: "images/舞台47-酒店娱乐室-1.jpg",
       hotspots: [
@@ -4538,7 +4538,7 @@
       sceneId: "hotelcorridor",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
-      nav: { left: { scene: "hotel", view: "大堂" } }, // 2026-07-20 酒店走廊：←回大堂（走廊在大堂右边）
+      nav: { left: { scene: "hotel", view: "大堂" } },
       alt: "酒店走廊场景，服务员推着客房服务车走过铺红色地毯的长廊，两侧客房门整齐排开",
       stage: "images/舞台48-酒店走廊-1.jpg",
       hotspots: [
@@ -4550,7 +4550,7 @@
         { w: 5, x: 8.1, y: 4.4, wd: 17.2, ht: 69.8 },
         { w: 6, x: 40.0, y: 59.1, wd: 7.5, ht: 23.9 },
         { w: 7, x: 0, y: 0, wd: 100, ht: 19.5 },
-        { portal: "hotelroom", x: 86.6, y: 4.9, wd: 13.4, ht: 58.6 } // 2026-07-20 右侧客房门→客房（独立新场景 hotelroom）
+        { portal: "hotelroom", x: 86.6, y: 4.9, wd: 13.4, ht: 58.6 }
       ],
       words: [
         { terms: { en: "housekeeping cart", zh: "客房服务车" }, reading: { en: "/ˈhaʊskiːpɪŋ kɑːrt/", zh: "kè fáng fú wù chē" }, sen: { en: "The housekeeping cart was stocked with towels and toiletries.", zh: "客房服务车上备满了毛巾和洗漱用品。" }, note: { zh: "客房部打扫用的多层推车，载着毛巾/洗浴用品/布草袋；不同于送餐用的 room service cart" } },
@@ -6532,15 +6532,6 @@
     applyLanguageChange();
   });
 
-  // ---------------------------------------------------------------
-  // 热区编辑器（本地开发工具，2026-07-19）：?edit=1 或 Cmd/Ctrl+Shift+E 进入，
-  // 可视化拖拽/缩放/新增/删除热区，改动落 localStorage（固定 key，刷新自动恢复）+
-  // 一键导出 JSON（剪贴板 + 下载 热区改动.json）给主循环 bake 回源码。
-  // 上线安全：不带 ?edit=1 且没按过快捷键时，除下面这一个全局按键监听外，
-  // 本模块不创建任何 DOM、不绑定任何热区级事件——公开访客完全看不到、摸不到编辑器的存在。
-  // applyStoredOverrides()/pristine 快照两段固定跑（不受 editMode 门控），
-  // 但对没有 localStorage 存档的公开访客而言就是读一个空 key、空跑一圈，零可观察影响。
-  // ---------------------------------------------------------------
   (function(){
   var EDIT_KEY = "cj_edit_hotspots_v1"; // ctxKey -> {sceneId, view, panel, hotspots, words}
   var MIN_SIZE = 1;   // 热区最小宽高（%），防止缩放手柄把框拖成负数/零
