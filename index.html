@@ -462,6 +462,11 @@
     background: rgba(234,178,89,0);
     cursor:pointer;
     transition: background 0.15s ease, border-color 0.15s ease;
+    /* 面积优先点击判定（2026-07-19）：--hz 由 buildHotspots() 按面积倒排写入（面积越小值越大），
+       让最具体的小物件天然叠在大框之上、原生 click 就落在它身上，不用另写命中测试。
+       用 CSS 变量而非直接内联 z-index，是为了不挡住下面 :hover/:focus-within/.label-front 的 z-index:40——
+       内联样式一旦直接设 z-index，会让样式表规则（含 :hover 这条）永远覆盖不了，悬停/点中态就顶不上来了。 */
+    z-index: var(--hz, 1);
   }
   .hotspot:hover,
   .hotspot:active,
@@ -519,6 +524,37 @@
     background: rgba(106,142,118,0.18);
   }
 
+  /* ---------- 传送门常驻地标（2026-07-19）----------
+     病根：entry-hint 靠 opacity:0→:hover 才显示提示签，iPad 触屏没有 hover，
+     传送门等于全隐形（用户 反复找不到 商场/诊所/美食广场/纪念品店 的门）。
+     做法：传送门徽章直接复用小镇地图坐标点（.map-pin/.map-pin-dot/.map-pin-label）
+     那套视觉——圆点+目的地名 pill，同色同形，跟地图上的点一模一样，不是另造一套。
+     独立成一层（不塞进 .hotspot-portal 内部）：门热区自己的 z-index 由「面积优先」
+     系统按面积排位（--hz，常常是全场最低几档），若徽章跟着塞在热区里会被 z-index:5
+     的 .stage-banner 场景横幅整个盖住（近顶部的门实测就是这样，比如商业街南的诊所）。
+     z-index 定 31——盖过横幅(5)/返回纸签(6)，也盖过词热区默认态最高档 --hz:30
+     （实测密集场景里词标签会叠住徽章圆点，如商业街南健身房门紧挨着 food truck/scooter
+     词签），但压不过词热区 hover/label-front 的 z-index:40，鼠标点词签时词签仍能正常
+     置顶，不会被徽章挡住。
+     层本身 pointer-events:none（留白处不挡下面任何东西），但 .map-pin 自己重新开
+     pointer-events:auto 并接了 click（见 buildHotspots）——圆点+名字 pill 本身就是
+     可点目标，不依赖穿透到底下的热区（实测踩过坑：商场中庭"服装店"门的徽章中心
+     恰好跟"information desk"词标签重叠，纯穿透会点到词标签而不是传送门）。 */
+  .portal-pin-layer{
+    position:absolute;
+    inset:0;
+    z-index:31;
+    pointer-events:none;
+  }
+  .portal-pin-layer .map-pin{
+    pointer-events:auto;
+    cursor:pointer;
+  }
+  /* 找词测验时隐藏，别跟测验找词干扰；quiz-active 类由 updateQuizButtonVisibility() 挂在 #portalPinLayer 上 */
+  .portal-pin-layer.quiz-active{
+    display:none;
+  }
+
   /* ---------- 面板返回纸签 ---------- */
   .panel-back{
     position:absolute;
@@ -574,8 +610,14 @@
     transition: opacity 0.12s ease;
   }
   .hotspot:hover,
-  .hotspot:focus-within,
-  .hotspot.label-front{ z-index: 40; }
+  .hotspot:focus-within{ z-index: 40; }
+  /* 点谁谁大的副作用修复（2026-07-19）：label-front 的热区整块曾经也吃 z-index:40，
+     一旦点过一个大热区（如门廊/TV stand），它就整块压住内部的小热区/panel 入口，越点越点不进去。
+     这里把 label-front 的"身子"改成点击穿透（pointer-events:none），只留标签本身可点——
+     标签仍靠 z-index:40 置顶可读，但下面的小热区/panel 恢复可点。不能并进上面 :hover/:focus-within
+     那条合并选择器，否则 pointer-events:none 会在鼠标悬停瞬间生效，导致 hover 状态反复横跳。 */
+  .hotspot.label-front{ z-index: 40; pointer-events: none; }
+  .hotspot.label-front .hotspot-label:not(.entry-hint){ pointer-events: auto; }
   .hotspot:hover .hotspot-label:not(.entry-hint),
   .hotspot:focus-within .hotspot-label:not(.entry-hint),
   .hotspot.label-front .hotspot-label:not(.entry-hint){ opacity: 1 !important; }
@@ -1215,6 +1257,57 @@
   .map-close:hover{ background: var(--glow-soft); transform: scale(1.06); }
   .map-close:focus-visible{ outline: 2px solid var(--rust); outline-offset: 2px; }
 
+  /* ---------- 小镇地图坐标点(pin)：2026-07-19 由区域框改造，一个点=一栋建筑 ---------- */
+  .map-pin{
+    position:absolute;
+    width: 16px; height: 16px;
+    margin-left: -8px; margin-top: -8px; /* 用负 margin 把固定尺寸的点精确摆在 left/top(%) 定的坐标上 */
+    cursor:pointer;
+    outline:none;
+  }
+  /* ::before 把可点击命中区扩到 44×44（触屏够点），不影响可见圆点大小 */
+  .map-pin::before{
+    content:"";
+    position:absolute;
+    inset: -14px;
+  }
+  .map-pin-dot{
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    background: var(--rust);
+    border: 2px solid var(--tag-bg);
+    box-shadow: 0 2px 6px var(--shadow);
+    transition: transform 0.12s ease, background 0.12s ease;
+  }
+  .map-pin:hover .map-pin-dot,
+  .map-pin:focus-visible .map-pin-dot{
+    background: var(--glow);
+    transform: scale(1.2);
+  }
+  .map-pin:focus-visible .map-pin-dot{ box-shadow: 0 0 0 3px var(--glow-soft), 0 2px 6px var(--shadow); }
+  .map-pin-label{
+    position:absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 5px;
+    white-space:nowrap;
+    background: var(--tag-bg);
+    border: 1px solid var(--tag-border);
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--rust-dark);
+    box-shadow: 0 2px 6px var(--shadow);
+    opacity: 0.85; /* 常驻半透明显示，不靠 hover；点中/聚焦时提到全不透明 */
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+  }
+  .map-pin:hover .map-pin-label,
+  .map-pin:focus-visible .map-pin-label{ opacity: 1; }
+
   footer{
     text-align:center;
     margin-top: 40px;
@@ -1250,6 +1343,7 @@
     .hotspot-label{ font-size: 0.6rem; padding:2px 5px; }
     .hotspot-label .en{ font-size: 0.62rem; }
     .hotspot-label .zh{ font-size: 0.58rem; }
+    .map-pin-label{ font-size: 0.6rem; padding:2px 6px; }
     .word-info-bar{ padding: 8px 14px; margin-bottom: 14px; min-height: 42px; }
     .wib-content{ gap: 4px; }
     .wib-main{ row-gap: 4px; }
@@ -1419,8 +1513,12 @@
     }
     .page.mode-explore .stage .tape{ display: none; }
     .page.mode-explore #exploreImg{ max-height: calc(100cqh - 2px); max-width: 100cqw; }
-    /* 沉浸横屏用滑动手势切场景/平移，方向按钮收起腾地方（桌面仍保留 ▲▼←→） */
-    .page.mode-explore .arrow{ display: none; }
+    /* 2026-07-20 沉浸横屏也显示方向箭头（滑动手势保留当加成）；
+       默认箭头定位在舞台外 -23px，沉浸模式舞台顶到视口边，要重定位到边缘内侧才不会跑出屏外 */
+    .page.mode-explore .arrow-left{ left: 4px; }
+    .page.mode-explore .arrow-right{ right: 4px; }
+    .page.mode-explore .arrow-up{ top: 4px; }
+    .page.mode-explore .arrow-down{ bottom: 4px; }
 
     /* 底部词栏常显：半透明窄条，在网格 info 行里就地占位（预留高度，不盖底部热区） */
     .page.mode-explore .word-info-bar{
@@ -1548,6 +1646,7 @@
         <div class="explore-stage-inner" id="exploreStageInner">
           <img id="exploreImg" src="" alt="" draggable="false">
           <div class="hotspot-layer" id="hotspotLayer"></div>
+          <div class="portal-pin-layer" id="portalPinLayer" aria-hidden="true"></div>
         </div>
         <div class="explore-placeholder" id="explorePlaceholder" hidden>
           <span class="icon" id="explorePlaceholderIcon">🧭</span>
@@ -1658,6 +1757,7 @@
       sceneId: "bedroom",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { left: { scene: "office" }, right: { scene: "bathroom" }, down: { scene: "hallway" } },
       image: "images/场景03-卧室-1.jpg",
       alt: "美式卧室全景图，标注20个物品名称",
       stage: "images/舞台03-卧室-1.jpg",
@@ -1674,12 +1774,12 @@
         { w: 1, x: 22.5, y: 74, wd: 8, ht: 13 },
         { w: 8, x: 21, y: 44, wd: 12.5, ht: 20.5 },
         { w: 9, x: 24.5, y: 27, wd: 8, ht: 17.5 },
-        { w: 10, x: 66, y: 37.5, wd: 6, ht: 9.5 },
-        { w: 19, x: 67, y: 25.5, wd: 4, ht: 7 },
+        { w: 10, x: 66.9, y: 37.5, wd: 5.1, ht: 9.5 },
+        { w: 19, x: 67.1, y: 28.1, wd: 4, ht: 7 },
         { w: 12, x: 7.5, y: 36, wd: 14, ht: 13 },
         { w: 14, x: 77.5, y: 10.5, wd: 11, ht: 7 },
         { w: 15, x: 78, y: 45.5, wd: 10, ht: 17.5 },
-        { w: 16, x: 91.5, y: 18, wd: 8.5, ht: 55.5 },
+        { w: 16, x: 90.3, y: 18.4, wd: 8.5, ht: 55.5 },
         { w: 17, x: 37, y: 82.5, wd: 15.5, ht: 11.5 },
         { w: 18, x: 62, y: 79.5, wd: 16.5, ht: 17 }
       ],
@@ -1712,17 +1812,18 @@
       sceneId: "bathroom",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { left: { scene: "bedroom" }, right: { scene: "office" }, down: { scene: "hallway" } },
       image: "images/场景04-浴室-1.jpg",
       alt: "美式家庭浴室全景图，标注20个物品名称",
       stage: "images/舞台04-浴室-1.jpg",
       hotspots: [
         { w: 2, x: 0.5, y: 49.5, wd: 38.5, ht: 31.5 },
         { w: 3, x: 3, y: 1.5, wd: 27, ht: 34.5 },
-        { w: 4, x: 69, y: 52, wd: 25, ht: 29 },
+        { w: 4, x: 68.1, y: 52.4, wd: 31.6, ht: 46.6 },
         { w: 7, x: 60.5, y: 2, wd: 8.5, ht: 73 },
-        { w: 5, x: 70.5, y: 40.5, wd: 5, ht: 12.5 },
-        { w: 6, x: 69.5, y: 5, wd: 6.5, ht: 7.5 },
-        { w: 10, x: 85.5, y: 15.5, wd: 11.5, ht: 4 },
+        { w: 5, x: 70, y: 38.3, wd: 5, ht: 7.5 },
+        { w: 6, x: 69.5, y: 5, wd: 6.5, ht: 8.2 },
+        { w: 10, x: 84.3, y: 15.5, wd: 14.6, ht: 3.7 },
         { w: 9, x: 86, y: 17, wd: 9, ht: 21.5 },
         { w: 0, x: 43.5, y: 41.5, wd: 15, ht: 39 },
         { w: 1, x: 38, y: 51.5, wd: 6, ht: 8 },
@@ -1732,12 +1833,12 @@
         { w: 14, x: 20.5, y: 38, wd: 3.5, ht: 11 },
         { w: 15, x: 24.5, y: 45, wd: 3.5, ht: 4.5 },
         { w: 16, x: 29.5, y: 44, wd: 5.5, ht: 4.5 },
-        { w: 17, x: 83.5, y: 47, wd: 4.5, ht: 16.5 },
-        { w: 18, x: 89, y: 51.5, wd: 4.5, ht: 13 },
+        { w: 17, x: 85.3, y: 49, wd: 4.5, ht: 16.5 },
+        { w: 18, x: 90.2, y: 52.9, wd: 4.5, ht: 13 },
         { w: 8, x: 71, y: 56.5, wd: 3, ht: 3.5 },
         { w: 19, x: 2, y: 74, wd: 16.5, ht: 24.5 },
         { panel: "medicine", x: 22, y: 5, wd: 8, ht: 28 },
-        { w: 20, x: 79.5, y: 47, wd: 4, ht: 19.5 }
+        { w: 20, x: 80.1, y: 47, wd: 4.3, ht: 17.7 }
       ],
       panels: [
         {
@@ -1811,7 +1912,7 @@
         { terms: { en: "shampoo", zh: "洗发水" }, reading: { en: "/ʃæmˈpuː/", zh: "xǐ fà shuǐ" }, sen: { en: "I wash my hair with shampoo.", zh: "我用洗发水洗头。" }, note: { zh: "" } },
         { terms: { en: "conditioner", zh: "护发素" }, reading: { en: "/kənˈdɪʃənər/", zh: "hù fà sù" }, sen: { en: "I apply conditioner after I rinse out the shampoo.", zh: "洗掉洗发水之后我再用护发素。" }, note: { zh: "" } },
         { terms: { en: "scale", zh: "体重秤" }, reading: { en: "/skeɪl/", zh: "tǐ zhòng chèng" }, sen: { en: "I weigh myself on the scale every morning.", zh: "我每天早上在体重秤上称体重。" }, note: { zh: "step on the scale" } },
-        { terms: { en: "body wash", zh: "沐浴液" }, reading: { en: "/ˈbɑːdi wɑːʃ/", zh: "mù yù yè" }, note: { zh: "也叫 shower gel" } }
+        { terms: { en: "body wash", zh: "沐浴液" }, reading: { en: "/ˈbɑːdi wɑːʃ/", zh: "mù yù yè" }, note: { zh: "也叫 shower gel" }, sen: {} }
       ]
     },
 {
@@ -1820,25 +1921,26 @@
       sceneId: "office",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { left: { scene: "bathroom" }, right: { scene: "bedroom" }, down: { scene: "hallway" } },
       image: "images/场景09-书房-1.jpg",
       alt: "居家办公书房全景图，标注20个物品名称",
       stage: "images/舞台09-书房-1.jpg",
       hotspots: [
         { w: 0, x: 14, y: 39, wd: 81, ht: 33 },
         { w: 17, x: 3.5, y: 3.5, wd: 25.5, ht: 29 },
-        { w: 18, x: 79, y: 4.5, wd: 18.5, ht: 25 },
+        { w: 18, x: 79.6, y: 6.1, wd: 18.5, ht: 25 },
         { w: 2, x: 31, y: 18, wd: 22.5, ht: 26.5 },
-        { w: 7, x: 39, y: 16.5, wd: 4, ht: 3.5 },
+        { w: 7, x: 38.9, y: 17.4, wd: 4, ht: 3.5 },
         { w: 3, x: 18, y: 32.5, wd: 17, ht: 22 },
         { w: 4, x: 36.5, y: 46.5, wd: 17.5, ht: 9 },
-        { w: 6, x: 54.5, y: 46, wd: 10.5, ht: 8.5 },
-        { w: 5, x: 56.5, y: 47, wd: 5, ht: 5 },
+        { w: 6, x: 53.7, y: 44, wd: 10.4, ht: 10.4 },
+        { w: 5, x: 55.3, y: 45.2, wd: 7.8, ht: 8.3 },
         { w: 8, x: 62.5, y: 10, wd: 15.5, ht: 34.5 },
         { w: 19, x: 64, y: 30, wd: 5.5, ht: 13.5 },
-        { w: 10, x: 65, y: 45.5, wd: 6, ht: 6 },
-        { w: 11, x: 70, y: 51, wd: 7.5, ht: 6 },
-        { w: 12, x: 77.5, y: 44, wd: 5, ht: 7 },
-        { w: 13, x: 83.5, y: 36.5, wd: 11, ht: 15.5 },
+        { w: 10, x: 64.1, y: 44.9, wd: 6.8, ht: 8.8 },
+        { w: 11, x: 63.8, y: 50.6, wd: 13.3, ht: 8.8 },
+        { w: 12, x: 76, y: 42.8, wd: 6.1, ht: 8.7 },
+        { w: 13, x: 83.5, y: 36.5, wd: 11, ht: 17.9 },
         { w: 9, x: 84, y: 57, wd: 13, ht: 9.5 },
         { w: 1, x: 29, y: 55, wd: 25.5, ht: 44 },
         { w: 15, x: 0.5, y: 60, wd: 17.5, ht: 31.5 },
@@ -1869,26 +1971,53 @@
       ]
     },
     {
+      sceneCode: "32",
+      sceneNames: { zh: "阁楼", en: "Attic" },
+      sceneId: "attic",
+      section: "房子",
+      viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "hallway" } },
+      alt: "阁楼场景，堆放纸箱、旧沙发和行李箱，右侧楼梯口通往楼下走廊",
+      stage: "images/舞台32-阁楼-1.jpg",
+      hotspots: [
+        { w: 0, x: 3, y: 3, wd: 30, ht: 35 },
+        { w: 1, x: 63, y: 20, wd: 14, ht: 23 },
+        { w: 2, x: 43, y: 13, wd: 6, ht: 17 },
+        { w: 3, x: 8, y: 47, wd: 21, ht: 27.1 },
+        { w: 4, x: 26, y: 70, wd: 22, ht: 24 },
+        { w: 5, x: 39, y: 42, wd: 20, ht: 25 }
+      ],
+      words: [
+        { terms: { en: "rafters", zh: "屋顶椽" }, reading: { en: "/ˈræftərz/", zh: "wū dǐng chuán" }, sen: { en: "Dust drifted down from the old wooden rafters overhead.", zh: "灰尘从头顶那些老旧的屋顶椽间飘落下来。" }, note: { zh: "屋顶三角桁架的木梁" } },
+        { terms: { en: "dormer window", zh: "老虎窗" }, reading: { en: "/ˈdɔːrmər ˌwɪndoʊ/", zh: "lǎo hǔ chuāng" }, sen: { en: "Sunlight streamed in through the small dormer window.", zh: "阳光从那扇小小的老虎窗照射进来。" }, note: { zh: "屋顶垂直插入的小窗" } },
+        { terms: { en: "bare bulb", zh: "裸灯泡" }, reading: { en: "/ˈber ˌbʌlb/", zh: "luǒ dēng pào" }, sen: { en: "A single bare bulb hung from a wire in the middle of the attic.", zh: "一只裸灯泡挂在电线上，垂在阁楼中央。" }, note: { zh: "无灯罩垂下的灯泡" } },
+        { terms: { en: "cardboard box", zh: "纸箱" }, reading: { en: "/ˈkɑːrdbɔːrd ˌbɑːks/", zh: "zhǐ xiāng" }, sen: { en: "We stacked the cardboard boxes against the attic wall.", zh: "我们把纸箱一摞摞堆在阁楼墙边。" }, note: { zh: "堆叠的搬家纸箱" } },
+        { terms: { en: "steamer trunk", zh: "旅行皮箱" }, reading: { en: "/ˈstiːmər ˌtrʌŋk/", zh: "lǚ xíng pí xiāng" }, sen: { en: "Grandma's old steamer trunk still sits in the corner of the attic.", zh: "奶奶那只旧旅行皮箱还放在阁楼角落里。" }, note: { zh: "老式铜角皮箱" } },
+        { terms: { en: "dust sheet", zh: "防尘布" }, reading: { en: "/ˈdʌst ˌʃiːt/", zh: "fáng chén bù" }, sen: { en: "A white dust sheet covers the old armchair in the attic.", zh: "一块白色防尘布盖在阁楼里那把旧扶手椅上。" }, note: { zh: "盖家具的白布" } }
+      ]
+    },
+{
       sceneCode: "28",
       sceneNames: { zh: "走廊楼梯", en: "Hallway & Stairs" },
       sceneId: "hallway",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { up: { scene: "attic" }, down: { scene: "entryway" } },
       alt: "走廊楼梯场景，标注8个物体名称",
       stage: "images/舞台28-走廊楼梯-1.jpg",
       hotspots: [
-        { w: 0, x: 0.5, y: 30, wd: 45, ht: 68 },
-        { w: 1, x: 60, y: 80, wd: 27, ht: 19 },
-        { w: 2, x: 44, y: 27, wd: 22, ht: 60 },
-        { w: 3, x: 78, y: 76, wd: 21, ht: 16 },
-        { w: 4, x: 64, y: 42, wd: 14, ht: 11 },
-        { w: 5, x: 12, y: 48, wd: 33, ht: 50 },
-        { w: 6, x: 47, y: 2, wd: 14, ht: 40 },
-        { w: 7, x: 65.5, y: 7, wd: 6.5, ht: 12 },
-        { portal: "bedroom", x: 0.3, y: 1, wd: 12.5, ht: 72 },
-        { portal: "bathroom", x: 30, y: 2, wd: 11, ht: 50 },
-        { portal: "office", x: 79, y: 1, wd: 17, ht: 62 },
-        { portal: "entryway", x: 66, y: 57, wd: 14, ht: 24 }
+        { w: 0, x: 45, y: 90, wd: 10, ht: 9 },
+        { w: 1, x: 50.9, y: 66.8, wd: 21.1, ht: 21.2 },
+        { w: 2, x: 26.1, y: 33.6, wd: 51.1, ht: 55.9 },
+        { w: 3, x: 58, y: 33, wd: 19.3, ht: 31.4 },
+        { w: 4, x: 51, y: 48, wd: 20, ht: 16 },
+        { w: 5, x: 0, y: 56, wd: 42, ht: 43 },
+        { w: 6, x: 54.1, y: 11, wd: 8.6, ht: 35.7 },
+        { w: 7, x: 69, y: 10, wd: 4.5, ht: 13.7 },
+        { portal: "bedroom", x: 2, y: 5.5, wd: 14, ht: 48 },
+        { portal: "bathroom", x: 25.5, y: 4.5, wd: 10.8, ht: 44.3 },
+        { portal: "office", x: 80.5, y: 5, wd: 16.5, ht: 53 },
+        { portal: "entryway", x: 54.4, y: 55, wd: 21, ht: 30 }
       ],
       words: [
         { terms: { en: "hallway", zh: "走廊" }, reading: { en: "/ˈhɔːlweɪ/", zh: "zǒu láng" }, sen: { en: "The hallway upstairs connects the bedroom, the bathroom, and the study.", zh: "楼上的走廊连接着卧室、浴室和书房。" }, note: { zh: "二楼走廊，连接卧室/浴室/书房三个房间" } },
@@ -1907,6 +2036,7 @@
       sceneId: "livingroom",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "entryway", view: "大厅" } }, // 2026-07-19 房间回程改单⬇️：仿商店⬇回街约定，回程走箭头不走 portal
       image: "images/场景05-客厅-1.jpg",
       alt: "美式客厅全景图，标注20个物品名称",
       stage: "images/舞台05-客厅-1.jpg",
@@ -1929,7 +2059,7 @@
         { w: 11, x: 73, y: 23, wd: 14.5, ht: 14 },
         { w: 2, x: 82, y: 58.5, wd: 17.5, ht: 23 },
         { w: 3, x: 85.5, y: 41.5, wd: 13.5, ht: 22 },
-        { w: 19, x: 93.5, y: 25, wd: 4, ht: 5.5 },
+        { w: 19, x: 93.5, y: 25.9, wd: 4, ht: 5.5 },
         { w: 18, x: 97.3, y: 73.5, wd: 2.6, ht: 5.5 },
         { panel: "tvdrawer", x: 83, y: 66, wd: 15, ht: 14 }
       ],
@@ -2013,15 +2143,16 @@
       sceneId: "kitchen",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "entryway", view: "大厅" } }, // 2026-07-19 房间回程改单⬇️：仿商店⬇回街约定，回程走箭头不走 portal；后院连接已撤销(用户拍板)
       image: "images/场景02-厨房-1.jpg",
       alt: "美式家庭厨房全景图，标注20个物品名称",
       stage: "images/舞台02-厨房-1.jpg",
       hotspots: [
         { w: 0, x: 0.5, y: 17, wd: 19.5, ht: 71 },
-        { w: 8, x: 40, y: 13.5, wd: 22, ht: 13 },
+        { w: 8, x: 37.6, y: 3.8, wd: 25.6, ht: 23.1 },
         { w: 3, x: 22, y: 13.5, wd: 16.5, ht: 16 },
         { w: 1, x: 20, y: 37.5, wd: 20, ht: 10.5 },
-        { w: 2, x: 25, y: 47.5, wd: 16, ht: 25 },
+        { w: 2, x: 25, y: 49.5, wd: 16, ht: 25 },
         { w: 4, x: 57, y: 41, wd: 20, ht: 11 },
         { w: 6, x: 67, y: 54, wd: 13.5, ht: 35 },
         { w: 7, x: 44, y: 42.5, wd: 12.5, ht: 6 },
@@ -2034,14 +2165,14 @@
         { w: 16, x: 50, y: 27.5, wd: 6.5, ht: 15 },
         { w: 5, x: 66, y: 30.5, wd: 9.5, ht: 11 },
         { w: 19, x: 78, y: 39.5, wd: 5, ht: 9 },
-        { w: 18, x: 83.5, y: 34.5, wd: 7, ht: 17 },
+        { w: 18, x: 84.7, y: 36.3, wd: 5.8, ht: 15.2 },
         { w: 13, x: 87, y: 56.5, wd: 9.5, ht: 7 },
         { w: 17, x: 87.5, y: 69.5, wd: 10.5, ht: 27 },
         { panel: "drawer", x: 40.3, y: 45, wd: 7.4, ht: 5.8 },
         { panel: "fridge", x: 8.8, y: 26, wd: 6.5, ht: 35 },
-        { panel: "spices", x: 52, y: 13.5, wd: 10, ht: 13 },
+        { panel: "spices", x: 48.6, y: 12.1, wd: 10, ht: 13 },
         { panel: "cookware", x: 40.5, y: 51.5, wd: 7, ht: 16 },
-        { panel: "undersink", x: 52, y: 50, wd: 14, ht: 17 }
+        { panel: "undersink", x: 54, y: 55.8, wd: 13, ht: 19.7 }
       ],
       panels: [
         {
@@ -2319,6 +2450,7 @@
       sceneId: "laundry",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "entryway", view: "大厅" } }, // 2026-07-19 房间回程改单⬇️：仿商店⬇回街约定，回程走箭头不走 portal
       image: "images/场景06-洗衣房-1.jpg",
       alt: "美式洗衣房全景图，标注20个物品名称",
       stage: "images/舞台06-洗衣房-1.jpg",
@@ -2373,13 +2505,14 @@
       sceneId: "utilities",
       section: "房子",
       viewNames: { zh: "地下室", en: "Basement" },
+      nav: { up: { scene: "entryway" } },
       image: "images/场景14-水电系统-1.jpg",
       alt: "美式地下室水电间全景图，标注20个设备名称",
       stage: "images/舞台14-水电系统-1.jpg",
       hotspots: [
-        { w: 0, x: 1, y: 1, wd: 98, ht: 97 },
+        { w: 0, x: 35.8, y: 80, wd: 11.7, ht: 17.5 },
         { w: 16, x: 3.5, y: 5.5, wd: 4, ht: 69 },
-        { w: 1, x: 4, y: 21.5, wd: 14.5, ht: 55.5 },
+        { w: 1, x: 8, y: 21.5, wd: 10.5, ht: 55.5 },
         { w: 2, x: 8, y: 64.5, wd: 6.5, ht: 8 },
         { w: 3, x: 19, y: 33.5, wd: 15.5, ht: 43.5 },
         { w: 4, x: 24, y: 52, wd: 6.5, ht: 22.5 },
@@ -2426,7 +2559,8 @@
       sceneNames: { zh: "玄关", en: "Entryway" },
       sceneId: "entryway",
       section: "房子",
-      viewNames: { zh: "全景", en: "Full view" },
+      viewNames: { zh: "入口", en: "Entry" },
+      nav: { up: { scene: "hallway" }, down: { scene: "utilities" } },
       image: "images/场景11-玄关-1.jpg",
       alt: "美式玄关全景图，标注20个物品名称",
       stage: "images/舞台11-玄关-1.jpg",
@@ -2477,11 +2611,43 @@
       ]
     },
 {
+      sceneCode: "11",
+      sceneNames: { zh: "玄关", en: "Entryway" },
+      sceneId: "entryway",
+      section: "房子",
+      viewNames: { zh: "大厅", en: "Hall" },
+      nav: { up: { scene: "hallway" }, down: { scene: "utilities" } },
+      alt: "大厅场景，四个门洞分别通往客厅、厨房、储物间和洗衣房，右侧楼梯通往楼上走廊",
+      stage: "images/舞台35-大厅-1.jpg",
+      hotspots: [
+        { portal: "livingroom", x: 3.1, y: 14.9, wd: 15, ht: 69 },
+        { portal: "kitchen", x: 33, y: 24.2, wd: 7, ht: 39.4 },
+        { portal: "garage", x: 85, y: 17.3, wd: 13, ht: 64 },
+        { portal: "laundry", x: 45.7, y: 26.3, wd: 10.8, ht: 34.1 },
+        { portal: "hallway", view: "全景", x: 60.5, y: 13.3, wd: 22.8, ht: 63.5 },
+        { w: 0, x: 22, y: 48, wd: 14, ht: 28 },
+        { w: 1, x: 24, y: 64, wd: 9, ht: 11 },
+        { w: 2, x: 47, y: 2, wd: 9, ht: 9 },
+        { w: 3, x: 71.2, y: 15.2, wd: 3.7, ht: 11.6 },
+        { w: 4, x: 28, y: 50, wd: 6, ht: 6 },
+        { w: 5, x: 87, y: 25, wd: 9, ht: 28 }
+      ],
+      words: [
+        { terms: { en: "entry table", zh: "玄关条案" }, reading: { en: "/ˈentri ˌteɪbl/", zh: "xuán guān tiáo àn" }, sen: { en: "She dropped her keys on the entry table by the door.", zh: "她把钥匙放在门边的玄关条案上。" }, note: { zh: "靠墙窄长木桌" } },
+        { terms: { en: "wicker basket", zh: "藤篮" }, reading: { en: "/ˈwɪkər ˈbæskɪt/", zh: "téng lán" }, sen: { en: "A wicker basket sits under the entry table, holding spare blankets.", zh: "一个藤篮放在玄关条案下面，装着备用毯子。" }, note: { zh: "条案下的编织篮" } },
+        { terms: { en: "ceiling light", zh: "吸顶灯" }, reading: { en: "/ˈsiːlɪŋ ˌlaɪt/", zh: "xī dǐng dēng" }, sen: { en: "The ceiling light glows softly above the front hall.", zh: "吸顶灯在前厅上方柔和地亮着。" }, note: { zh: "天花圆罩灯" } },
+        { terms: { en: "landscape painting", zh: "风景画" }, reading: { en: "/ˈlændskeɪp ˌpeɪntɪŋ/", zh: "fēng jǐng huà" }, sen: { en: "A small landscape painting hangs on the wall beside the staircase.", zh: "一幅小小的风景画挂在楼梯旁的墙上。" }, note: { zh: "楼梯旁墙上挂画" } },
+        { terms: { en: "ceramic bowl", zh: "陶瓷碗" }, reading: { en: "/səˈræmɪk boʊl/", zh: "táo cí wǎn" }, sen: { en: "A ceramic bowl on the entry table catches loose coins and keys.", zh: "玄关条案上的陶瓷碗用来盛零钱和钥匙。" }, note: { zh: "条案上装饰碗" } },
+        { terms: { en: "shelving unit", zh: "置物架" }, reading: { en: "/ˈʃelvɪŋ ˌjuːnɪt/", zh: "zhì wù jià" }, sen: { en: "Moving boxes are stacked on the metal shelving unit in the storage room.", zh: "储物间里的金属置物架上堆着搬家纸箱。" }, note: { zh: "储物间门洞里的金属层架" } }
+      ]
+    },
+{
       sceneCode: "08",
       sceneNames: { zh: "车库", en: "Garage" },
       sceneId: "garage",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "entryway", view: "大厅" } }, // 2026-07-19 房间回程改单⬇️：仿商店⬇回街约定，回程走箭头不走 portal；汽车仍走 portal
       image: "images/场景08-车库-1.jpg",
       alt: "美式车库全景图，标注20个物品名称",
       stage: "images/舞台08-车库-1.jpg",
@@ -2491,9 +2657,10 @@
         { panel: "garage-workbench", x: 15.5, y: 64.5, wd: 66, ht: 34.5 },
         { w: 1, x: 9.5, y: 29, wd: 3.5, ht: 6.5 },
         { w: 2, x: 18.5, y: 50.5, wd: 16, ht: 20 },
-        { w: 3, x: 71, y: 81, wd: 6, ht: 9.5 },
+        { w: 3, x: 71.4, y: 80.2, wd: 6, ht: 9.5 },
         { w: 4, x: 0.5, y: 37.5, wd: 15, ht: 46.5 },
-        { w: 5, x: 80, y: 45, wd: 19.5, ht: 44 }
+        { w: 5, x: 80, y: 45, wd: 19.5, ht: 44 },
+        { portal: "car", x: 86, y: 2.5, wd: 13, ht: 42 }
       ],
       words: [
         { terms: { en: "garage door", zh: "车库门" }, reading: { en: "/ɡəˈrɑːʒ ˌdɔːr/", zh: "chē kù mén" }, sen: { en: "I open the garage door before I drive out.", zh: "我开车前先打开车库门。" }, note: { zh: "garage 美音重音在后" } },
@@ -2554,6 +2721,7 @@
       sceneId: "backyard",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "exterior" } }, // 2026-07-19 用户拍板：后院不连厨房，双向断开，只留↓回房屋外观
       image: "images/场景12-后院-1.jpg",
       alt: "美式后院全景图，标注20个物品名称",
       stage: "images/舞台12-后院-1.jpg",
@@ -2608,32 +2776,35 @@
       sceneId: "exterior",
       section: "房子",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "neighborhood" } }, // 2026-07-19 户外主干改环：⬇回住宅街走箭头不走 portal；玄关/汽车/后院仍走 portal
       image: "images/场景13-房屋外观-1.jpg",
       alt: "美式独栋住宅正面全景图，标注20个部件名称",
       stage: "images/舞台13-房屋外观-1.jpg",
       hotspots: [
         { w: 17, x: 1, y: 70, wd: 98, ht: 29 },
-        { w: 0, x: 19, y: 14, wd: 14, ht: 8 },
-        { w: 6, x: 14, y: 40, wd: 61.5, ht: 31.5 },
-        { w: 11, x: 79, y: 70.5, wd: 20.5, ht: 29 },
+        { w: 0, x: 19.7, y: 12.1, wd: 18.9, ht: 11 },
+        { w: 6, x: 13, y: 40, wd: 30.5, ht: 31.5 },
+        { w: 6, x: 54, y: 40, wd: 22, ht: 31.5 },
+        { w: 11, x: 77.5, y: 70.5, wd: 22, ht: 29 },
         { w: 10, x: 38.5, y: 78, wd: 19, ht: 21.5 },
         { w: 1, x: 60, y: 13, wd: 17, ht: 9 },
         { w: 2, x: 19, y: 4, wd: 5.5, ht: 9 },
-        { w: 3, x: 50, y: 24, wd: 19, ht: 3 },
+        { w: 3, x: 58.7, y: 23.3, wd: 19, ht: 3 },
         { w: 4, x: 74.5, y: 26, wd: 3, ht: 47 },
-        { w: 5, x: 46, y: 19, wd: 6, ht: 7 },
+        { w: 5, x: 47.2, y: 16.5, wd: 4.9, ht: 5.6 },
         { w: 7, x: 53, y: 51.5, wd: 3, ht: 7 },
         { w: 8, x: 17.5, y: 62.5, wd: 21, ht: 7.5 },
         { w: 9, x: 41.5, y: 70, wd: 15.5, ht: 8 },
         { w: 12, x: 86.5, y: 70.5, wd: 10.5, ht: 28.5 },
-        { w: 13, x: 20, y: 35, wd: 7, ht: 7 },
-        { w: 14, x: 35.5, y: 29, wd: 3.5, ht: 10 },
-        { w: 15, x: 28, y: 55.5, wd: 10.5, ht: 9 },
+        { w: 13, x: 20, y: 26.4, wd: 6.6, ht: 13.5 },
+        { w: 14, x: 33.9, y: 27.1, wd: 3, ht: 11.6 },
+        { w: 15, x: 26.8, y: 52.6, wd: 10.5, ht: 9 },
         { w: 16, x: 59, y: 60, wd: 10.5, ht: 7.5 },
         { w: 18, x: 33.5, y: 79, wd: 6.5, ht: 18 },
-        { w: 19, x: 19, y: 51.5, wd: 6.5, ht: 17 },
-        { portal: "entryway", x: 45.5, y: 50.5, wd: 8, ht: 22.5 },
-        { portal: "car", x: 81, y: 63, wd: 18, ht: 15 }
+        { w: 19, x: 20.2, y: 51.3, wd: 6.5, ht: 17 },
+        { portal: "entryway", x: 45.5, y: 50.5, wd: 7.3, ht: 20.2 },
+        { portal: "car", x: 81, y: 63, wd: 18, ht: 15 },
+        { portal: "backyard", x: 1, y: 39, wd: 11, ht: 32.1 }
       ],
       words: [
         { terms: { en: "roof", zh: "屋顶" }, reading: { en: "/ruːf/", zh: "wū dǐng" }, sen: { en: "Snow covers the roof this morning.", zh: "今早雪盖满了屋顶。" }, note: { zh: "" } },
@@ -2664,6 +2835,7 @@
       sceneId: "car",
       section: "交通",
       viewNames: { zh: "总览", en: "Overview" },
+      nav: { up: { scene: "garage" }, down: { scene: "exterior" } },
       image: "images/场景01-汽车-1.jpg",
       alt: "汽车总览图，标注10个外观部件名称",
       stage: "images/舞台01-汽车-1.jpg",
@@ -2699,6 +2871,7 @@
       sceneId: "car",
       section: "交通",
       viewNames: { zh: "驾驶位视角", en: "Driver's view" },
+      nav: { up: { scene: "garage" }, down: { scene: "exterior" } },
       image: "images/场景01-汽车-2.jpg",
       alt: "驾驶位第一人称视角图，标注30个部件名称",
       stage: "images/舞台01-汽车-2.jpg",
@@ -2722,7 +2895,7 @@
         { w: 15, x: 29, y: 49, wd: 8, ht: 13 },
         { panel: "car-dashboard", x: 25, y: 34, wd: 18, ht: 15 },
         { panel: "car-console", x: 50, y: 66, wd: 22, ht: 33 },
-        { panel: "car-pedals", x: 22, y: 75, wd: 26, ht: 24 }
+        { panel: "car-pedals", x: 21.8, y: 73, wd: 26, ht: 13.9 }
       ],
       words: [
         { terms: { en: "ignition", zh: "点火开关" }, reading: { en: "/ɪɡˈnɪʃn/", zh: "diǎn huǒ kāi guān" }, sen: { en: "I turn the key in the ignition.", zh: "我转动点火开关的钥匙。" }, note: { zh: "turn on the ignition" } },
@@ -2821,6 +2994,7 @@
       sceneId: "car",
       section: "交通",
       viewNames: { zh: "引擎盖维修视角", en: "Under the hood" },
+      nav: { up: { scene: "garage" }, down: { scene: "exterior" } },
       image: "images/场景01-汽车-3.jpg",
       alt: "引擎盖打开的发动机舱与随车工具图，标注20个部件名称",
       stage: "images/舞台01-汽车-3.jpg",
@@ -2842,8 +3016,8 @@
         { w: 7, x: 21, y: 44, wd: 8, ht: 12 },
         { w: 5, x: 44, y: 42.5, wd: 4.5, ht: 10 },
         { w: 4, x: 32, y: 39.5, wd: 5, ht: 6 },
-        { w: 8, x: 53.5, y: 72.5, wd: 7, ht: 7 },
-        { w: 19, x: 36, y: 76.5, wd: 11, ht: 11 },
+        { w: 8, x: 54.5, y: 72.4, wd: 7, ht: 7 },
+        { w: 19, x: 37.2, y: 75.8, wd: 11, ht: 11 },
         { w: 18, x: 76.5, y: 87.5, wd: 12, ht: 11 }
       ],
       words: [
@@ -2875,6 +3049,7 @@
       sceneId: "car",
       section: "交通",
       viewNames: { zh: "外部侧方视角", en: "Exterior" },
+      nav: { up: { scene: "garage" }, down: { scene: "exterior" } },
       image: "images/场景01-汽车-4.jpg",
       alt: "汽车侧后方45度车身外观图，标注20个部件名称",
       stage: "images/舞台01-汽车-4.jpg",
@@ -2929,19 +3104,20 @@
       sceneId: "neighborhood",
       section: "交通",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { left: { scene: "southplaza" }, right: { scene: "street" } }, // 2026-07-19 户外主干改5节点←→循环环
       alt: "住宅街场景，标注8个物体名称",
       stage: "images/舞台29-住宅街-1.jpg",
       hotspots: [
-        { w: 0, x: 0.5, y: 56, wd: 42, ht: 43 },
+        { w: 0, x: -0.3, y: 44.1, wd: 42, ht: 56.1 },
         { w: 1, x: 14, y: 29, wd: 14, ht: 17 },
         { w: 2, x: 20.5, y: 15, wd: 6.5, ht: 16 },
         { w: 3, x: 15, y: 44.5, wd: 6, ht: 14 },
-        { w: 4, x: 3.5, y: 43, wd: 8.5, ht: 18 },
-        { w: 5, x: 72, y: 60, wd: 16, ht: 30 },
+        { w: 4, x: 3.4, y: 46.3, wd: 8.5, ht: 14.7 },
+        { w: 5, x: 72, y: 61.1, wd: 16, ht: 30 },
         { w: 6, x: 77, y: 52, wd: 23, ht: 9 },
-        { w: 7, x: 41, y: 64, wd: 12, ht: 22 },
+        { w: 7, x: 39.1, y: 72.7, wd: 10.2, ht: 12.7 },
         { portal: "exterior", x: 29.5, y: 19, wd: 7.5, ht: 26 },
-        { portal: "street", x: 83, y: 11, wd: 16, ht: 30 }
+        { portal: "gasstation", x: 83, y: 11, wd: 16, ht: 30 }
       ],
       words: [
         { terms: { en: "picket fence", zh: "尖桩栅栏" }, reading: { en: "/ˈpɪkɪt fens/", zh: "jiān zhuāng zhà lán" }, sen: { en: "A white picket fence runs along the neighbor's yard.", zh: "一道白色尖桩栅栏沿着邻居家的院子延伸。" }, note: { zh: "邻居院子常见的白色尖桩栅栏" } },
@@ -2951,7 +3127,7 @@
         { terms: { en: "birdbath", zh: "鸟浴盆" }, reading: { en: "/ˈbɜːrdbæθ/", zh: "niǎo yù pén" }, sen: { en: "Sparrows splash around in the birdbath every morning.", zh: "每天早上麻雀都在鸟浴盆里扑腾洗澡。" }, note: { zh: "供鸟饮水洗浴的立柱式浅盆" } },
         { terms: { en: "recycling bin", zh: "回收桶" }, reading: { en: "/riːˈsaɪklɪŋ bɪn/", zh: "huí shōu tǒng" }, sen: { en: "We put the bottles and cans in the recycling bin.", zh: "我们把瓶子和罐子都放进回收桶。" }, note: { zh: "路缘可回收垃圾桶" } },
         { terms: { en: "speed bump", zh: "减速带" }, reading: { en: "/ˈspiːd bʌmp/", zh: "jiǎn sù dài" }, sen: { en: "The car slowed down to cross the speed bump.", zh: "汽车放慢速度通过了减速带。" }, note: { zh: "路面隆起的减速设施" } },
-        { terms: { en: "dog", zh: "狗" }, reading: { en: "/dɔːɡ/", zh: "gǒu" }, sen: { en: "They walk their dog around the block every evening.", zh: "他们每天傍晚都牵着狗绕街区散步。" }, note: { zh: "图中热区=柯基犬 Biscuit（红项圈，牵绳散步中）" } }
+        { terms: { en: "dog", zh: "狗" }, reading: { en: "/dɔːɡ/", zh: "gǒu" }, sen: { en: "They walk their dog around the block every evening.", zh: "他们每天傍晚都牵着狗绕街区散步。" }, note: { zh: "图中热区=腊肠狗 Biscuit（红项圈，牵绳散步中）" } }
       ]
     },
 {
@@ -2960,30 +3136,32 @@
       sceneId: "street",
       section: "交通",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { left: { scene: "neighborhood" }, right: { scene: "mainstreet" } }, // 2026-07-19 户外主干改5节点←→循环环
       image: "images/场景15-街道路口-1.jpg",
       alt: "美式小镇十字路口全景图，标注20个物品名称",
       stage: "images/舞台15-街道路口-1.jpg",
       hotspots: [
-        { w: 0, x: 8, y: 62, wd: 92, ht: 38 },
+        { w: 0, x: 14.5, y: 73.2, wd: 85.5, ht: 26.8 },
         { w: 12, x: 0, y: 0.5, wd: 52, ht: 8 },
         { w: 14, x: 0, y: 35.5, wd: 13.5, ht: 21 },
         { w: 11, x: 18.5, y: 1, wd: 4, ht: 55 },
         { w: 19, x: 83.5, y: 4.5, wd: 15, ht: 15.5 },
         { w: 7, x: 28, y: 29, wd: 34, ht: 62 },
-        { w: 3, x: 56.5, y: 7.5, wd: 7, ht: 18 },
+        { w: 3, x: 56.9, y: 8.7, wd: 4.8, ht: 16.8 },
         { w: 4, x: 73.5, y: 18.5, wd: 9, ht: 14 },
         { w: 18, x: 63, y: 32.5, wd: 14.5, ht: 8 },
-        { w: 15, x: 62.5, y: 44.5, wd: 10.5, ht: 16 },
+        { w: 15, x: 81.8, y: 45, wd: 3.4, ht: 16 },
         { w: 17, x: 14, y: 46, wd: 12, ht: 13 },
         { w: 13, x: 14.5, y: 27.5, wd: 5, ht: 22 },
         { w: 8, x: 3.5, y: 56.5, wd: 15.5, ht: 11 },
-        { w: 2, x: 60, y: 57.5, wd: 18, ht: 6.5 },
-        { w: 9, x: 80.5, y: 71.5, wd: 10, ht: 9.5 },
-        { w: 10, x: 13, y: 87.5, wd: 9.5, ht: 9 },
+        { w: 2, x: 7.2, y: 66.5, wd: 7, ht: 18.4 },
+        { w: 9, x: 85.1, y: 73.6, wd: 10, ht: 4.9 },
+        { w: 10, x: 15, y: 87.3, wd: 9.5, ht: 9 },
         { w: 1, x: 0, y: 84, wd: 13, ht: 11 },
         { w: 16, x: 78.5, y: 32.5, wd: 5, ht: 8 },
         { w: 5, x: 69.5, y: 13.5, wd: 6.5, ht: 5 },
-        { w: 6, x: 20.5, y: 10.5, wd: 9.5, ht: 6 }
+        { w: 6, x: 20.5, y: 10.5, wd: 9.5, ht: 6 },
+        { portal: "station", x: 2, y: 42, wd: 10, ht: 14 }
       ],
       words: [
         { terms: { en: "crosswalk", zh: "斑马线" }, reading: { en: "/ˈkrɔːswɔːk/", zh: "bān mǎ xiàn" }, sen: { en: "I wait for cars before crossing the crosswalk.", zh: "过斑马线前我会先看看车。" }, note: { zh: "美式；英式 zebra crossing" } },
@@ -3014,6 +3192,7 @@
       sceneId: "gasstation",
       section: "交通",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "neighborhood" } }, // 2026-07-19 加⬇回住宅街，入口 portal(neighborhood→gasstation)不动
       image: "images/场景16-加油站-1.jpg",
       alt: "美式自助加油站全景图，标注20个物品名称",
       stage: "images/舞台16-加油站-1.jpg",
@@ -3034,12 +3213,12 @@
         { w: 16, x: 43.5, y: 39, wd: 7, ht: 6.5 },
         { w: 10, x: 63.5, y: 60.5, wd: 9, ht: 11 },
         { w: 3, x: 87.5, y: 46, wd: 3.5, ht: 10.5 },
-        { w: 1, x: 20.5, y: 57, wd: 6, ht: 9 },
+        { w: 1, x: 20.5, y: 57, wd: 5.1, ht: 7 },
         { w: 2, x: 42.5, y: 48.5, wd: 6, ht: 8 },
         { w: 14, x: 86.5, y: 3.5, wd: 5.5, ht: 7 },
-        { w: 11, x: 55.5, y: 71.5, wd: 4.5, ht: 17 },
-        { w: 20, x: 80.5, y: 66.5, wd: 10.5, ht: 27 },
-        { panel: "washstation", x: 81, y: 65, wd: 10, ht: 11 }
+        { w: 11, x: 55.5, y: 69, wd: 4.5, ht: 19.5 },
+        { w: 20, x: 80.3, y: 67.6, wd: 10.5, ht: 4.3 },
+        { panel: "washstation", x: 80.4, y: 65.8, wd: 10, ht: 29.1 }
       ],
       words: [
         { terms: { en: "gas pump", zh: "加油机" }, reading: { en: "/ˈɡæs pʌmp/", zh: "jiā yóu jī" }, sen: { en: "I stop the car next to the gas pump.", zh: "我把车停在加油机旁边。" }, note: { zh: "" } },
@@ -3090,19 +3269,19 @@
       sceneId: "mainstreet",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { left: { scene: "street" }, right: { scene: "marketstreet" } }, // 2026-07-19 户外主干改5节点←→循环环
       alt: "商业街北场景，标注6个物体名称",
       stage: "images/舞台30-商业街北-1.jpg",
       hotspots: [
         { w: 0, x: 76, y: 49, wd: 8, ht: 14 },
-        { w: 1, x: 0.5, y: 49, wd: 13.5, ht: 30 },
+        { w: 1, x: 1.7, y: 49, wd: 13.3, ht: 30 },
         { w: 2, x: 29.5, y: 33.5, wd: 11, ht: 19.5 },
-        { w: 3, x: 66, y: 21, wd: 9, ht: 15 },
-        { w: 4, x: 52, y: 77, wd: 46, ht: 22 },
+        { w: 3, x: 67.1, y: 23.9, wd: 7.6, ht: 11.6 },
+        { w: 4, x: 45.3, y: 69.9, wd: 46, ht: 22 },
         { w: 5, x: 52, y: 60, wd: 34, ht: 30 },
-        { portal: "supermarket", x: 16.5, y: 33, wd: 11, ht: 24 },
-        { portal: "diner", x: 54.5, y: 33, wd: 8, ht: 26 },
-        { portal: "coffeeshop", x: 83.5, y: 35, wd: 7, ht: 22 },
-        { portal: "street", x: 0, y: 84, wd: 14, ht: 16 }
+        { portal: "supermarket", x: 17.9, y: 37.1, wd: 12.8, ht: 24 },
+        { portal: "diner", x: 54.5, y: 33, wd: 6.5, ht: 21.9 },
+        { portal: "coffeeshop", x: 83.5, y: 35, wd: 6.3, ht: 19.4 }
       ],
       words: [
         { terms: { en: "sandwich board", zh: "A字广告板" }, reading: { en: "/ˈsænwɪtʃ bɔːrd/", zh: "A zì guǎng gào bǎn" }, sen: { en: "A sandwich board outside the café shows today's specials.", zh: "咖啡店门口的A字广告板写着今日特饮。" }, note: { zh: "咖啡店门口人字形广告牌，板面画色块无字" } },
@@ -3119,6 +3298,7 @@
       sceneId: "supermarket",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "mainstreet" } }, // 2026-07-19 商店单⬇️回街：隐藏 ↑ 和乱跳的店间 ←→，只留一个⬇️
       image: "images/场景07-超市-1.jpg",
       alt: "美式超市全景图，标注20个商品名称",
       stage: "images/舞台07-超市-1.jpg",
@@ -3144,7 +3324,7 @@
           names: { zh: "结账台", en: "Checkout" },
           stage: "images/舞台07-超市-面板1.jpg",
           hotspots: [
-            { w: 1, x: 0, y: 41, wd: 100, ht: 59 },
+            { w: 1, x: 27, y: 48, wd: 58, ht: 39 },
             { w: 0, x: 63, y: 5, wd: 35, ht: 50 },
             { w: 6, x: 77, y: 31, wd: 16, ht: 25 },
             { w: 3, x: 14, y: 65, wd: 11, ht: 23 },
@@ -3180,11 +3360,150 @@
       ]
     },
 {
+      sceneCode: "07",
+      sceneNames: { zh: "超市", en: "Supermarket" },
+      sceneId: "supermarket",
+      section: "外出",
+      viewNames: { zh: "蔬菜区", en: "Produce" },
+      nav: {}, // 2026-07-19 超市分区：空 nav 隐藏⬆⬇；←→ 走同 sceneId 视角循环（全景→蔬菜区→肉区→零食区→生活用品区→调料区）
+      alt: "超市蔬菜区场景，标注7个物体名称",
+      stage: "images/舞台42-超市蔬菜区-1.jpg",
+      hotspots: [
+        { w: 0, x: 0, y: 10, wd: 11, ht: 23 },
+        { w: 1, x: 20, y: 20, wd: 12, ht: 11 },
+        { w: 2, x: 40, y: 43, wd: 14, ht: 13 },
+        { w: 3, x: 65, y: 79, wd: 15, ht: 18 },
+        { w: 4, x: 6, y: 43, wd: 15, ht: 26 },
+        { w: 5, x: 71, y: 18, wd: 10, ht: 12 },
+        { w: 6, x: 88, y: 38, wd: 12, ht: 18 }
+      ],
+      words: [
+        { terms: { en: "leafy greens", zh: "绿叶菜" }, reading: { en: "/ˈliːfi ɡriːnz/", zh: "lǜ yè cài" }, sen: { en: "The leafy greens are misted every few minutes to stay fresh.", zh: "这些绿叶菜每隔几分钟就会喷一次水保鲜。" }, note: { zh: "货架顶部有喷雾装置给绿叶菜保鲜" } },
+        { terms: { en: "carrot", zh: "胡萝卜" }, reading: { en: "/ˈkærət/", zh: "hú luó bo" }, sen: { en: "I toss a bunch of carrots into my cart.", zh: "我往购物车里扔了一把胡萝卜。" }, note: { zh: "" } },
+        { terms: { en: "bell peppers", zh: "甜椒" }, reading: { en: "/bel ˈpepərz/", zh: "tián jiāo" }, sen: { en: "The bell peppers come in red, yellow, and green.", zh: "甜椒有红、黄、绿三种颜色。" }, note: { zh: "" } },
+        { terms: { en: "garlic", zh: "大蒜" }, reading: { en: "/ˈɡɑːrlɪk/", zh: "dà suàn" }, sen: { en: "I grab a few heads of garlic from the basket.", zh: "我从篮子里拿了几头大蒜。" }, note: { zh: "" } },
+        { terms: { en: "produce scale", zh: "果蔬秤" }, reading: { en: "/ˈproʊduːs skeɪl/", zh: "guǒ shū chèng" }, sen: { en: "I weigh the apples on the produce scale before bagging them.", zh: "我先在果蔬秤上称了苹果，再装袋。" }, note: { zh: "生鲜区自助称重用的秤，和结账区的电子秤是同款不同处" } },
+        { terms: { en: "watermelon", zh: "西瓜" }, reading: { en: "/ˈwɔːtərˌmelən/", zh: "xī guā" }, sen: { en: "A whole watermelon is too heavy for one bag.", zh: "一整个西瓜一个袋子装不下。" }, note: { zh: "" } },
+        { terms: { en: "pineapple", zh: "菠萝" }, reading: { en: "/ˈpaɪnæpl/", zh: "bō luó" }, sen: { en: "The pineapple's spiky crown pokes out of the cart.", zh: "菠萝带刺的顶冠从购物车里探出来。" }, note: { zh: "" } }
+      ]
+    },
+{
+      sceneCode: "07",
+      sceneNames: { zh: "超市", en: "Supermarket" },
+      sceneId: "supermarket",
+      section: "外出",
+      viewNames: { zh: "肉区", en: "Meat" },
+      nav: {}, // 2026-07-19 超市分区：空 nav 隐藏⬆⬇；←→ 走同 sceneId 视角循环
+      alt: "超市肉区场景，标注7个物体名称",
+      stage: "images/舞台43-超市肉区-1.jpg",
+      hotspots: [
+        { w: 0, x: 65, y: 8, wd: 8, ht: 30 },
+        { w: 1, x: 64, y: 43, wd: 36, ht: 18 },
+        { w: 2, x: 80, y: 0, wd: 13, ht: 41 },
+        { w: 3, x: 9, y: 13, wd: 9, ht: 12 },
+        { w: 4, x: 20, y: 28, wd: 12, ht: 12 },
+        { w: 5, x: 37, y: 28, wd: 12, ht: 12 },
+        { w: 6, x: 0, y: 53, wd: 9, ht: 16 }
+      ],
+      words: [
+        { terms: { en: "meat display case", zh: "肉类冷柜" }, reading: { en: "/miːt dɪˈspleɪ keɪs/", zh: "ròu lèi lěng guì" }, sen: { en: "Steaks and chicken breasts line the meat display case.", zh: "牛排和鸡胸肉整齐地摆在肉类冷柜里。" }, note: { zh: "带弧形侧板的开放式冷藏陈列柜" } },
+        { terms: { en: "glass display case", zh: "玻璃展柜" }, reading: { en: "/ɡlæs dɪˈspleɪ keɪs/", zh: "bō lí zhǎn guì" }, sen: { en: "The butcher points out a cut inside the glass display case.", zh: "肉贩指了指玻璃展柜里的一块肉。" }, note: { zh: "柜台前带玻璃罩的近景展示柜，和后面的开放冷柜是两处" } },
+        { terms: { en: "hanging scale", zh: "悬挂秤" }, reading: { en: "/ˈhæŋɪŋ skeɪl/", zh: "xuán guà chèng" }, sen: { en: "The butcher hangs the tray on the hanging scale to weigh it.", zh: "肉贩把托盘挂在悬挂秤上称重。" }, note: { zh: "从天花板垂下的圆盘秤，和别处的电子秤/果蔬秤是不同款" } },
+        { terms: { en: "meat tray", zh: "冷藏肉盒" }, reading: { en: "/miːt treɪ/", zh: "lěng cáng ròu hé" }, sen: { en: "Each meat tray is wrapped tight in plastic.", zh: "每个冷藏肉盒都用保鲜膜裹得严严实实。" }, note: { zh: "" } },
+        { terms: { en: "ground beef", zh: "牛肉糜" }, reading: { en: "/ɡraʊnd biːf/", zh: "niú ròu mí" }, sen: { en: "I need a pound of ground beef for the meatballs.", zh: "我要买一磅牛肉糜做肉丸。" }, note: { zh: "" } },
+        { terms: { en: "raw chicken", zh: "生鸡肉" }, reading: { en: "/rɔː ˈtʃɪkɪn/", zh: "shēng jī ròu" }, sen: { en: "Always wash your hands after touching raw chicken.", zh: "摸过生鸡肉后一定要洗手。" }, note: { zh: "" } },
+        { terms: { en: "salmon fillet", zh: "三文鱼柳" }, reading: { en: "/ˈsæmən fɪˈleɪ/", zh: "sān wén yú liǔ" }, sen: { en: "The salmon fillets are bright orange and boneless.", zh: "三文鱼柳颜色橙亮，已经去骨。" }, note: { zh: "salmon 的 l 不发音" } }
+      ]
+    },
+{
+      sceneCode: "07",
+      sceneNames: { zh: "超市", en: "Supermarket" },
+      sceneId: "supermarket",
+      section: "外出",
+      viewNames: { zh: "零食区", en: "Snacks" },
+      nav: {}, // 2026-07-19 超市分区：空 nav 隐藏⬆⬇；←→ 走同 sceneId 视角循环
+      alt: "超市零食区场景，标注6个物体名称",
+      stage: "images/舞台44-超市零食区-1.jpg",
+      hotspots: [
+        { w: 0, x: 8, y: 2, wd: 8, ht: 18 },
+        { w: 1, x: 12, y: 29, wd: 7, ht: 18 },
+        { w: 2, x: 33, y: 58, wd: 30, ht: 40 },
+        { w: 3, x: 0, y: 50, wd: 32, ht: 48 },
+        { w: 4, x: 44, y: 16, wd: 20, ht: 24 },
+        { w: 5, x: 53, y: 1, wd: 6, ht: 9 }
+      ],
+      words: [
+        { terms: { en: "chip bag", zh: "薯片袋" }, reading: { en: "/tʃɪp bæɡ/", zh: "shǔ piàn dài" }, sen: { en: "He grabs a chip bag off the top shelf.", zh: "他从最上层货架抓了一袋薯片。" }, note: { zh: "袋面只画薯片图案，不印字" } },
+        { terms: { en: "cookie box", zh: "饼干盒" }, reading: { en: "/ˈkʊki bɑːks/", zh: "bǐng gān hé" }, sen: { en: "She picks a cookie box with a picture of chocolate chip cookies.", zh: "她挑了一盒印着巧克力曲奇图案的饼干。" }, note: { zh: "" } },
+        { terms: { en: "snack aisle", zh: "零食过道" }, reading: { en: "/snæk aɪl/", zh: "líng shí guò dào" }, sen: { en: "The snack aisle stretches all the way to the back wall.", zh: "零食过道一路延伸到后墙。" }, note: { zh: "" } },
+        { terms: { en: "snack shelf", zh: "零食货架" }, reading: { en: "/snæk ʃelf/", zh: "líng shí huò jià" }, sen: { en: "Every snack shelf is packed edge to edge.", zh: "每一层零食货架都摆得满满当当。" }, note: { zh: "" } },
+        { terms: { en: "snack packaging", zh: "零食包装" }, reading: { en: "/snæk ˈpækɪdʒɪŋ/", zh: "líng shí bāo zhuāng" }, sen: { en: "The snack packaging comes in every color imaginable.", zh: "零食包装五颜六色，各种颜色都有。" }, note: { zh: "泛指货架上五花八门的包装，远处那一整面墙尤其明显" } },
+        { terms: { en: "pendant light", zh: "吊灯" }, reading: { en: "/ˈpendənt laɪt/", zh: "diào dēng" }, sen: { en: "A row of pendant lights hangs above the aisle.", zh: "一排吊灯悬在过道上方。" }, note: { zh: "" } }
+      ]
+    },
+{
+      sceneCode: "07",
+      sceneNames: { zh: "超市", en: "Supermarket" },
+      sceneId: "supermarket",
+      section: "外出",
+      viewNames: { zh: "生活用品区", en: "Household" },
+      nav: {}, // 2026-07-19 超市分区：空 nav 隐藏⬆⬇；←→ 走同 sceneId 视角循环
+      alt: "超市生活用品区场景，标注7个物体名称",
+      stage: "images/舞台45-超市生活用品区-1.jpg",
+      hotspots: [
+        { w: 0, x: 18, y: 2, wd: 12, ht: 17 },
+        { w: 1, x: 85, y: 6, wd: 15, ht: 17 },
+        { w: 2, x: 70, y: 25, wd: 12, ht: 13 },
+        { w: 3, x: 75, y: 41, wd: 14, ht: 13 },
+        { w: 4, x: 27, y: 66, wd: 14, ht: 12 },
+        { w: 5, x: 2, y: 57, wd: 15, ht: 12 },
+        { w: 6, x: 75, y: 62, wd: 20, ht: 33 }
+      ],
+      words: [
+        { terms: { en: "paper towels", zh: "厨房纸" }, reading: { en: "/ˈpeɪpər ˈtaʊəlz/", zh: "chú fáng zhǐ" }, sen: { en: "I stock up on paper towels for the kitchen.", zh: "我囤了些厨房纸备用。" }, note: { zh: "" } },
+        { terms: { en: "cleaning spray", zh: "清洁喷雾" }, reading: { en: "/ˈkliːnɪŋ spreɪ/", zh: "qīng jié pēn wù" }, sen: { en: "A bottle of cleaning spray sits next to the sponges.", zh: "一瓶清洁喷雾摆在海绵旁边。" }, note: { zh: "" } },
+        { terms: { en: "trash bag roll", zh: "垃圾袋卷" }, reading: { en: "/træʃ bæɡ roʊl/", zh: "lā jī dài juǎn" }, sen: { en: "I pick a trash bag roll that fits our kitchen bin.", zh: "我挑了一卷适合厨房垃圾桶的垃圾袋。" }, note: { zh: "" } },
+        { terms: { en: "dish sponge", zh: "洗碗海绵" }, reading: { en: "/dɪʃ spʌndʒ/", zh: "xǐ wǎn hǎi mián" }, sen: { en: "A pack of dish sponges is on sale this week.", zh: "这周洗碗海绵在打折。" }, note: { zh: "" } },
+        { terms: { en: "storage bin", zh: "收纳箱" }, reading: { en: "/ˈstɔːrɪdʒ bɪn/", zh: "shōu nà xiāng" }, sen: { en: "We need a storage bin for the extra blankets.", zh: "我们需要一个收纳箱装多余的毯子。" }, note: { zh: "" } },
+        { terms: { en: "detergent bottle", zh: "洗衣液" }, reading: { en: "/dɪˈtɜːrdʒənt ˈbɑːtl/", zh: "xǐ yī yè" }, sen: { en: "I grab a detergent bottle with a built-in handle.", zh: "我拿了一瓶带手柄的洗衣液。" }, note: { zh: "" } },
+        { terms: { en: "whisk broom", zh: "小笤帚" }, reading: { en: "/wɪsk bruːm/", zh: "xiǎo tiáo zhou" }, sen: { en: "A whisk broom hangs by the dustpan section.", zh: "小笤帚挂在簸箕区旁边。" }, note: { zh: "带塑料套的小号短柄笤帚，常配簸箕使用" } }
+      ]
+    },
+{
+      sceneCode: "07",
+      sceneNames: { zh: "超市", en: "Supermarket" },
+      sceneId: "supermarket",
+      section: "外出",
+      viewNames: { zh: "调料区", en: "Condiments" },
+      nav: {}, // 2026-07-19 超市分区：空 nav 隐藏⬆⬇；←→ 走同 sceneId 视角循环
+      alt: "超市调料区场景，标注7个物体名称",
+      stage: "images/舞台46-超市调料区-1.jpg",
+      hotspots: [
+        { w: 0, x: 0, y: 7, wd: 15, ht: 18 },
+        { w: 1, x: 18, y: 11, wd: 14, ht: 13 },
+        { w: 2, x: 0, y: 47, wd: 19, ht: 23 },
+        { w: 3, x: 83, y: 33, wd: 17, ht: 17 },
+        { w: 4, x: 0, y: 27, wd: 20, ht: 13 },
+        { w: 5, x: 0, y: 82, wd: 25, ht: 18 },
+        { w: 6, x: 75, y: 2, wd: 13, ht: 12 }
+      ],
+      words: [
+        { terms: { en: "sauce bottle", zh: "酱料瓶" }, reading: { en: "/sɔːs ˈbɑːtl/", zh: "jiàng liào píng" }, sen: { en: "A row of sauce bottles lines the top shelf.", zh: "一排酱料瓶摆在最上层货架。" }, note: { zh: "" } },
+        { terms: { en: "spice jar", zh: "香料罐" }, reading: { en: "/spaɪs dʒɑːr/", zh: "xiāng liào guàn" }, sen: { en: "Each spice jar shows the seasoning through the glass.", zh: "每个香料罐都能透过玻璃看到里面的调料。" }, note: { zh: "" } },
+        { terms: { en: "hot sauce bottle", zh: "辣酱瓶" }, reading: { en: "/hɑːt sɔːs ˈbɑːtl/", zh: "là jiàng píng" }, sen: { en: "He squeezes the hot sauce bottle over his tacos.", zh: "他把辣酱瓶挤在墨西哥卷饼上。" }, note: { zh: "瓶口带尖锥挤压嘴，和普通酱料瓶的瓶盖不同" } },
+        { terms: { en: "vinegar bottle", zh: "醋瓶" }, reading: { en: "/ˈvɪnɪɡər ˈbɑːtl/", zh: "cù píng" }, sen: { en: "A tall vinegar bottle stands at the end of the row.", zh: "一瓶高高的醋瓶立在这排的末端。" }, note: { zh: "" } },
+        { terms: { en: "spice tin", zh: "香料铁罐" }, reading: { en: "/spaɪs tɪn/", zh: "xiāng liào tiě guàn" }, sen: { en: "The spice tin has a tight metal lid to keep it fresh.", zh: "香料铁罐带着紧实的金属盖，保持新鲜。" }, note: { zh: "矮圆柱形铁罐，和旁边玻璃香料罐是两种包装" } },
+        { terms: { en: "seasoning packet", zh: "调味包" }, reading: { en: "/ˈsiːzənɪŋ ˈpækɪt/", zh: "tiáo wèi bāo" }, sen: { en: "I toss a seasoning packet into the soup pot.", zh: "我往汤锅里扔了一包调味包。" }, note: { zh: "" } },
+        { terms: { en: "mason jar", zh: "广口瓶" }, reading: { en: "/ˈmeɪsn dʒɑːr/", zh: "guǎng kǒu píng" }, sen: { en: "Pickles are sold in a classic mason jar.", zh: "腌菜装在经典的广口瓶里出售。" }, note: { zh: "" } }
+      ]
+    },
+{
       sceneCode: "10",
       sceneNames: { zh: "餐厅", en: "Diner" },
       sceneId: "diner",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "mainstreet" } }, // 2026-07-19 商店单⬇️回街
       image: "images/场景10-餐厅-1.jpg",
       alt: "美式 diner 餐厅全景图，标注20个物品名称",
       stage: "images/舞台10-餐厅-1.jpg",
@@ -3239,16 +3558,17 @@
       sceneId: "coffeeshop",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "mainstreet" } }, // 2026-07-19 商店单⬇️回街
       image: "images/场景18-咖啡店-1.jpg",
       alt: "美式街角咖啡店全景图，标注20个物品名称",
       stage: "images/舞台18-咖啡店-1.jpg",
       hotspots: [
         { w: 6, x: 60, y: 24, wd: 39, ht: 51 },
-        { w: 13, x: 50, y: 1.5, wd: 26, ht: 20 },
+        { w: 13, x: 49.8, y: 1.8, wd: 26, ht: 20 },
         { w: 4, x: 77, y: 6.5, wd: 21, ht: 14 },
         { w: 0, x: 38, y: 6.5, wd: 15, ht: 43 },
         { w: 1, x: 18, y: 19, wd: 23, ht: 27 },
-        { w: 2, x: 52.5, y: 22, wd: 8, ht: 31 },
+        { w: 2, x: 52.8, y: 22.8, wd: 8, ht: 31 },
         { w: 7, x: 64, y: 29, wd: 15, ht: 13 },
         { w: 8, x: 77, y: 31, wd: 19, ht: 14 },
         { w: 9, x: 63.5, y: 45, wd: 20, ht: 17 },
@@ -3256,13 +3576,13 @@
         { w: 11, x: 63, y: 59, wd: 30, ht: 13 },
         { w: 3, x: 47, y: 46, wd: 10, ht: 12 },
         { w: 5, x: 34.5, y: 41.5, wd: 7, ht: 9 },
-        { w: 12, x: 83.3, y: 69.3, wd: 13.1, ht: 22.5 },
-        { w: 14, x: 16, y: 46.7, wd: 10, ht: 21.7 },
-        { w: 15, x: 25.7, y: 58.4, wd: 9.6, ht: 10.5 },
-        { w: 16, x: 35.5, y: 60, wd: 9.8, ht: 16.6 },
-        { w: 17, x: 45.3, y: 57.1, wd: 6.8, ht: 20 },
-        { w: 18, x: 52.1, y: 55.2, wd: 10.7, ht: 23.4 },
-        { w: 19, x: 62.8, y: 67.9, wd: 11.4, ht: 11.7 }
+        { w: 12, x: 83.3, y: 70.9, wd: 10.3, ht: 22.5 },
+        { w: 14, x: 16, y: 47.3, wd: 10, ht: 21.1 },
+        { w: 15, x: 25.7, y: 59.3, wd: 6.6, ht: 10.5 },
+        { w: 16, x: 32.2, y: 60.1, wd: 9.2, ht: 13.1 },
+        { w: 17, x: 43.4, y: 57.9, wd: 6.8, ht: 20 },
+        { w: 18, x: 51.4, y: 57.9, wd: 8.3, ht: 22.9 },
+        { w: 19, x: 61.2, y: 68, wd: 9.4, ht: 17.2 }
       ],
       words: [
         { terms: { en: "barista", zh: "咖啡师" }, reading: { en: "/bəˈriːstə/", zh: "kā fēi shī" }, sen: { en: "The barista makes my coffee quickly.", zh: "咖啡师很快就做好了我的咖啡。" }, note: { zh: "" } },
@@ -3293,6 +3613,7 @@
       sceneId: "marketstreet",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { left: { scene: "mainstreet" }, right: { scene: "southplaza" } }, // 2026-07-19 户外主干改5节点←→循环环
       alt: "商业街南场景，标注5个物体名称",
       stage: "images/舞台31-商业街南-1.jpg",
       hotspots: [
@@ -3301,11 +3622,11 @@
         { w: 2, x: 52, y: 64, wd: 34, ht: 35 },
         { w: 3, x: 58.5, y: 51.5, wd: 7, ht: 10 },
         { w: 4, x: 79.5, y: 1, wd: 14, ht: 37 },
-        { portal: "pharmacy", x: 9, y: 48, wd: 5.5, ht: 17 },
+        { portal: "pharmacy", x: 9, y: 49.5, wd: 5.5, ht: 17 },
         { portal: "postoffice", x: 40.5, y: 36, wd: 6.5, ht: 20 },
         { portal: "gym", x: 63, y: 37, wd: 4.5, ht: 19 },
-        { portal: "barbershop", x: 83, y: 50, wd: 5.5, ht: 18 },
-        { portal: "mall", x: 0.5, y: 1, wd: 18, ht: 20 },
+        { portal: "barbershop", x: 86.1, y: 46.4, wd: 5.5, ht: 18 },
+        { portal: "mall", x: 1, y: 4.5, wd: 18, ht: 20 },
         { portal: "clinic", x: 54, y: 1, wd: 18, ht: 12 }
       ],
       words: [
@@ -3326,12 +3647,12 @@
       alt: "诊所候诊室图，标注7个物品名称",
       stage: "images/舞台20-诊所-1.jpg",
       hotspots: [
-        { w: 0, x: 18, y: 21, wd: 50, ht: 34 },
+        { w: 0, x: 18, y: 26.1, wd: 50, ht: 22.2 },
         { w: 4, x: 0, y: 53, wd: 23, ht: 44 },
         { w: 5, x: 3.5, y: 26, wd: 11, ht: 37 },
-        { w: 6, x: 55, y: 2, wd: 10.5, ht: 20 },
+        { w: 6, x: 55.3, y: 3.3, wd: 10.5, ht: 20 },
         { w: 1, x: 35, y: 6.5, wd: 10.5, ht: 24 },
-        { w: 3, x: 66, y: 76, wd: 19, ht: 16 },
+        { w: 3, x: 67.1, y: 73.3, wd: 19, ht: 16 },
         { w: 2, x: 24.5, y: 30.5, wd: 9.5, ht: 8 }
       ],
       words: [
@@ -3361,7 +3682,7 @@
         { w: 6, x: 25, y: 8, wd: 18, ht: 22 },
         { w: 3, x: 17, y: 59.5, wd: 19, ht: 25 },
         { w: 2, x: 46.5, y: 15, wd: 15, ht: 22 },
-        { panel: "tray", x: 68, y: 49, wd: 28, ht: 16 }
+        { panel: "tray", x: 67, y: 47.8, wd: 28, ht: 16 }
       ],
       words: [
         { terms: { en: "exam table", zh: "检查床" }, reading: { en: "/ɪɡˈzæm ˈteɪbl/", zh: "jiǎn chá chuáng" }, sen: { en: "I sit on the exam table.", zh: "我坐在检查床上。" }, note: { zh: "" } },
@@ -3408,6 +3729,7 @@
       sceneId: "pharmacy",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "marketstreet" } }, // 2026-07-19 商店单⬇️回街
       image: "images/场景19-药房-1.jpg",
       alt: "美式药房图，标注15个物品名称",
       stage: "images/舞台19-药房-1.jpg",
@@ -3424,7 +3746,7 @@
         { w: 0, x: 8, y: 15.5, wd: 16, ht: 31 },
         { w: 11, x: 91.5, y: 59.5, wd: 6.5, ht: 36 },
         { w: 9, x: 77, y: 44.5, wd: 6.5, ht: 11 },
-        { w: 8, x: 66, y: 42.5, wd: 11, ht: 10 },
+        { w: 8, x: 66, y: 43.1, wd: 11, ht: 10 },
         { w: 7, x: 55, y: 43.5, wd: 11, ht: 9 },
         { w: 13, x: 4, y: 36.5, wd: 5.5, ht: 14 }
       ],
@@ -3452,6 +3774,7 @@
       sceneId: "mall",
       section: "外出",
       viewNames: { zh: "中庭", en: "Atrium" },
+      nav: { down: { scene: "marketstreet" } }, // 2026-07-19 商店单⬇️回街
       image: "images/场景27-商场-1.jpg",
       alt: "商场中庭图，标注15个物品名称",
       stage: "images/舞台27-商场-1.jpg",
@@ -3460,18 +3783,19 @@
         { w: 0, x: 14, y: 29, wd: 31, ht: 43 },
         { w: 1, x: 66, y: 4, wd: 13, ht: 69 },
         { w: 5, x: 33, y: 16.5, wd: 33, ht: 23 },
-        { w: 6, x: 0.5, y: 28, wd: 14.5, ht: 26 },
+        { w: 6, x: -0.8, y: 9.1, wd: 14.5, ht: 26 },
         { w: 2, x: 40, y: 63, wd: 22, ht: 19 },
         { w: 13, x: 33, y: 76.5, wd: 29, ht: 16 },
-        { w: 3, x: 77.5, y: 65.5, wd: 9, ht: 31 },
+        { w: 3, x: 75.6, y: 63.5, wd: 9, ht: 31 },
         { w: 4, x: 13, y: 53, wd: 19, ht: 31 },
         { w: 8, x: 0, y: 59.5, wd: 9.5, ht: 35 },
         { w: 9, x: 9.5, y: 65.5, wd: 5.5, ht: 24 },
         { w: 10, x: 33, y: 57, wd: 6, ht: 21 },
-        { w: 11, x: 24, y: 35.5, wd: 4.5, ht: 9 },
+        { w: 11, x: 24, y: 35.5, wd: 3.4, ht: 7 },
         { w: 12, x: 58.5, y: 67.5, wd: 8.5, ht: 24 },
-        { w: 14, x: 85, y: 68.5, wd: 15, ht: 25 },
-        { portal: "clothingstore", x: 79, y: 44, wd: 21, ht: 21 }
+        { w: 14, x: 84.4, y: 64.2, wd: 15, ht: 25 },
+        { portal: "clothingstore", x: 79, y: 44, wd: 21, ht: 21 },
+        { portal: "foodcourt", x: 44, y: 19, wd: 12, ht: 14 }
       ],
       words: [
         { terms: { en: "escalator", zh: "自动扶梯" }, reading: { en: "/ˈeskəleɪtər/", zh: "zì dòng fú tī" }, sen: { en: "We ride the escalator to the second floor.", zh: "我们乘自动扶梯到二楼。" }, note: { zh: "" } },
@@ -3497,24 +3821,25 @@
       sceneId: "clothingstore",
       section: "外出",
       viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "mall" } }, // 2026-07-19 商店单⬇️回街：服装店在商场里，退回商场层
       image: "images/场景22-服装店-1.jpg",
       alt: "服装店内景图，标注13个物品名称",
       stage: "images/舞台22-服装店-1.jpg",
       hotspots: [
-        { w: 0, x: 60, y: 4, wd: 19, ht: 44 },
+        { w: 0, x: 67.7, y: 7.1, wd: 11.3, ht: 40.9 },
         { w: 1, x: 0.5, y: 4, wd: 21.5, ht: 42 },
         { w: 2, x: 0, y: 44, wd: 24, ht: 51 },
-        { w: 3, x: 48, y: 13, wd: 16, ht: 35 },
+        { w: 3, x: 50.6, y: 14.4, wd: 16, ht: 35 },
         { w: 8, x: 53, y: 49, wd: 25, ht: 46 },
-        { w: 7, x: 41, y: 26, wd: 11, ht: 52 },
-        { w: 4, x: 1, y: 50, wd: 12, ht: 30 },
+        { w: 7, x: 41, y: 34.3, wd: 11, ht: 43.7 },
+        { w: 4, x: 0, y: 54.7, wd: 12, ht: 30 },
         { w: 6, x: 13, y: 47, wd: 11, ht: 28 },
         { w: 5, x: 79, y: 6.5, wd: 19, ht: 16 },
-        { w: 9, x: 79, y: 23, wd: 15, ht: 11 },
-        { w: 10, x: 81, y: 48, wd: 17, ht: 16 },
-        { w: 11, x: 81, y: 65, wd: 19, ht: 30 },
-        { w: 12, x: 14, y: 21, wd: 6, ht: 10 },
-        { panel: "shoes", x: 29, y: 7, wd: 21, ht: 22 }
+        { w: 9, x: 79, y: 23, wd: 19.2, ht: 11 },
+        { w: 10, x: 80.5, y: 52.9, wd: 17, ht: 16 },
+        { w: 11, x: 79.3, y: 74.8, wd: 19, ht: 23.7 },
+        { w: 12, x: 14.4, y: 20.9, wd: 6, ht: 10 },
+        { panel: "shoes", x: 30.3, y: 7, wd: 19.7, ht: 20.1 }
       ],
       words: [
         { terms: { en: "fitting room", zh: "试衣间" }, reading: { en: "/ˈfɪtɪŋ ruːm/", zh: "shì yī jiān" }, sen: { en: "I try on jeans in the fitting room.", zh: "我在试衣间试穿牛仔裤。" }, note: { zh: "" } },
@@ -3564,27 +3889,28 @@
       sceneNames: { zh: "邮局", en: "Post Office" },
       sceneId: "postoffice",
       section: "外出",
+      nav: { down: { scene: "marketstreet" } }, // 2026-07-19 商店单⬇️回街
       image: "images/场景21-邮局-1.jpg",
       alt: "邮局场景，标注17个物体名称",
       stage: "images/舞台21-邮局-1.jpg",
       hotspots: [
-        { w: 0, x: 42, y: 30, wd: 17, ht: 20 },
-        { w: 1, x: 47, y: 30, wd: 11, ht: 8 },
-        { w: 2, x: 49, y: 44, wd: 15, ht: 9 },
-        { w: 3, x: 2, y: 64, wd: 12, ht: 16 },
+        { w: 0, x: 44, y: 27.6, wd: 17, ht: 20 },
+        { w: 1, x: 47.2, y: 29.7, wd: 8, ht: 3.9 },
+        { w: 2, x: 50.3, y: 42.4, wd: 15, ht: 9 },
+        { w: 3, x: 3.2, y: 62, wd: 12, ht: 16 },
         { w: 4, x: 14, y: 66, wd: 13, ht: 17 },
-        { w: 5, x: 26, y: 68, wd: 17, ht: 24 },
-        { w: 6, x: 0, y: 80, wd: 13, ht: 18 },
-        { w: 7, x: 42, y: 74, wd: 11, ht: 15 },
-        { w: 8, x: 52, y: 80, wd: 9, ht: 11 },
+        { w: 5, x: 26.8, y: 69.1, wd: 17, ht: 24 },
+        { w: 6, x: 2.9, y: 77.4, wd: 13, ht: 18 },
+        { w: 7, x: 46, y: 74, wd: 6.4, ht: 15 },
+        { w: 8, x: 52.8, y: 81.3, wd: 9, ht: 11 },
         { w: 9, x: 80, y: 32, wd: 10, ht: 12 },
-        { w: 10, x: 52, y: 66, wd: 20, ht: 18 },
-        { w: 11, x: 84, y: 61, wd: 10, ht: 30 },
-        { w: 12, x: 38, y: 2, wd: 26, ht: 20 },
-        { w: 13, x: 20, y: 26, wd: 12, ht: 27 },
-        { w: 14, x: 13, y: 18, wd: 7, ht: 13 },
+        { w: 10, x: 63, y: 63.9, wd: 15.1, ht: 18 },
+        { w: 11, x: 79.5, y: 60.4, wd: 10, ht: 30 },
+        { w: 12, x: 38.9, y: 2, wd: 22.5, ht: 7.1 },
+        { w: 13, x: 21.3, y: 17.9, wd: 9.4, ht: 31.3 },
+        { w: 14, x: 13.7, y: 18, wd: 7, ht: 13 },
         { w: 15, x: 0, y: 10, wd: 14, ht: 48 },
-        { w: 16, x: 54, y: 6, wd: 20, ht: 46 }
+        { w: 16, x: 54, y: 6.2, wd: 20, ht: 39.5 }
       ],
       words: [
         { terms: { en: "parcel", zh: "包裹" }, reading: { en: "/ˈpɑːrsl/", zh: "bāo guǒ" }, sen: { en: "The clerk weighed my parcel before printing the postage.", zh: "店员在打印邮资前先给我的包裹称了重。" }, note: { zh: "package 的正式/常用替代说法，寄件核心词（package 已被占用）" } },
@@ -3611,29 +3937,30 @@
       sceneNames: { zh: "健身房", en: "The Gym" },
       sceneId: "gym",
       section: "外出",
+      nav: { down: { scene: "marketstreet" } }, // 2026-07-19 商店单⬇️回街
       image: "images/场景23-健身房-1.jpg",
       alt: "健身房场景，标注18个物体名称",
       stage: "images/舞台23-健身房-1.jpg",
       hotspots: [
-        { w: 0, x: 3, y: 25, wd: 22, ht: 52 },
+        { w: 0, x: 2.9, y: 26.9, wd: 22, ht: 41.6 },
         { w: 1, x: 25, y: 33, wd: 13, ht: 38 },
         { w: 2, x: 35, y: 33, wd: 23, ht: 34 },
-        { w: 3, x: 45, y: 17, wd: 19, ht: 50 },
+        { w: 3, x: 45, y: 17, wd: 15.2, ht: 37.8 },
         { w: 4, x: 58, y: 15, wd: 13, ht: 25 },
-        { w: 5, x: 63, y: 33, wd: 20, ht: 10 },
-        { w: 6, x: 58, y: 42, wd: 17, ht: 22 },
-        { w: 7, x: 20, y: 72, wd: 9, ht: 20 },
-        { w: 8, x: 82, y: 34, wd: 15, ht: 34 },
-        { w: 9, x: 84, y: 40, wd: 12, ht: 20 },
-        { w: 10, x: 54, y: 64, wd: 38, ht: 32 },
-        { w: 11, x: 38, y: 72, wd: 10, ht: 17 },
-        { w: 12, x: 27, y: 74, wd: 11, ht: 12 },
-        { w: 13, x: 50, y: 78, wd: 10, ht: 8 },
-        { w: 14, x: 86, y: 4, wd: 13, ht: 17 },
-        { w: 15, x: 1, y: 4, wd: 32, ht: 60 },
-        { w: 16, x: 90, y: 28, wd: 9, ht: 20 },
-        { w: 17, x: 72, y: 6, wd: 18, ht: 52 },
-        { panel: "面板1-储物柜", x: 88, y: 26, wd: 10, ht: 22 }
+        { w: 5, x: 53.5, y: 30.7, wd: 20, ht: 10 },
+        { w: 6, x: 54.3, y: 41.6, wd: 11.5, ht: 9.4 },
+        { w: 7, x: 20, y: 72, wd: 6.9, ht: 15.7 },
+        { w: 8, x: 80.3, y: 38.1, wd: 15, ht: 23.3 },
+        { w: 9, x: 84, y: 40, wd: 12, ht: 12 },
+        { w: 10, x: 54.4, y: 68, wd: 38, ht: 16.8 },
+        { w: 11, x: 39.6, y: 72, wd: 8.4, ht: 11.8 },
+        { w: 12, x: 29.2, y: 76.5, wd: 11, ht: 12 },
+        { w: 13, x: 51.1, y: 79.4, wd: 10, ht: 8 },
+        { w: 14, x: 83.6, y: 6, wd: 13, ht: 7.5 },
+        { w: 15, x: 18, y: 8, wd: 14, ht: 26 },
+        { w: 16, x: 94, y: 28, wd: 5, ht: 14.5 },
+        { w: 17, x: 72, y: 6, wd: 10.8, ht: 38.1 },
+        { panel: "面板1-储物柜", x: 83, y: 26, wd: 6, ht: 18 }
       ],
       words: [
         { terms: { en: "treadmill", zh: "跑步机" }, reading: { en: "/ˈtredmɪl/", zh: "pǎo bù jī" }, sen: { en: "I ran three miles on the treadmill this morning.", zh: "今早我在跑步机上跑了三英里。" }, note: { zh: "有氧器械；口语可省作 the mill" } },
@@ -3684,23 +4011,24 @@
       sceneNames: { zh: "理发店", en: "The Barbershop" },
       sceneId: "barbershop",
       section: "外出",
+      nav: { down: { scene: "marketstreet" } }, // 2026-07-19 商店单⬇️回街
       image: "images/场景24-理发店-1.jpg",
       alt: "理发店场景，标注12个物体名称",
       stage: "images/舞台24-理发店-1.jpg",
       hotspots: [
         { w: 0, x: 44, y: 4, wd: 25, ht: 72 },
         { w: 1, x: 74, y: 2, wd: 8, ht: 28 },
-        { w: 2, x: 26, y: 32, wd: 26, ht: 58 },
-        { w: 3, x: 29, y: 33, wd: 25, ht: 45 },
-        { w: 4, x: 50, y: 40, wd: 17, ht: 35 },
+        { w: 2, x: 20.7, y: 34.6, wd: 26, ht: 58 },
+        { w: 3, x: 17.8, y: 32.3, wd: 25, ht: 45 },
+        { w: 4, x: 42.2, y: 27.1, wd: 10.6, ht: 30.3 },
         { w: 5, x: 38, y: 19, wd: 8, ht: 9 },
-        { w: 6, x: 63, y: 74, wd: 10, ht: 17 },
-        { w: 7, x: 72, y: 70, wd: 10, ht: 22 },
-        { w: 8, x: 55, y: 64, wd: 12, ht: 28 },
-        { w: 9, x: 84, y: 73, wd: 10, ht: 22 },
-        { w: 10, x: 74, y: 35, wd: 26, ht: 50 },
-        { w: 11, x: 30, y: 66, wd: 40, ht: 28 },
-        { panel: "面板1-工具台", x: 56, y: 64, wd: 44, ht: 34 }
+        { w: 6, x: 68.2, y: 79.9, wd: 5.1, ht: 13.9 },
+        { w: 7, x: 76.4, y: 77.5, wd: 7.4, ht: 18.2 },
+        { w: 8, x: 57.1, y: 65.6, wd: 9.5, ht: 24.3 },
+        { w: 9, x: 87.3, y: 73.1, wd: 6.9, ht: 22 },
+        { w: 10, x: 69.3, y: 33.6, wd: 26, ht: 29 },
+        { w: 11, x: 24.7, y: 79.1, wd: 26.4, ht: 9.9 },
+        { panel: "面板1-工具台", x: 60, y: 90, wd: 34, ht: 7 }
       ],
       words: [
         { terms: { en: "barber", zh: "理发师" }, reading: { en: "/ˈbɑːrbər/", zh: "lǐ fà shī" }, sen: { en: "The barber trimmed the sides with a quick, steady hand.", zh: "理发师手法又快又稳，修着两侧的头发。" }, note: { zh: "男士理发师；女士美发店多说 hairstylist" } },
@@ -3749,30 +4077,31 @@
       sceneNames: { zh: "公园", en: "Park & Playground" },
       sceneId: "park",
       section: "外出",
+      nav: { down: { scene: "southplaza" }, right: { scene: "dogpark" } }, // 2026-07-19 ⬇回南区广场；➡去宠物公园（与dogpark的⬅相互切换）
       image: "images/场景25-公园-1.jpg",
       alt: "公园场景，标注20个物体名称",
       stage: "images/舞台25-公园-1.jpg",
       hotspots: [
-        { w: 0, x: 2, y: 22, wd: 21, ht: 31 },
-        { w: 1, x: 43, y: 33, wd: 15, ht: 22 },
-        { w: 2, x: 59, y: 63, wd: 17, ht: 13 },
-        { w: 3, x: 26, y: 25, wd: 16, ht: 19 },
-        { w: 4, x: 61, y: 22, wd: 16, ht: 16 },
-        { w: 5, x: 42, y: 53, wd: 17, ht: 16 },
-        { w: 6, x: 37, y: 71, wd: 22, ht: 20 },
-        { w: 7, x: 62, y: 46, wd: 13, ht: 19 },
-        { w: 8, x: 72, y: 60, wd: 26, ht: 22 },
+        { w: 0, x: 3.4, y: 21.7, wd: 21, ht: 20.7 },
+        { w: 1, x: 43.1, y: 28.3, wd: 10.4, ht: 17.5 },
+        { w: 2, x: 60.5, y: 67.3, wd: 21.4, ht: 9.8 },
+        { w: 3, x: 26, y: 25, wd: 16, ht: 10.9 },
+        { w: 4, x: 61.4, y: 19.9, wd: 16, ht: 13 },
+        { w: 5, x: 42, y: 53, wd: 17, ht: 11.5 },
+        { w: 6, x: 41, y: 71, wd: 18, ht: 16 },
+        { w: 7, x: 62, y: 46, wd: 13, ht: 12.1 },
+        { w: 8, x: 73.6, y: 60, wd: 24.4, ht: 15.1 },
         { w: 9, x: 62, y: 75, wd: 9, ht: 15 },
-        { w: 10, x: 16, y: 45, wd: 8, ht: 13 },
+        { w: 10, x: 16, y: 45, wd: 6.2, ht: 16 },
         { w: 11, x: 85, y: 22, wd: 14, ht: 32 },
         { w: 12, x: 1, y: 52, wd: 16, ht: 16 },
-        { w: 13, x: 30, y: 64, wd: 15, ht: 8 },
+        { w: 13, x: 25.2, y: 65.6, wd: 15, ht: 8 },
         { w: 14, x: 0, y: 74, wd: 18, ht: 24 },
         { w: 15, x: 3, y: 83, wd: 11, ht: 9 },
         { w: 16, x: 27, y: 83, wd: 8, ht: 11 },
-        { w: 17, x: 90, y: 82, wd: 9, ht: 13 },
-        { w: 18, x: 81, y: 2, wd: 12, ht: 12 },
-        { w: 19, x: 78, y: 25, wd: 11, ht: 24 }
+        { w: 17, x: 88.5, y: 80.9, wd: 4.7, ht: 8.6 },
+        { w: 18, x: 81, y: 2, wd: 10.5, ht: 7.8 },
+        { w: 19, x: 77.6, y: 24.1, wd: 5.7, ht: 13.5 }
       ],
       words: [
         { terms: { en: "swing", zh: "秋千" }, reading: { en: "/swɪŋ/", zh: "qiū qiān" }, sen: { en: "The little girl laughed as her dad pushed her higher on the swing.", zh: "爸爸把她推得越来越高，小女孩在秋千上笑个不停。" }, note: { zh: "复数 swings 常指整组秋千架 swing set；push sb on the swing = 推某人荡秋千" } },
@@ -3798,25 +4127,60 @@
       ]
     },
 {
+      sceneCode: "37",
+      sceneNames: { zh: "宠物公园", en: "Dog Park" },
+      sceneId: "dogpark",
+      section: "外出",
+      viewNames: { zh: "全景", en: "Full view" },
+      nav: { left: { scene: "park" } }, // 2026-07-19 改⬅回公园，与 park 的➡构成相互切换；不接southplaza，只有公园能回南区广场
+      alt: "宠物公园场景，10只不同品种的狗在草地上玩耍，围栏入口处3人在闲聊",
+      stage: "images/舞台37-宠物公园-1.jpg",
+      hotspots: [
+        { w: 0, x: 39, y: 58, wd: 30, ht: 39 },
+        { w: 1, x: 1, y: 39, wd: 29, ht: 44 },
+        { w: 2, x: 71, y: 49, wd: 26, ht: 41 },
+        { w: 3, x: 25, y: 60, wd: 13, ht: 21 },
+        { w: 4, x: 52, y: 32, wd: 17, ht: 27 },
+        { w: 5, x: 35, y: 40, wd: 14, ht: 18 },
+        { w: 6, x: 67, y: 21, wd: 20, ht: 21 },
+        { w: 7, x: 18, y: 29, wd: 15, ht: 20 },
+        { w: 8, x: 39, y: 22, wd: 15, ht: 17 },
+        { w: 9, x: 84, y: 37, wd: 15, ht: 22 }
+      ],
+      words: [
+        { terms: { en: "dachshund", zh: "腊肠狗" }, reading: { en: "/ˈdɑːkshʊnd/", zh: "là cháng gǒu" }, sen: { en: "The dachshund has a long body and short legs.", zh: "腊肠狗身体细长，腿很短。" }, note: { zh: "俗称 wiener dog / sausage dog，因体型像香肠得名" } },
+        { terms: { en: "golden retriever", zh: "金毛寻回犬" }, reading: { en: "/ˈɡoʊldən rɪˈtriːvər/", zh: "jīn máo xún huí quǎn" }, sen: { en: "The golden retriever wagged its tail and ran over to greet me.", zh: "金毛寻回犬摇着尾巴跑过来迎接我。" }, note: { zh: "毛色金黄，性格温顺友善，热门家庭犬" } },
+        { terms: { en: "Labrador", zh: "拉布拉多" }, reading: { en: "/ˈlæbrədɔːr/", zh: "lā bù lā duō" }, sen: { en: "The Labrador is one of the most popular family dogs.", zh: "拉布拉多是最受欢迎的家庭犬之一。" }, note: { zh: "常简称 Lab，毛色分金黄/黑/巧克力色" } },
+        { terms: { en: "corgi", zh: "柯基" }, reading: { en: "/ˈkɔːrɡi/", zh: "kē jī" }, sen: { en: "The corgi has short legs and big pointy ears.", zh: "柯基腿很短，耳朵又大又尖。" }, note: { zh: "全称 Welsh Corgi，曾是英国女王最爱的犬种" } },
+        { terms: { en: "husky", zh: "哈士奇" }, reading: { en: "/ˈhʌski/", zh: "hā shì qí" }, sen: { en: "The husky often has bright blue eyes.", zh: "哈士奇常常有一双明亮的蓝眼睛。" }, note: { zh: "西伯利亚雪橇犬，耐寒，精力旺盛" } },
+        { terms: { en: "poodle", zh: "贵宾犬" }, reading: { en: "/ˈpuːdl/", zh: "guì bīn quǎn" }, sen: { en: "The poodle's curly coat barely sheds.", zh: "贵宾犬的卷毛几乎不掉毛。" }, note: { zh: "分标准/迷你/玩具三种体型，掉毛少" } },
+        { terms: { en: "German shepherd", zh: "德国牧羊犬" }, reading: { en: "/ˌdʒɜːrmən ˈʃepərd/", zh: "dé guó mù yáng quǎn" }, sen: { en: "The German shepherd is trained as a police dog.", zh: "德国牧羊犬被训练成警犬。" }, note: { zh: "常用作警犬/导盲犬，聪明忠诚" } },
+        { terms: { en: "beagle", zh: "比格犬" }, reading: { en: "/ˈbiːɡl/", zh: "bǐ gé quǎn" }, sen: { en: "The beagle sniffed along the ground, following a scent.", zh: "比格犬沿着地面嗅来嗅去，追踪气味。" }, note: { zh: "嗅觉猎犬，长耳下垂，Snoopy 的原型犬种" } },
+        { terms: { en: "Shiba Inu", zh: "柴犬" }, reading: { en: "/ˈʃiːbə ˈiːnuː/", zh: "chái quǎn" }, sen: { en: "The Shiba Inu has a fox-like face and a curled tail.", zh: "柴犬有一张狐狸脸和卷起来的尾巴。" }, note: { zh: "日本原产犬种，网络热门表情包\"doge\"的原型" } },
+        { terms: { en: "French bulldog", zh: "法国斗牛犬" }, reading: { en: "/frentʃ ˈbʊldɔːɡ/", zh: "fǎ guó dòu niú quǎn" }, sen: { en: "The French bulldog has large bat-like ears.", zh: "法国斗牛犬有一对蝙蝠状的大耳朵。" }, note: { zh: "扁脸短鼻，热门公寓犬种，夏天需注意防中暑" } }
+      ]
+    },
+{
       sceneCode: "26",
       sceneNames: { zh: "酒店", en: "The Hotel" },
       sceneId: "hotel",
       section: "外出",
       viewNames: { zh: "大堂", en: "Lobby" },
+      nav: { up: { scene: "southplaza" }, left: { scene: "hotelrec" }, right: { scene: "hotelcorridor" } }, // 2026-07-20 动线理顺：娱乐室⇄大堂⇄走廊左右切换，↑仍去南区广场；客房只从走廊房门进
       image: "images/场景26-酒店-1.jpg",
       alt: "酒店·大堂场景，标注10个物体名称",
       stage: "images/舞台26-酒店-1.jpg",
       hotspots: [
-        { w: 0, x: 84, y: 42, wd: 16, ht: 30 },
-        { w: 1, x: 80, y: 42, wd: 8, ht: 8 },
-        { w: 2, x: 17, y: 40, wd: 20, ht: 35 },
+        { w: 0, x: 84, y: 49.4, wd: 16, ht: 30 },
+        { w: 1, x: 78.3, y: 41.9, wd: 4.8, ht: 6.2 },
+        { w: 2, x: 17, y: 29.4, wd: 12.7, ht: 35.4 },
         { w: 3, x: 12, y: 28, wd: 12, ht: 42 },
-        { w: 4, x: 32, y: 17, wd: 24, ht: 45 },
-        { w: 5, x: 10, y: 63, wd: 50, ht: 30 },
+        { w: 4, x: 32, y: 17, wd: 24, ht: 31.7 },
+        { w: 5, x: 9.5, y: 67.9, wd: 37.1, ht: 30 },
         { w: 6, x: 8, y: 52, wd: 12, ht: 22 },
-        { w: 7, x: 40, y: 2, wd: 22, ht: 32 },
-        { w: 8, x: 42, y: 50, wd: 22, ht: 15 },
-        { w: 9, x: 84, y: 47, wd: 9, ht: 11 }
+        { w: 7, x: 40, y: 2, wd: 15.1, ht: 18.6 },
+        { w: 8, x: 31.7, y: 50.5, wd: 22, ht: 6.2 },
+        { w: 9, x: 86.8, y: 47.4, wd: 6.2, ht: 10.6 }
       ],
       words: [
         { terms: { en: "reception desk", zh: "前台" }, reading: { en: "/rɪˈsɛpʃən dɛsk/", zh: "qián tái" }, sen: { en: "Please check in at the reception desk when you arrive.", zh: "到店后请在前台办理入住。" }, note: { zh: "办理入住/退房的柜台；美式口语更常说 front desk" } },
@@ -3833,21 +4197,22 @@
     },
 {
       sceneCode: "26",
-      sceneNames: { zh: "酒店", en: "The Hotel" },
-      sceneId: "hotel",
+      sceneNames: { zh: "酒店客房", en: "Hotel Room" },
+      sceneId: "hotelroom",
       section: "外出",
-      viewNames: { zh: "客房", en: "Room" },
+      viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "hotelcorridor" } }, // 2026-07-20 客房独立成新场景：只能从走廊房门进，⬇️退回走廊，不再挂大堂
       image: "images/场景26-酒店-2.jpg",
       alt: "酒店·客房场景，标注10个物体名称",
       stage: "images/舞台26-酒店-2.jpg",
       hotspots: [
-        { w: 0, x: 26, y: 30, wd: 48, ht: 51 },
-        { w: 1, x: 2, y: 60, wd: 19, ht: 31 },
-        { w: 2, x: 3, y: 9, wd: 17, ht: 15 },
-        { w: 3, x: 4, y: 25, wd: 16, ht: 44 },
-        { w: 4, x: 76, y: 71, wd: 9, ht: 7 },
-        { w: 5, x: 24, y: 71, wd: 24, ht: 27 },
-        { w: 6, x: 77, y: 14, wd: 9, ht: 44 },
+        { w: 0, x: 26, y: 30, wd: 48, ht: 47.6 },
+        { w: 1, x: 2, y: 60, wd: 19, ht: 23.1 },
+        { w: 2, x: 3, y: 9, wd: 13.1, ht: 10.6 },
+        { w: 3, x: 4, y: 25, wd: 10, ht: 33.8 },
+        { w: 4, x: 76, y: 71, wd: 7.3, ht: 7 },
+        { w: 5, x: 24, y: 71, wd: 21.7, ht: 27 },
+        { w: 6, x: 74.2, y: 14.7, wd: 9, ht: 44 },
         { w: 7, x: 85, y: 39, wd: 9, ht: 13 },
         { w: 8, x: 83, y: 57, wd: 11, ht: 21 },
         { w: 9, x: 91, y: 57, wd: 9, ht: 19 }
@@ -3866,20 +4231,159 @@
       ]
     },
 {
+      sceneCode: "36",
+      sceneNames: { zh: "南区广场", en: "South Plaza" },
+      sceneId: "southplaza",
+      section: "外出",
+      viewNames: { zh: "全景", en: "Full view" },
+      nav: { left: { scene: "marketstreet" }, right: { scene: "neighborhood" } }, // 2026-07-19 户外主干改5节点←→循环环
+      alt: "南区广场场景，左侧藤架绿拱门步道通向公园，中间是酒店楼与门廊车道，右侧是带雨棚的车站站台与列车",
+      stage: "images/舞台36-南区广场-1.jpg",
+      hotspots: [
+        { portal: "park", x: 0, y: 20, wd: 30, ht: 45 },
+        { portal: "hotel", x: 37, y: 13, wd: 28, ht: 36 },
+        { portal: "station", x: 66, y: 27, wd: 34, ht: 42 },
+        { w: 0, x: 1.5, y: 25.3, wd: 24.7, ht: 35.3 },
+        { w: 1, x: 31.3, y: 38.1, wd: 5, ht: 29 },
+        { w: 2, x: 19, y: 72, wd: 19, ht: 20 },
+        { w: 3, x: 40.8, y: 71.6, wd: 22, ht: 29 },
+        { w: 4, x: 60.1, y: 49.1, wd: 7, ht: 8.4 },
+        { w: 5, x: 66.7, y: 42.8, wd: 5.3, ht: 4.2 }
+      ],
+      words: [
+        { terms: { en: "pergola", zh: "藤架拱廊" }, reading: { en: "/ˈpɜːrɡələ/", zh: "téng jià gǒng láng" }, sen: { en: "Vines climb over the stone pergola at the entrance to the path.", zh: "藤蔓爬满了步道入口那座石柱藤架拱廊。" }, note: { zh: "爬满绿藤的石柱步道入口" } },
+        { terms: { en: "lamppost", zh: "路灯柱" }, reading: { en: "/ˈlæmppoʊst/", zh: "lù dēng zhù" }, sen: { en: "The old-fashioned lamppost flicks on at dusk.", zh: "黄昏时那盏复古路灯柱亮了起来。" }, note: { zh: "复古路灯" } },
+        { terms: { en: "park bench", zh: "公园长椅" }, reading: { en: "/ˈpɑːrk ˌbentʃ/", zh: "gōng yuán cháng yǐ" }, sen: { en: "She sat on the park bench and watched the trains go by.", zh: "她坐在公园长椅上，看着火车经过。" }, note: { zh: "木条长椅" } },
+        { terms: { en: "paving stones", zh: "铺石地面" }, reading: { en: "/ˈpeɪvɪŋ ˌstoʊnz/", zh: "pū shí dì miàn" }, sen: { en: "The paving stones form circular patterns across the plaza.", zh: "铺石地面在广场上铺出一圈圈同心圆纹。" }, note: { zh: "同心圆纹石板铺地" } },
+        { terms: { en: "iron railing", zh: "铁栏杆" }, reading: { en: "/ˈaɪərn ˌreɪlɪŋ/", zh: "tiě lán gān" }, sen: { en: "Passengers leaned against the iron railing while waiting for the train.", zh: "乘客们靠在铁栏杆上等火车。" }, note: { zh: "站台/步道旁黑铁栏" } },
+        { terms: { en: "sedan", zh: "轿车" }, reading: { en: "/sɪˈdæn/", zh: "jiào chē" }, sen: { en: "A black sedan waited under the hotel's covered driveway.", zh: "一辆黑色轿车停在酒店有顶棚的门廊车道上。" }, note: { zh: "酒店门廊车道上的轿车" } }
+      ]
+    },
+{
+      sceneCode: "33",
+      sceneNames: { zh: "车站", en: "Station" },
+      sceneId: "station",
+      section: "交通",
+      viewNames: { zh: "全景", en: "Full view" },
+      nav: { left: { scene: "southplaza" } }, // 2026-07-19 加⬅回南区广场，去冗余portal；airport门保留
+      alt: "车站站台场景，两人拖着行李箱在站台等候，一旁停靠着列车",
+      stage: "images/舞台33-车站-1.jpg",
+      hotspots: [
+        { portal: "airportexterior", x: 82, y: 15, wd: 18, ht: 55 }, // 2026-07-19 改指机场外观（原直连airport值机）
+        { w: 0, x: 0, y: 85, wd: 44, ht: 13 },
+        { w: 1, x: 25, y: 32, wd: 14, ht: 47 },
+        { w: 2, x: 5, y: 26, wd: 19, ht: 33 },
+        { w: 3, x: 0, y: 58, wd: 22, ht: 26 },
+        { w: 4, x: 44, y: 10, wd: 56, ht: 52 },
+        { w: 5, x: 50, y: 59, wd: 24, ht: 32 },
+        { w: 6, x: 0, y: 0, wd: 78, ht: 18 },
+        { w: 7, x: 62, y: 55, wd: 33, ht: 35 }
+      ],
+      words: [
+        { terms: { en: "platform", zh: "站台" }, reading: { en: "/ˈplætfɔːrm/", zh: "zhàn tái" }, sen: { en: "We waited on the platform for the next train.", zh: "我们在站台上等下一班列车。" }, note: { zh: "月台/站台，候车上下车的地方；美式口语有时说 track" } },
+        { terms: { en: "ticket machine", zh: "售票机" }, reading: { en: "/ˈtɪkɪt məˌʃiːn/", zh: "shòu piào jī" }, sen: { en: "He bought two tickets from the ticket machine.", zh: "他在售票机上买了两张票。" }, note: { zh: "自助购票的机器；也叫 ticket kiosk" } },
+        { terms: { en: "timetable", zh: "时刻表" }, reading: { en: "/ˈtaɪmˌteɪbl/", zh: "shí kè biǎo" }, sen: { en: "She checked the timetable to see when the next train departs.", zh: "她查看时刻表，看下一班车几点发车。" }, note: { zh: "显示车次时刻的牌子；美式英语更常说 schedule" } },
+        { terms: { en: "bench", zh: "长椅" }, reading: { en: "/bentʃ/", zh: "cháng yǐ" }, sen: { en: "They sat on a bench and waited for the train.", zh: "他们坐在长椅上等车。" }, note: { zh: "站台上供候车的长条椅" } },
+        { terms: { en: "train", zh: "列车" }, reading: { en: "/treɪn/", zh: "liè chē" }, sen: { en: "The train pulled into the station right on time.", zh: "列车准点驶入车站。" }, note: { zh: "泛指火车/列车" } },
+        { terms: { en: "suitcase", zh: "行李箱" }, reading: { en: "/ˈsuːtkeɪs/", zh: "xíng lǐ xiāng" }, sen: { en: "She pulled her suitcase along the platform.", zh: "她拉着行李箱走过站台。" }, note: { zh: "带轮子的硬壳箱；也叫 rolling suitcase" } },
+        { terms: { en: "canopy", zh: "候车棚顶棚" }, reading: { en: "/ˈkænəpi/", zh: "hòu chē péng dǐng péng" }, sen: { en: "The platform canopy kept the rain off the passengers.", zh: "站台顶棚帮乘客挡住了雨。" }, note: { zh: "站台上方的雨棚/顶棚；也叫 platform roof" } },
+        { terms: { en: "safety line", zh: "安全线" }, reading: { en: "/ˈseɪfti laɪn/", zh: "ān quán xiàn" }, sen: { en: "Please stand behind the safety line until the train stops.", zh: "请站在安全线后，等列车停稳再上前。" }, note: { zh: "月台边缘的黄色触感警示线；也叫 yellow line" } }
+      ]
+    },
+{
+      sceneCode: "38",
+      sceneNames: { zh: "机场外观", en: "Airport Exterior" },
+      sceneId: "airportexterior",
+      section: "交通",
+      viewNames: { zh: "全景", en: "Full view" },
+      nav: {}, // 2026-07-20 撤←箭头；出租车候车站牌改传送门直接回车站
+      alt: "机场外观场景，航站楼落客区正面，一排自动玻璃门入口，落客区停着行李推车，远处天际线有塔台",
+      stage: "images/舞台38-机场外观-1.jpg",
+      hotspots: [
+        { portal: "airport", view: "大厅", x: 19.1, y: 35.3, wd: 22, ht: 22 },
+        { w: 0, x: -0.2, y: -1.2, wd: 80, ht: 62 },
+        { w: 1, x: 85.7, y: 27, wd: 6.3, ht: 22.9 },
+        { w: 2, x: 18.3, y: 35, wd: 33, ht: 25.5 },
+        { w: 3, x: 0, y: 56, wd: 39, ht: 41 },
+        { portal: "station", x: 60, y: 25.7, wd: 12.2, ht: 51.3 }, // 2026-07-20 出租车候车站牌→传送门回车站
+        { w: 4, x: 66, y: 38, wd: 34, ht: 60 }
+      ],
+      words: [
+        { terms: { en: "terminal", zh: "航站楼" }, reading: { en: "/ˈtɜːrmɪnl/", zh: "háng zhàn lóu" }, sen: { en: "Our flight leaves from Terminal 2, so we headed straight for the doors.", zh: "我们的航班从2号航站楼起飞，所以直奔大门而去。" }, note: { zh: "机场主体建筑；大机场常分多座航站楼，用编号区分" } },
+        { terms: { en: "control tower", zh: "塔台" }, reading: { en: "/kənˈtroʊl ˈtaʊər/", zh: "tǎ tái" }, sen: { en: "The control tower guided our plane safely to the runway.", zh: "塔台引导我们的飞机安全滑向跑道。" }, note: { zh: "机场空管指挥中心，远处那座最高的塔状建筑" } },
+        { terms: { en: "automatic door", zh: "自动门" }, reading: { en: "/ˌɔːtəˈmætɪk dɔːr/", zh: "zì dòng mén" }, sen: { en: "The automatic door slid open as soon as we stepped close.", zh: "我们一走近，自动门就滑开了。" }, note: { zh: "感应式玻璃滑门，航站楼入口标配；点门可进机场大厅" } },
+        { terms: { en: "luggage trolley", zh: "行李推车" }, reading: { en: "/ˈlʌɡɪdʒ ˈtrɑːli/", zh: "xíng lǐ tuī chē" }, sen: { en: "He grabbed a luggage trolley and piled all three suitcases onto it.", zh: "他推了辆行李推车，把三个箱子都摞了上去。" }, note: { zh: "落客区/大厅免费手推车；英式常说 trolley，美式多说 cart" } },
+        { terms: { en: "curbside", zh: "落客区路缘" }, reading: { en: "/ˈkɜːrbsaɪd/", zh: "luò kè qū lù yuán" }, sen: { en: "She said a quick goodbye at the curbside before rushing inside.", zh: "她在落客区路缘匆匆道别，就赶紧进了航站楼。" }, note: { zh: "航站楼外上下客的路缘带，车辆只能临时停靠" } }
+      ]
+    },
+{
+      sceneCode: "17",
+      sceneNames: { zh: "机场", en: "The Airport" },
+      sceneId: "airport",
+      section: "交通",
+      viewNames: { zh: "大厅", en: "Hall" },
+      nav: { down: { scene: "airportexterior" } }, // 2026-07-19 机场大厅：↓出机场；←→ 走同 sceneId 视角循环（大厅→值机→安检→登机口→行李转盘）
+      alt: "机场大厅场景，自助值机机排、问询处、行李秤、排队护栏、扶梯与航班动态屏",
+      stage: "images/舞台39-机场大厅-1.jpg",
+      hotspots: [
+        { w: 0, x: 57.1, y: 4.5, wd: 38.9, ht: 24.2 },
+        { w: 1, x: 50, y: 50, wd: 50, ht: 50 },
+        { w: 2, x: 55.9, y: 36.6, wd: 37, ht: 22 },
+        { w: 3, x: 36, y: 64, wd: 16, ht: 18 },
+        { w: 4, x: 0, y: 38, wd: 35.9, ht: 62 },
+        { w: 5, x: 12, y: 13.4, wd: 19.9, ht: 32.8 }
+      ],
+      words: [
+        { terms: { en: "flight status board", zh: "航班动态屏" }, reading: { en: "/flaɪt ˈsteɪtəs bɔːrd/", zh: "háng bān dòng tài píng" }, sen: { en: "She scanned the flight status board for her gate number.", zh: "她在航班动态屏上找自己的登机口号。" }, note: { zh: "大厅高处的多联屏，滚动显示所有航班状态；生图无字只画色块，和值机柜台那边的 departure board 是两处同类屏幕" } },
+        { terms: { en: "check-in kiosk", zh: "自助值机机" }, reading: { en: "/ˈtʃek ɪn ˈkiːɑːsk/", zh: "zì zhù zhí jī jī" }, sen: { en: "We printed our boarding passes at a check-in kiosk before joining the line.", zh: "我们先在自助值机机打印了登机牌，再去排队。" }, note: { zh: "自助打印登机牌/行李牌的机器，省去人工柜台排队；屏幕无字" } },
+        { terms: { en: "inquiry desk", zh: "问询处" }, reading: { en: "/ɪnˈkwaɪəri desk/", zh: "wèn xún chù" }, sen: { en: "I ask for directions at the inquiry desk.", zh: "我在问询处问路。" }, note: { zh: "大厅里回答旅客问题的服务台" } },
+        { terms: { en: "luggage scale", zh: "行李秤" }, reading: { en: "/ˈlʌɡɪdʒ skeɪl/", zh: "xíng lǐ chèng" }, sen: { en: "She set her bag on the luggage scale to check the weight before check-in.", zh: "值机前，她把包放上行李秤称了称重。" }, note: { zh: "排队通道旁的落地秤，值机前先自测行李重量；与值机柜台的 baggage scale 是同类不同处" } },
+        { terms: { en: "belt barrier", zh: "伸缩带护栏" }, reading: { en: "/belt ˈbæriər/", zh: "shēn suō dài hù lán" }, sen: { en: "The belt barriers zigzagged across the floor, guiding the line toward the kiosks.", zh: "伸缩带护栏在地上曲折排开，把队伍引向值机机。" }, note: { zh: "带伸缩带的排队护栏，整套也叫 stanchion；值机柜台那边的排队立柱是同一物件的近景" } },
+        { terms: { en: "up escalator", zh: "上行扶梯" }, reading: { en: "/ʌp ˈeskəleɪtər/", zh: "shàng xíng fú tī" }, sen: { en: "We stepped onto the up escalator and headed toward security.", zh: "我们踏上上行扶梯，朝安检方向去。" }, note: { zh: "通往上层/安检方向的自动扶梯；商场那台是同款不同场景，故加 up 区分" } }
+      ]
+    },
+{
+      sceneCode: "17",
+      sceneNames: { zh: "机场", en: "The Airport" },
+      sceneId: "airport",
+      section: "交通",
+      viewNames: { zh: "纪念品店", en: "Gift Shop" },
+      nav: {}, // 2026-07-20 纪念品店改为机场自有视角（原靠portal进），紧接大厅之后：←→走视角循环 大厅→纪念品店→值机→安检→登机口→行李转盘
+      alt: "机场大厅里的纪念品店，货架上摆着钥匙扣、雪景球、冰箱贴、毛绒玩具和帆布袋",
+      stage: "images/舞台40-机场纪念品店-1.jpg",
+      hotspots: [
+        { w: 0, x: 58, y: 17, wd: 10, ht: 41 },
+        { w: 1, x: 0, y: 24, wd: 35, ht: 17 },
+        { w: 2, x: 0, y: 38, wd: 40, ht: 19 },
+        { w: 3, x: 0, y: 54, wd: 42, ht: 18 },
+        { w: 4, x: 0, y: 76, wd: 46, ht: 23 },
+        { w: 5, x: 69, y: 44, wd: 15, ht: 18 }
+      ],
+      words: [
+        { terms: { en: "souvenir", zh: "纪念品" }, reading: { en: "/ˌsuːvəˈnɪr/", zh: "jì niàn pǐn" }, sen: { en: "She picked out a small souvenir to remember her trip.", zh: "她挑了个小纪念品，纪念这趟旅行。" }, note: { zh: "泛指旅行纪念品;店里从钥匙扣到毛绒玩具都算 souvenir,是这类小商品的统称" } },
+        { terms: { en: "keychain", zh: "钥匙扣" }, reading: { en: "/ˈkiːtʃeɪn/", zh: "yào shi kòu" }, sen: { en: "He hung a tiny airplane keychain on his backpack zipper.", zh: "他把一个小飞机钥匙扣挂在背包拉链上。" }, note: { zh: "挂钩上成排的钥匙扣,常印当地地标图案;英式也叫 key ring" } },
+        { terms: { en: "snow globe", zh: "雪景球" }, reading: { en: "/snoʊ ɡloʊb/", zh: "xuě jǐng qiú" }, sen: { en: "She shook the snow globe and watched tiny flakes swirl around the little airport inside.", zh: "她摇了摇雪景球，看里面的雪花在小机场模型周围打转。" }, note: { zh: "玻璃圆球里封着水和亮片,摇晃会飘雪;常见摆件款纪念品" } },
+        { terms: { en: "fridge magnet", zh: "冰箱贴" }, reading: { en: "/frɪdʒ ˈmæɡnət/", zh: "bīng xiāng tiē" }, sen: { en: "I always buy a fridge magnet from every city I visit.", zh: "我每去一个城市都会买个冰箱贴。" }, note: { zh: "背面带磁铁、贴冰箱上的小纪念品;这里指货架上一排的方形磁贴" } },
+        { terms: { en: "plush toy", zh: "毛绒玩具" }, reading: { en: "/plʌʃ tɔɪ/", zh: "máo róng wán jù" }, sen: { en: "The little girl hugged a plush toy penguin the whole flight.", zh: "小女孩整趟航班都抱着一只毛绒玩具企鹅。" }, note: { zh: "货架上的毛绒玩偶;也叫 stuffed animal,plush toy 更偏商品/礼品店用语" } },
+        { terms: { en: "tote bag", zh: "帆布袋" }, reading: { en: "/toʊt bæɡ/", zh: "fān bù dài" }, sen: { en: "She folded her tote bag flat and tucked it into her carry-on.", zh: "她把帆布袋叠平，塞进了登机箱里。" }, note: { zh: "带两根提手的敞口布袋,常印图案当纪念品;与别处的 shopping bag/handbag 区分——tote 特指这种敞口手提袋" } }
+      ]
+    },
+{
       sceneCode: "17",
       sceneNames: { zh: "机场", en: "The Airport" },
       sceneId: "airport",
       section: "交通",
       viewNames: { zh: "值机", en: "Check-in" },
+      nav: {}, // 2026-07-19 修bug：原无nav导致↑↓线性wrap到卧室；空nav隐藏⬆⬇，←→走视角循环
       image: "images/场景17-机场-1.jpg",
       alt: "机场·值机场景，标注7个物体名称",
       stage: "images/舞台17-机场-1.jpg",
       hotspots: [
-        { w: 0, x: 60, y: 33, wd: 32, ht: 32 },
-        { w: 1, x: 48, y: 76, wd: 12, ht: 12 },
-        { w: 2, x: 58, y: 40, wd: 12, ht: 8 },
-        { w: 3, x: 30, y: 40, wd: 11, ht: 15 },
-        { w: 4, x: 34, y: 68, wd: 8, ht: 13 },
+        { w: 0, x: 40.8, y: 33.2, wd: 32, ht: 16.4 },
+        { w: 1, x: 44.7, y: 74.4, wd: 12, ht: 12 },
+        { w: 2, x: 43.9, y: 40.4, wd: 8.4, ht: 5.4 },
+        { w: 3, x: 30, y: 40, wd: 4.4, ht: 8.7 },
+        { w: 4, x: 33.8, y: 67.6, wd: 4.7, ht: 8.7 },
         { w: 5, x: 0, y: 55, wd: 38, ht: 38 },
         { w: 6, x: 24, y: 3, wd: 63, ht: 20 }
       ],
@@ -3899,6 +4403,7 @@
       sceneId: "airport",
       section: "交通",
       viewNames: { zh: "安检", en: "Security" },
+      nav: {}, // 2026-07-19 修bug：原无nav导致↑↓线性wrap到卧室；空nav隐藏⬆⬇，←→走视角循环
       image: "images/场景17-机场-2.jpg",
       alt: "机场·安检场景，标注6个物体名称",
       stage: "images/舞台17-机场-2.jpg",
@@ -3906,7 +4411,7 @@
         { w: 0, x: 1, y: 60, wd: 36, ht: 38 },
         { w: 1, x: 26, y: 50, wd: 40, ht: 30 },
         { w: 2, x: 49, y: 19, wd: 15, ht: 52 },
-        { w: 3, x: 33, y: 52, wd: 13, ht: 9 },
+        { w: 3, x: 34.3, y: 51.7, wd: 13, ht: 9 },
         { w: 4, x: 71, y: 14, wd: 23, ht: 52 },
         { w: 5, x: 17, y: 60, wd: 11, ht: 24 }
       ],
@@ -3925,6 +4430,7 @@
       sceneId: "airport",
       section: "交通",
       viewNames: { zh: "登机口", en: "Gate" },
+      nav: {}, // 2026-07-19 修bug：原无nav导致↑↓线性wrap到卧室；空nav隐藏⬆⬇，←→走视角循环
       image: "images/场景17-机场-3.jpg",
       alt: "机场·登机口场景，标注6个物体名称",
       stage: "images/舞台17-机场-3.jpg",
@@ -3941,7 +4447,7 @@
         { terms: { en: "jet bridge", zh: "登机廊桥" }, reading: { en: "/ˈdʒet brɪdʒ/", zh: "dēng jī láng qiáo" }, sen: { en: "We walked down the jet bridge and stepped onto the plane.", zh: "我们走过登机廊桥，踏上飞机。" }, note: { zh: "连接登机口与飞机舱门的活动通道;也叫 jetway" } },
         { terms: { en: "gate agent", zh: "检票员(登机口地勤)" }, reading: { en: "/ˈɡeɪt ˌeɪdʒənt/", zh: "jiǎn piào yuán (dēng jī kǒu dì qín)" }, sen: { en: "The gate agent scanned our passes and wished us a good flight.", zh: "检票员扫了我们的登机牌，祝我们旅途愉快。" }, note: { zh: "人=热区;负责检票、登机广播、处理改签" } },
         { terms: { en: "waiting area seats", zh: "候机座椅" }, reading: { en: "/ˈweɪtɪŋ ˈeriə siːts/", zh: "hòu jī zuò yǐ" }, sen: { en: "We found two waiting area seats near the window and sat down.", zh: "我们在靠窗找到两个候机座椅坐下。" }, note: { zh: "登机口前成排的连椅;机场标识常写 gate seating" } },
-        { terms: { en: "flight information screen", zh: "航显屏(登机口)" }, reading: { en: "/ˈflaɪt ˌɪnfərˈmeɪʃn skriːn/", zh: "háng xiǎn píng (dēng jī kǒu)" }, sen: { en: "The flight information screen at the gate showed 'Now Boarding.'", zh: "登机口的航显屏上显示\"正在登机\"。" }, note: { zh: "登机口旁显示本航班状态的屏,区别于大厅的 departure board。生图无字只画色块" } },
+        { terms: { en: "flight information screen", zh: "航显屏(登机口)" }, reading: { en: "/ˈflaɪt ˌɪnfərˈmeɪʃn skriːn/", zh: "háng xiǎn píng (dēng jī kǒu)" }, sen: { en: "The flight information screen at the gate showed 'Now Boarding.'", zh: "登机口的航显屏上显示\"正在登机\"。" }, note: { zh: "登机口旁显示本航班状态的屏,区别于大厅的 flight status board 和值机柜台的 departure board。生图无字只画色块" } },
         { terms: { en: "podium", zh: "检票台" }, reading: { en: "/ˈpoʊdiəm/", zh: "jiǎn piào tái" }, sen: { en: "The gate agent stood at the podium and called our boarding group.", zh: "检票员站在检票台后，叫到了我们这组登机。" }, note: { zh: "登机口检票员站的斜面台;也叫 gate podium/counter" } }
       ]
     },
@@ -3951,12 +4457,13 @@
       sceneId: "airport",
       section: "交通",
       viewNames: { zh: "行李转盘", en: "Baggage claim" },
+      nav: {}, // 2026-07-19 修bug：原无nav导致↑↓线性wrap到卧室；空nav隐藏⬆⬇，←→走视角循环
       image: "images/场景17-机场-4.jpg",
       alt: "机场·行李转盘场景，标注5个物体名称",
       stage: "images/舞台17-机场-4.jpg",
       hotspots: [
         { w: 0, x: 25, y: 42, wd: 68, ht: 38 },
-        { w: 1, x: 32, y: 49, wd: 13, ht: 19 },
+        { w: 1, x: 33.2, y: 48.9, wd: 13, ht: 12.5 },
         { w: 2, x: 76, y: 52, wd: 21, ht: 39 },
         { w: 3, x: 16, y: 65, wd: 12, ht: 25 },
         { w: 4, x: 53, y: 15, wd: 33, ht: 15 }
@@ -3967,6 +4474,93 @@
         { terms: { en: "baggage cart", zh: "行李手推车" }, reading: { en: "/ˈbæɡɪdʒ kɑːrt/", zh: "xíng lǐ shǒu tuī chē" }, sen: { en: "He loaded three bags onto a baggage cart and pushed it to the exit.", zh: "他把三件行李装上行李手推车，推向出口。" }, note: { zh: "机场推行李的小推车;有些机场要投币租用" } },
         { terms: { en: "carry-on", zh: "登机箱(随身行李)" }, reading: { en: "/ˈkæri ɑːn/", zh: "dēng jī xiāng (suí shēn xíng lǐ)" }, sen: { en: "My carry-on fit in the overhead bin, so I didn't check any bags.", zh: "我的登机箱塞得进头顶行李舱，所以没托运。" }, note: { zh: "不托运、带上飞机的小箱,要放进头顶行李舱" } },
         { terms: { en: "baggage claim sign", zh: "行李提取指示牌" }, reading: { en: "/ˈbæɡɪdʒ kleɪm saɪn/", zh: "xíng lǐ tí qǔ zhǐ shì pái" }, sen: { en: "Follow the baggage claim sign downstairs to pick up your luggage.", zh: "顺着行李提取指示牌下楼去取行李。" }, note: { zh: "指向取行李区的标识牌。生图无字只画色块,词库照常收词" } }
+      ]
+    },
+{
+      sceneCode: "41",
+      sceneNames: { zh: "商场美食广场", en: "Food Court" },
+      sceneId: "foodcourt",
+      section: "外出",
+      viewNames: { zh: "全景", en: "Full view" },
+      nav: { down: { scene: "mall", view: "中庭" } }, // 2026-07-19 商场中庭子铺：商店单⬇️回中庭
+      alt: "商场美食广场，一圈快餐档口围着公共餐座，近景有自助饮料机和调料台",
+      stage: "images/舞台41-商场美食广场-1.jpg",
+      hotspots: [
+        { w: 0, x: 0, y: 0, wd: 91, ht: 42 },
+        { w: 1, x: 0, y: 72, wd: 49, ht: 28 },
+        { w: 2, x: 0, y: 41, wd: 25, ht: 49 },
+        { w: 3, x: 24, y: 57, wd: 11, ht: 24 },
+        { w: 4, x: 35, y: 55, wd: 18, ht: 26 },
+        { w: 5, x: 57, y: 70, wd: 14, ht: 30 }
+      ],
+      words: [
+        { terms: { en: "food stall", zh: "餐饮档口" }, reading: { en: "/fuːd stɔːl/", zh: "cān yǐn dàng kǒu" }, sen: { en: "We walked past a dozen food stalls before picking a burger place.", zh: "我们逛过十几个餐饮档口，才选定一家汉堡店。" }, note: { zh: "美食广场一圈的快餐柜台,各卖不同菜式;也叫 food kiosk" } },
+        { terms: { en: "food tray", zh: "餐盘" }, reading: { en: "/fuːd treɪ/", zh: "cān pán" }, sen: { en: "He carried his food tray to an empty table by the window.", zh: "他端着餐盘走向窗边一张空桌。" }, note: { zh: "端菜用的塑料托盘,取餐后用它端到座位;与别处泛指的 tray 是同词不同场景" } },
+        { terms: { en: "soda fountain", zh: "自助饮料机" }, reading: { en: "/ˈsoʊdə ˈfaʊntən/", zh: "zì zhù yǐn liào jī" }, sen: { en: "She filled her cup at the soda fountain and grabbed a lid.", zh: "她在自助饮料机接满了杯子，拿了个盖子。" }, note: { zh: "自助按压出碳酸饮料的机器,多种口味按钮一字排开" } },
+        { terms: { en: "napkin dispenser", zh: "纸巾盒" }, reading: { en: "/ˈnæpkɪn dɪˈspensər/", zh: "zhǐ jīn hé" }, sen: { en: "He pulled a few napkins from the dispenser before sitting down.", zh: "他坐下前先从纸巾盒里抽了几张纸巾。" }, note: { zh: "抽取式的纸巾盒,放在自助区台面上" } },
+        { terms: { en: "condiment station", zh: "调料台" }, reading: { en: "/ˈkɑːndɪmənt ˈsteɪʃn/", zh: "tiáo liào tái" }, sen: { en: "I stopped by the condiment station for some ketchup and napkins.", zh: "我在调料台那儿拿了点番茄酱和纸巾。" }, note: { zh: "放酱料/调味瓶的自取台,常和纸巾盒挨在一起" } },
+        { terms: { en: "high chair", zh: "儿童餐椅" }, reading: { en: "/haɪ tʃer/", zh: "ér tóng cān yǐ" }, sen: { en: "The waiter pulled up a high chair for the toddler at the table.", zh: "服务员给桌边的小朋友搬来一把儿童餐椅。" }, note: { zh: "带安全带的宝宝高脚餐椅,安置在座椅区;与别处的 chair/armchair 区分" } }
+      ]
+    },
+{
+      sceneCode: "47",
+      sceneNames: { zh: "酒店娱乐室", en: "Hotel Rec Room" },
+      sceneId: "hotelrec",
+      section: "外出",
+      viewNames: { zh: "全景", en: "Full view" },
+      nav: { right: { scene: "hotel", view: "大堂" } }, // 2026-07-20 酒店娱乐室：→回大堂（娱乐室在大堂左边）
+      alt: "酒店娱乐室场景，台球桌居中，墙上挂着台球杆架和飞镖靶，一旁是配着高脚凳的吧台和皮沙发休息区",
+      stage: "images/舞台47-酒店娱乐室-1.jpg",
+      hotspots: [
+        { w: 0, x: 12.7, y: 48.3, wd: 73.9, ht: 44.9 },
+        { w: 1, x: 48.5, y: 20.5, wd: 10.1, ht: 25.4 },
+        { w: 2, x: 31.9, y: 58.1, wd: 20.8, ht: 11.2 },
+        { w: 3, x: 65.8, y: 18.1, wd: 7.8, ht: 11.7 },
+        { w: 4, x: 65.1, y: 50.8, wd: 27.3, ht: 21.5 },
+        { w: 5, x: 61.8, y: 37.6, wd: 38.2, ht: 17.1 },
+        { w: 6, x: 74.9, y: 12.7, wd: 25.1, ht: 26.4 },
+        { w: 7, x: 11.1, y: 37.6, wd: 21.5, ht: 15.6 }
+      ],
+      words: [
+        { terms: { en: "pool table", zh: "台球桌" }, reading: { en: "/puːl ˈteɪbl/", zh: "tái qiú zhuō" }, sen: { en: "He leaned over the pool table and lined up his shot.", zh: "他俯身在台球桌上，瞄准了这一杆。" }, note: { zh: "台球桌，绿色台面配木框；英式台球桌叫 snooker table，尺寸更大" } },
+        { terms: { en: "pool cue", zh: "台球杆" }, reading: { en: "/puːl kjuː/", zh: "tái qiú gǎn" }, sen: { en: "She chalked the tip of her pool cue before taking aim.", zh: "她先给台球杆杆头擦了点巧克粉，再瞄准。" }, note: { zh: "打台球用的长杆；杆头需要蘸巧克粉(chalk)增加摩擦力" } },
+        { terms: { en: "billiard ball", zh: "台球" }, reading: { en: "/ˈbɪljərd bɔːl/", zh: "tái qiú" }, sen: { en: "The billiard balls scattered across the table after the break shot.", zh: "开球一杆下去，台球散落在桌面各处。" }, note: { zh: "台球统称；一套里有母球(cue ball)加彩色号码球，此处指桌上那些球" } },
+        { terms: { en: "dartboard", zh: "飞镖靶" }, reading: { en: "/ˈdɑːrtbɔːrd/", zh: "fēi biāo bǎ" }, sen: { en: "He threw three darts at the dartboard and hit the bullseye.", zh: "他朝飞镖靶投了三支镖，正中靶心。" }, note: { zh: "墙上分区计分的圆靶；靶心叫 bullseye" } },
+        { terms: { en: "bar stool", zh: "吧凳" }, reading: { en: "/bɑːr stuːl/", zh: "bā dèng" }, sen: { en: "She hopped up onto a bar stool and ordered a drink.", zh: "她跳上一张吧凳，点了杯酒。" }, note: { zh: "吧台配的高脚凳，常带脚踏环" } },
+        { terms: { en: "bar counter", zh: "吧台" }, reading: { en: "/bɑːr ˈkaʊntər/", zh: "bā tái" }, sen: { en: "The bartender wiped down the bar counter before the guests arrived.", zh: "客人到来前，调酒师把吧台擦了一遍。" }, note: { zh: "调酒/摆酒的长台；也叫 bar top" } },
+        { terms: { en: "liquor bottle", zh: "酒瓶" }, reading: { en: "/ˈlɪkər ˈbɑːtl/", zh: "jiǔ píng" }, sen: { en: "Rows of liquor bottles lined the shelves behind the bar.", zh: "一排排酒瓶摆满了吧台后的架子。" }, note: { zh: "泛指烈酒瓶；架上分不同种类的酒，如威士忌、伏特加" } },
+        { terms: { en: "leather sofa", zh: "皮沙发" }, reading: { en: "/ˈlɛðər ˈsoʊfə/", zh: "pí shā fā" }, sen: { en: "They sank into the leather sofa while waiting for their turn at the pool table.", zh: "他们瘫坐在皮沙发上，等着轮到自己打台球。" }, note: { zh: "娱乐室休息区的皮质沙发；couch 是近义口语说法" } }
+      ]
+    },
+{
+      sceneCode: "48",
+      sceneNames: { zh: "酒店走廊", en: "Hotel Corridor" },
+      sceneId: "hotelcorridor",
+      section: "外出",
+      viewNames: { zh: "全景", en: "Full view" },
+      nav: { left: { scene: "hotel", view: "大堂" } }, // 2026-07-20 酒店走廊：←回大堂（走廊在大堂右边）
+      alt: "酒店走廊场景，服务员推着客房服务车走过铺红色地毯的长廊，两侧客房门整齐排开",
+      stage: "images/舞台48-酒店走廊-1.jpg",
+      hotspots: [
+        { w: 0, x: 39.4, y: 45.9, wd: 28.3, ht: 49.8 },
+        { w: 1, x: 47.9, y: 44.4, wd: 10.7, ht: 13.7 },
+        { w: 2, x: 57.0, y: 45.9, wd: 8.1, ht: 10.3 },
+        { w: 3, x: 1.0, y: 32.2, wd: 4.9, ht: 7.3 },
+        { w: 4, x: 21.5, y: 38.6, wd: 56.6, ht: 61.4 },
+        { w: 5, x: 8.1, y: 4.4, wd: 17.2, ht: 69.8 },
+        { w: 6, x: 40.0, y: 59.1, wd: 7.5, ht: 23.9 },
+        { w: 7, x: 0, y: 0, wd: 100, ht: 19.5 },
+        { portal: "hotelroom", x: 86.6, y: 4.9, wd: 13.4, ht: 58.6 } // 2026-07-20 右侧客房门→客房（独立新场景 hotelroom）
+      ],
+      words: [
+        { terms: { en: "housekeeping cart", zh: "客房服务车" }, reading: { en: "/ˈhaʊskiːpɪŋ kɑːrt/", zh: "kè fáng fú wù chē" }, sen: { en: "The housekeeping cart was stocked with towels and toiletries.", zh: "客房服务车上备满了毛巾和洗漱用品。" }, note: { zh: "客房部打扫用的多层推车，载着毛巾/洗浴用品/布草袋；不同于送餐用的 room service cart" } },
+        { terms: { en: "hand towel", zh: "毛巾" }, reading: { en: "/hænd ˈtaʊəl/", zh: "máo jīn" }, sen: { en: "She folded a stack of hand towels and placed them on the cart.", zh: "她把一叠毛巾叠好，放到了服务车上。" }, note: { zh: "客房用的小方巾；比浴巾(bath towel)小，通常叠成方块摆放" } },
+        { terms: { en: "pump bottle", zh: "按压瓶" }, reading: { en: "/pʌmp ˈbɑːtl/", zh: "àn yā píng" }, sen: { en: "The pump bottles held shampoo, conditioner, and lotion.", zh: "按压瓶里装着洗发水、护发素和乳液。" }, note: { zh: "按压出液的洗浴用品瓶；客房服务车上常见的补充装" } },
+        { terms: { en: "door plate", zh: "门牌" }, reading: { en: "/dɔːr pleɪt/", zh: "mén pái" }, sen: { en: "Each door plate showed the room number in gold letters.", zh: "每块门牌上都用金色字体印着房间号。" }, note: { zh: "挂在客房门边的房号牌；也叫 room number plate" } },
+        { terms: { en: "carpet runner", zh: "走廊地毯" }, reading: { en: "/ˈkɑːrpɪt ˈrʌnər/", zh: "zǒu láng dì tǎn" }, sen: { en: "A long carpet runner stretched down the center of the hallway.", zh: "一条长长的走廊地毯铺在走廊正中央。" }, note: { zh: "铺在狭长通道中央的长条地毯；runner 特指这种窄长款式" } },
+        { terms: { en: "door frame", zh: "门框" }, reading: { en: "/dɔːr freɪm/", zh: "mén kuàng" }, sen: { en: "The wooden door frame was carved with a simple molded trim.", zh: "木质门框上刻着简单的线条装饰。" }, note: { zh: "包住房门四周的木质框架；区别于门本身(door)" } },
+        { terms: { en: "laundry bag", zh: "布草袋" }, reading: { en: "/ˈlɔːndri bæɡ/", zh: "bù cǎo dài" }, sen: { en: "She tossed the used sheets into the laundry bag on the cart.", zh: "她把用过的床单扔进了服务车上的布草袋。" }, note: { zh: "服务车侧边挂的黑色布袋，装换下来的脏床单毛巾；也叫 linen bag" } },
+        { terms: { en: "crown molding", zh: "天花线脚" }, reading: { en: "/kraʊn ˈmoʊldɪŋ/", zh: "tiān huā xiàn jiǎo" }, sen: { en: "Crown molding traced the edge where the ceiling met the walls.", zh: "天花线脚沿着天花板与墙面交界的地方勾勒出一圈轮廓。" }, note: { zh: "天花板与墙面交界处的装饰线条；美式说 crown molding，英式常说 coving" } }
       ]
     }
   ];
@@ -4007,6 +4601,7 @@
   var elExploreStageInner = document.getElementById("exploreStageInner");
   var elExploreImg = document.getElementById("exploreImg");
   var elHotspotLayer = document.getElementById("hotspotLayer");
+  var elPortalPinLayer = document.getElementById("portalPinLayer");
   var elExplorePlaceholder = document.getElementById("explorePlaceholder");
   var elExplorePlaceholderIcon = document.getElementById("explorePlaceholderIcon");
   var elExplorePlaceholderMsg = document.getElementById("explorePlaceholderMsg");
@@ -4233,6 +4828,23 @@
     return idxs;
   }
 
+  // ---------------------------------------------------------------
+  // nav 覆盖（2026-07-19 导航图定稿 §6）：slide 可选 nav:{up,down,left,right}，
+  // 每项 {scene, view?}——view 缺省时匹配该 sceneId 的第一个 slide（沿用 findPortalTarget 的既有约定）。
+  // 有 nav 目标就走 nav（↑↓可换场景、←→可跨场景，专给楼上三房间互切用）；没有 nav 就回退原有 sceneGroup/同场景视角逻辑。
+  // ---------------------------------------------------------------
+  function findSceneViewIndex(sceneId, view){
+    for(var i=0;i<slides.length;i++){
+      var s = slides[i];
+      if(s.sceneId === sceneId && (view === undefined || viewKey(s) === view)) return i;
+    }
+    return -1;
+  }
+  function navTargetIndex(navEntry){
+    if(!navEntry) return -1;
+    return findSceneViewIndex(navEntry.scene, navEntry.view);
+  }
+
   // 舞台图上的场景横幅：探索模式代替旧顶部场景行（海报的横幅烤在图里，这里代码渲染）
   function renderStageBanner(){
     var s = slides[current];
@@ -4269,23 +4881,46 @@
   }
 
   // ←→ 场景内视角平移（单视角场景无动作；换场景走 ↑↓）
+  // nav.left/right 存在时优先走 nav（可跨场景，专给楼上房间互切用），否则回退原有同场景视角循环
   function nextSlide(){
+    var s = slides[current];
+    var navIdx = s.nav ? navTargetIndex(s.nav.right) : -1;
+    if(navIdx >= 0){ goTo(navIdx); return; }
     var idxs = sceneSlideIndices();
     if(idxs.length < 2) return;
     goTo(idxs[(idxs.indexOf(current) + 1) % idxs.length]);
   }
   function prevSlide(){
+    var s = slides[current];
+    var navIdx = s.nav ? navTargetIndex(s.nav.left) : -1;
+    if(navIdx >= 0){ goTo(navIdx); return; }
     var idxs = sceneSlideIndices();
     if(idxs.length < 2) return;
     goTo(idxs[(idxs.indexOf(current) - 1 + idxs.length) % idxs.length]);
   }
 
+  // ↑↓ 换场景。有 nav 字段的场景：只走 nav.up/down，没设的方向直接不动，绝不回退线性
+  // （2026-07-19 修：之前"没设就回退 sceneGroup 线性"会让楼上房间之类的场景冒出乱跳箭头）。
+  // 没有 nav 字段的场景（镇上那些）：保持原有 sceneGroup 线性 ↑↓ 回退（一天动线）。
+  // （按钮语义：elBtnUp → prevScene，elBtnDown → nextScene，对应 nav.up/nav.down）
   function nextScene(){
+    var s = slides[current];
+    if(s.nav){
+      var navIdx = navTargetIndex(s.nav.down);
+      if(navIdx >= 0) goTo(navIdx);
+      return;
+    }
     var gi = currentSceneGroupIndex();
     var nextGi = (gi + 1) % sceneGroups.length;
     goTo(sceneGroups[nextGi].firstIndex);
   }
   function prevScene(){
+    var s = slides[current];
+    if(s.nav){
+      var navIdx = navTargetIndex(s.nav.up);
+      if(navIdx >= 0) goTo(navIdx);
+      return;
+    }
     var gi = currentSceneGroupIndex();
     var prevGi = (gi - 1 + sceneGroups.length) % sceneGroups.length;
     goTo(sceneGroups[prevGi].firstIndex);
@@ -4298,28 +4933,61 @@
     return s.sceneNames[nativeLang] + (vn ? " · " + vn : "");
   }
   function updateArrowTooltips(){
-    var gi = currentSceneGroupIndex();
-    var prevSceneSlide = slides[sceneGroups[(gi - 1 + sceneGroups.length) % sceneGroups.length].firstIndex];
-    var nextSceneSlide = slides[sceneGroups[(gi + 1) % sceneGroups.length].firstIndex];
-    var upText = t("arrowPrevScene") + prevSceneSlide.sceneNames[nativeLang];
-    var downText = t("arrowNextScene") + nextSceneSlide.sceneNames[nativeLang];
-    elTipUp.textContent = upText;
-    elTipDown.textContent = downText;
-    elBtnUp.setAttribute("aria-label", upText);
-    elBtnDown.setAttribute("aria-label", downText);
+    if(activePanel){ elBtnUp.hidden=true; elBtnDown.hidden=true; elBtnLeft.hidden=true; elBtnRight.hidden=true; return; }
+    var s = slides[current];
+    // 有 nav 字段的场景：↑/↓ 只在对应方向显式设了才显示+可点，没设就整个隐藏，不回退线性
+    // （没有 nav 字段的场景仍走原有 sceneGroup 线性 ↑↓，一天动线不变）
+    var showUp, showDown, upText, downText;
+    if(s.nav){
+      var upNavIdx = navTargetIndex(s.nav.up);
+      var downNavIdx = navTargetIndex(s.nav.down);
+      showUp = upNavIdx >= 0;
+      showDown = downNavIdx >= 0;
+      if(showUp) upText = t("arrowPrevScene") + slideBrief(upNavIdx);
+      if(showDown) downText = t("arrowNextScene") + slideBrief(downNavIdx);
+    } else {
+      showUp = true;
+      showDown = true;
+      var gi = currentSceneGroupIndex();
+      var prevSceneSlide = slides[sceneGroups[(gi - 1 + sceneGroups.length) % sceneGroups.length].firstIndex];
+      upText = t("arrowPrevScene") + prevSceneSlide.sceneNames[nativeLang];
+      var gi2 = currentSceneGroupIndex();
+      var nextSceneSlide = slides[sceneGroups[(gi2 + 1) % sceneGroups.length].firstIndex];
+      downText = t("arrowNextScene") + nextSceneSlide.sceneNames[nativeLang];
+    }
+    elBtnUp.hidden = !showUp;
+    elBtnDown.hidden = !showDown;
+    if(showUp){
+      elTipUp.textContent = upText;
+      elBtnUp.setAttribute("aria-label", upText);
+    }
+    if(showDown){
+      elTipDown.textContent = downText;
+      elBtnDown.setAttribute("aria-label", downText);
+    }
 
-    // 单视角场景没有"平移"可言，左右箭头整个收起
+    // 左右箭头：有 nav.left/right 目标就显示（可跨场景，楼上房间互切用）；
+    // 否则回退原逻辑——单视角场景没有"平移"可言，左右箭头整个收起
+    var leftNavIdx = s.nav ? navTargetIndex(s.nav.left) : -1;
+    var rightNavIdx = s.nav ? navTargetIndex(s.nav.right) : -1;
     var idxs = sceneSlideIndices();
     var multi = idxs.length > 1;
-    elBtnLeft.hidden = !multi;
-    elBtnRight.hidden = !multi;
-    if(multi){
-      var pos = idxs.indexOf(current);
-      var leftText = t("arrowPan") + viewLabel(slides[idxs[(pos - 1 + idxs.length) % idxs.length]]);
-      var rightText = t("arrowPan") + viewLabel(slides[idxs[(pos + 1) % idxs.length]]);
+    var showLeft = (leftNavIdx >= 0) || multi;
+    var showRight = (rightNavIdx >= 0) || multi;
+    elBtnLeft.hidden = !showLeft;
+    elBtnRight.hidden = !showRight;
+    if(showLeft){
+      var leftText = leftNavIdx >= 0
+        ? (t("arrowPan") + slideBrief(leftNavIdx))
+        : (t("arrowPan") + viewLabel(slides[idxs[(idxs.indexOf(current) - 1 + idxs.length) % idxs.length]]));
       elTipLeft.textContent = leftText;
-      elTipRight.textContent = rightText;
       elBtnLeft.setAttribute("aria-label", leftText);
+    }
+    if(showRight){
+      var rightText = rightNavIdx >= 0
+        ? (t("arrowPan") + slideBrief(rightNavIdx))
+        : (t("arrowPan") + viewLabel(slides[idxs[(idxs.indexOf(current) + 1) % idxs.length]]));
+      elTipRight.textContent = rightText;
       elBtnRight.setAttribute("aria-label", rightText);
     }
   }
@@ -4834,7 +5502,19 @@
 
   function buildHotspots(ctx){
     elHotspotLayer.innerHTML = "";
+    elPortalPinLayer.innerHTML = ""; // 传送门常驻徽章单独一层，见 buildHotspots 内 isPortal 分支
     var s = slides[current];
+    // 面积优先点击判定（2026-07-19 任务书§E）：同一点被多个热区矩形同时覆盖时，
+    // 面积最小的那个应该判定优先——它是画面里最具体的物件，不该被随手扣住它的大框（房间/传送门）抢走点击。
+    // 做法：按 wd*ht 面积从大到小排出层级，面积越小 --hz 越大，天然叠在最上层；
+    // 原生 DOM click 只会落在"当前像素下最上层的元素"上，于是无需另写坐标命中测试，交给浏览器自己算。
+    // 非重叠区域不受影响：那里从头到尾只有一个热区的框覆盖那个像素，z-index 高低无关痛痒——大框在空白处照样兜底可点。
+    var areaOrder = ctx.hotspots.map(function(h, i){
+      return { i: i, area: Math.max(0, Number(h.wd) || 0) * Math.max(0, Number(h.ht) || 0) };
+    });
+    areaOrder.sort(function(a, b){ return b.area - a.area; }); // 大→小：大框先分到低层级
+    var hzRank = {};
+    areaOrder.forEach(function(o, rank){ hzRank[o.i] = Math.min(rank + 1, 30); }); // 面积最小者拿到最大层级（最上层）；封顶 30，让给 hover/label-front 的 z-index:40
     ctx.hotspots.forEach(function(h, idx){
       var isEntry = (h.panel !== undefined);
       var isPortal = (h.portal !== undefined);
@@ -4857,6 +5537,7 @@
       hotspot.style.top = h.y + "%";
       hotspot.style.width = h.wd + "%";
       hotspot.style.height = h.ht + "%";
+      hotspot.style.setProperty("--hz", String(hzRank[idx]));
       hotspot.tabIndex = 0;
       hotspot.setAttribute("role", "button");
 
@@ -4874,13 +5555,32 @@
         var pTarget = slides[portalIdx];
         var pTargetName = pTarget.sceneNames[nativeLang];
         hotspot.setAttribute("aria-label", t("ariaGoTo") + " " + pTargetName);
-        var pHint = document.createElement("div");
-        pHint.className = "hotspot-label entry-hint";
-        var pHintText = document.createElement("span");
-        pHintText.className = "en";
-        pHintText.textContent = t("goToPrefix") + " " + pTargetName + " " + t("goToSuffix");
-        pHint.appendChild(pHintText);
-        hotspot.appendChild(pHint);
+        // 常驻地标：跟 buildMapHotspots() 的地图坐标点用完全一样的 DOM 结构/class
+        // （.map-pin > .map-pin-dot + .map-pin-label），视觉上跟地图 pin 一模一样，
+        // 锚在热区几何中心（跟地图上"一栋建筑=一个点"的手感一致）。
+        // 挂在独立的 #portalPinLayer（跟 #hotspotLayer 同容器、同坐标系，inset:0 共享
+        // 百分比坐标），不塞进 .hotspot-portal 内部——否则会被面积优先排出的低 --hz
+        // 压到 .stage-banner 场景横幅底下（近顶部的门实测会被横幅盖住）。
+        // 徽章自带独立 click（复用 handleHotspotClick，跟真热区完全同一套逻辑/守卫）：
+        // 实测踩过坑——若徽章只是纯装饰（pointer-events:none 穿透），商场中庭"服装店"
+        // 门的徽章几何中心恰好跟它内部"information desk"词标签常驻显示的那张纸签重叠，
+        // 穿透点击落到的其实是词标签，传送门反而点不动。给徽章自己接一个 click，不管
+        // 底下叠着什么都保证点得到；键盘/读屏走的还是原热区本身（tabIndex/aria-label
+        // 都在 .hotspot-portal 上，没变），徽章只是给鼠标/触屏加一个更好点的可视目标。
+        var pPin = document.createElement("div");
+        pPin.className = "map-pin";
+        pPin.setAttribute("aria-hidden", "true");
+        pPin.style.left = (h.x + h.wd / 2) + "%";
+        pPin.style.top = (h.y + h.ht / 2) + "%";
+        pPin.addEventListener("click", function(){ handleHotspotClick(idx, hotspot); });
+        var pDot = document.createElement("span");
+        pDot.className = "map-pin-dot";
+        pPin.appendChild(pDot);
+        var pLabel = document.createElement("span");
+        pLabel.className = "map-pin-label";
+        pLabel.textContent = pTargetName;
+        pPin.appendChild(pLabel);
+        elPortalPinLayer.appendChild(pPin);
       } else {
         // .en span = 学习语言词（图上标签），.zh span = 母语词；退化格（学习=母语）只显一个不重复
         var learnTerm = wordTerm(word, learnLang);
@@ -4935,7 +5635,9 @@
       updateQuizButtonVisibility();
       return;
     }
-    if(!ctx.stage || !ctx.hotspots || !ctx.hotspots.length){
+    if(!ctx.stage){
+      // 0 热区不算 unavailable——纯导航过场场景（靠 ↑↓/←→/portal 走）合法，
+      // 只有真的没有 stage 图才算探索版还没做好
       showExplorePlaceholder("unavailable");
       updateQuizButtonVisibility();
       return;
@@ -5038,6 +5740,7 @@
         activePanel = p;
         renderExplore();
         updateFooterText();
+        updateArrowTooltips(); // 2026-07-20 面板内隐藏场景方向箭头，只留返回键
       },
       "scale(0.88)", "50% 50%"
     );
@@ -5067,6 +5770,7 @@
         panelEntryHotspot = null;
         renderExplore();
         updateFooterText();
+        updateArrowTooltips(); // 2026-07-20 退出面板恢复场景方向箭头
       },
       "scale(" + zp.scale + ")", zp.origin
     );
@@ -5179,6 +5883,7 @@
     elQuizStart.hidden = !show;
     elMapToggle.hidden = quiz.active; // 地图纸签测验中隐藏，与 quiz.active 联动
     elMapQuickBtn.hidden = quiz.active; // 顶栏地图快速入口同步隐藏
+    elPortalPinLayer.classList.toggle("quiz-active", quiz.active); // 传送门常驻徽章找词测验时跟着隐藏，见 CSS .portal-pin-layer.quiz-active
     renderStageBanner(); // 测验开/收、面板进出、占位切换都路过这里，横幅状态跟着刷
   }
 
@@ -5471,26 +6176,27 @@
 
   var mapOpen = false;
 
-  // 热区数据：按地图视觉图层顺序声明——大区域在前、小区域在后（后声明的叠在上层）
+  // 热区数据：坐标点(pin)——每栋建筑一个点，落在建筑视觉中心；x/y 是地图图片的百分比坐标。
+  // 2026-07-19 由区域框(x/y/wd/ht)迁移为坐标点：新 x/y = 原框中心（x+wd/2, y+ht/2），保留 1 位小数。
   var mapSpots = [
-    { sceneId: "backyard",    zh: "后院",     x: 0.5,  y: 19, wd: 9,    ht: 11 },
-    { sceneId: "exterior",    zh: "房屋外观", x: 10,   y: 21, wd: 18,   ht: 21 },
-    { sceneId: "garage",      zh: "车库",     x: 5.5,  y: 29, wd: 7.5,  ht: 11 },
-    { sceneId: "car",         zh: "汽车",     x: 8,    y: 40, wd: 7,    ht: 7  },
-    { sceneId: "street",      zh: "街道路口", x: 36,   y: 26, wd: 14,   ht: 21 },
-    { sceneId: "gasstation",  zh: "加油站",   x: 42,   y: 9,  wd: 24,   ht: 20 },
-    { sceneId: "supermarket", zh: "超市",     x: 66,   y: 23, wd: 10,   ht: 15 },
-    { sceneId: "diner",       zh: "餐厅",     x: 74.5, y: 29, wd: 12,   ht: 11 },
-    { sceneId: "coffeeshop",  zh: "咖啡店",   x: 86.5, y: 31, wd: 11.5, ht: 15 },
-    { sceneId: "clinic",      zh: "诊所",     x: 19,   y: 50, wd: 14,   ht: 14 },
-    { sceneId: "pharmacy",    zh: "药房",     x: 33,   y: 52, wd: 9.5,  ht: 13 },
-    { sceneId: "mall",        zh: "商场",     x: 36,   y: 44, wd: 17,   ht: 12 },
-    { sceneId: "airport",     zh: "机场",     x: 62,   y: 3,  wd: 37,   ht: 16 },
-    { sceneId: "postoffice",  zh: "邮局",     x: 44,   y: 52, wd: 13,   ht: 21 },
-    { sceneId: "gym",         zh: "健身房",   x: 68,   y: 54, wd: 17,   ht: 18 },
-    { sceneId: "barbershop",  zh: "理发店",   x: 86,   y: 57, wd: 13,   ht: 18 },
-    { sceneId: "park",        zh: "公园",     x: 55,   y: 72, wd: 28,   ht: 26 },
-    { sceneId: "hotel",       zh: "酒店",     x: 1.5,  y: 70, wd: 24,   ht: 23 }
+    { sceneId: "backyard", zh: "后院", x: 9.2, y: 28.2 },
+    { sceneId: "exterior", zh: "房屋外观", x: 20.4, y: 34.1 },
+    { sceneId: "garage", zh: "车库", x: 8.2, y: 34.3 },
+    { sceneId: "car", zh: "汽车", x: 11, y: 43.4 },
+    { sceneId: "street", zh: "街道路口", x: 43, y: 36.5 },
+    { sceneId: "gasstation", zh: "加油站", x: 52.9, y: 23.4 },
+    { sceneId: "supermarket", zh: "超市", x: 70.1, y: 34.1 },
+    { sceneId: "diner", zh: "餐厅", x: 78.3, y: 38.8 },
+    { sceneId: "coffeeshop", zh: "咖啡店", x: 91.7, y: 44 },
+    { sceneId: "clinic", zh: "诊所", x: 18.2, y: 65.2 },
+    { sceneId: "pharmacy", zh: "药房", x: 29.6, y: 64.7 },
+    { sceneId: "mall", zh: "商场", x: 49.2, y: 60.4 },
+    { sceneId: "airport", zh: "机场", x: 77.8, y: 13 },
+    { sceneId: "postoffice", zh: "邮局", x: 65.4, y: 60.5 },
+    { sceneId: "gym", zh: "健身房", x: 78.1, y: 65.7 },
+    { sceneId: "barbershop", zh: "理发店", x: 89.2, y: 70.4 },
+    { sceneId: "park", zh: "公园", x: 69, y: 85 },
+    { sceneId: "hotel", zh: "酒店", x: 16, y: 91.8 }
   ];
 
   // 目标场景在 slides 里第一次出现的下标；场景尚未收录（规划中）时返回 -1
@@ -5505,35 +6211,35 @@
     elMapHotspotLayer.innerHTML = "";
     mapSpots.forEach(function(spot){
       var targetIdx = findSceneFirstIndex(spot.sceneId);
-      if(targetIdx < 0) return; // 找不到目标场景就不生成热区
-      // 地图热区文案用目标场景的母语名（en 显英文场景名），mapSpots.zh 只作兜底
+      if(targetIdx < 0) return; // 找不到目标场景就不生成坐标点
+      // 地图坐标点文案用目标场景的母语名（en 显英文场景名），mapSpots.zh 只作兜底
       var spotName = slides[targetIdx].sceneNames[nativeLang] || spot.zh;
 
-      var hotspot = document.createElement("div");
-      hotspot.className = "hotspot hotspot-entry hotspot-portal";
-      hotspot.style.left = spot.x + "%";
-      hotspot.style.top = spot.y + "%";
-      hotspot.style.width = spot.wd + "%";
-      hotspot.style.height = spot.ht + "%";
-      hotspot.tabIndex = 0;
-      hotspot.setAttribute("role", "button");
-      hotspot.setAttribute("aria-label", t("ariaGoTo") + " " + spotName);
+      // 坐标点(pin)：常驻显示，圆点+名字标签都不靠 hover——地图打开时 18 栋建筑一次性看全
+      var pin = document.createElement("div");
+      pin.className = "map-pin";
+      pin.style.left = spot.x + "%";
+      pin.style.top = spot.y + "%";
+      pin.tabIndex = 0;
+      pin.setAttribute("role", "button");
+      pin.setAttribute("aria-label", t("ariaGoTo") + " " + spotName);
 
-      var hint = document.createElement("div");
-      hint.className = "hotspot-label entry-hint";
-      var hintText = document.createElement("span");
-      hintText.className = "en";
-      hintText.textContent = t("goToPrefix") + " " + spotName + " " + t("goToSuffix");
-      hint.appendChild(hintText);
-      hotspot.appendChild(hint);
+      var dot = document.createElement("span");
+      dot.className = "map-pin-dot";
+      pin.appendChild(dot);
+
+      var label = document.createElement("span");
+      label.className = "map-pin-label";
+      label.textContent = spotName;
+      pin.appendChild(label);
 
       var jump = function(){ closeMap(); goTo(targetIdx); };
-      hotspot.addEventListener("click", jump);
-      hotspot.addEventListener("keydown", function(e){
+      pin.addEventListener("click", jump);
+      pin.addEventListener("keydown", function(e){
         if(e.key === "Enter" || e.key === " "){ e.preventDefault(); jump(); }
       });
 
-      elMapHotspotLayer.appendChild(hotspot);
+      elMapHotspotLayer.appendChild(pin);
     });
   }
 
@@ -5827,11 +6533,1114 @@
   });
 
   // ---------------------------------------------------------------
+  // 热区编辑器（用户 本地开发工具，2026-07-19）：?edit=1 或 Cmd/Ctrl+Shift+E 进入，
+  // 可视化拖拽/缩放/新增/删除热区，改动落 localStorage（固定 key，刷新自动恢复）+
+  // 一键导出 JSON（剪贴板 + 下载 热区改动.json）给主循环 bake 回源码。
+  // 上线安全：不带 ?edit=1 且没按过快捷键时，除下面这一个全局按键监听外，
+  // 本模块不创建任何 DOM、不绑定任何热区级事件——公开访客完全看不到、摸不到编辑器的存在。
+  // applyStoredOverrides()/pristine 快照两段固定跑（不受 editMode 门控），
+  // 但对没有 localStorage 存档的公开访客而言就是读一个空 key、空跑一圈，零可观察影响。
+  // ---------------------------------------------------------------
+  (function(){
+  var EDIT_KEY = "cj_edit_hotspots_v1"; // ctxKey -> {sceneId, view, panel, hotspots, words}
+  var MIN_SIZE = 1;   // 热区最小宽高（%），防止缩放手柄把框拖成负数/零
+  var NUDGE = 0.2;     // 方向键微调步长（%）
+  var NUDGE_BIG = 0.5; // Shift+方向键缩放步长（%）
+  var HANDLE_DIRS = ["n","s","e","w","ne","nw","se","sw"];
+  var TYPE_LABEL = { word:"单词", portal:"传送门", panel:"面板" };
+
+  function loadJSON(key){
+    try{ return JSON.parse(window.localStorage.getItem(key)) || {}; }catch(e){ return {}; }
+  }
+  function saveJSON(key, obj){
+    try{ window.localStorage.setItem(key, JSON.stringify(obj)); }catch(e){ /* 忽略存储失败，编辑仍在内存里生效 */ }
+  }
+  function clone(v){ return JSON.parse(JSON.stringify(v)); }
+
+  var store = loadJSON(EDIT_KEY);
+  var MAP_EDIT_KEY = "cj_edit_mapspots_v1"; // mapSpots 只有全局一份，没有场景/视角/面板的"上下文"概念，
+  // 不用像场景那样按 key 分记录——存整个 mapSpots 数组的坐标快照就够，每次改动整份重写
+
+  // ---- 原始数据快照（"重置"用；必须在套用 localStorage 改动之前拍，且不管是否进编辑模式都要拍——
+  // 快捷键随时能把 editMode 掰开，届时"原始"必须还在） ----
+  var PRISTINE_HS = {};
+  var PRISTINE_WORDS = {};
+  slides.forEach(function(s){
+    var key = s.sceneId + "::" + viewKey(s);
+    PRISTINE_HS[key] = clone(s.hotspots || []);
+    PRISTINE_WORDS[key] = clone(s.words || []);
+    (s.panels || []).forEach(function(p){
+      var pk = key + "::" + p.id;
+      PRISTINE_HS[pk] = clone(p.hotspots || []);
+      PRISTINE_WORDS[pk] = clone(p.words || []);
+    });
+  });
+  var PRISTINE_MAPSPOTS = clone(mapSpots); // 地图热区同款原始快照，供"重置全部"用
+
+  function targetFor(sceneId, view, panelId){
+    var idx = findSceneViewIndex(sceneId, view);
+    if(idx < 0) return null;
+    var s = slides[idx];
+    if(!panelId) return s;
+    return findPanel(s, panelId) || null;
+  }
+
+  // ---- 把 localStorage 里存的改动套回内存 slides 数据：无条件跑，不看 editMode——
+  // 这样"拖完切正常模式点验/刷新页面"才能看到改动；公开版 localStorage 里没有这个 key，等于空跑 ----
+  (function applyStoredOverrides(){
+    Object.keys(store).forEach(function(k){
+      var rec = store[k];
+      var target = targetFor(rec.sceneId, rec.view, rec.panel);
+      if(!target) return;
+      target.hotspots = clone(rec.hotspots);
+      target.words = clone(rec.words);
+    });
+  })();
+
+  function loadMapStore(){
+    try{
+      var raw = window.localStorage.getItem(MAP_EDIT_KEY);
+      if(!raw) return null;
+      var arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : null;
+    }catch(e){ return null; }
+  }
+  function saveMapStore(){
+    try{ window.localStorage.setItem(MAP_EDIT_KEY, JSON.stringify(mapSpots)); }catch(e){ /* 存不了地图编辑仍在内存里生效 */ }
+  }
+  var mapHasEdits = false; // 是否曾经改过地图热区（决定导出时带不带 mapSpots 这个 change 条目）
+
+  // ---- 同上，套地图热区的存档：按 sceneId 匹配（不依赖数组下标，改动 mapSpots 声明顺序也不会错位）----
+  (function applyStoredMapOverrides(){
+    var stored = loadMapStore();
+    if(!stored) return;
+    stored.forEach(function(rec){
+      for(var i=0;i<mapSpots.length;i++){
+        if(mapSpots[i].sceneId === rec.sceneId){
+          mapSpots[i].x = rec.x; mapSpots[i].y = rec.y; // 坐标点只有 x/y，旧存档若带 wd/ht 直接忽略
+          break;
+        }
+      }
+    });
+    mapHasEdits = true;
+  })();
+
+  // ---------------------------------------------------------------
+  // 编辑模式开关
+  // ---------------------------------------------------------------
+  var editMode = /(^|[?&])edit=1(&|$)/.test(location.search);
+  var selected = null;   // 当前选中的热区对象（ctx.hotspots 里的引用，不是副本）
+  var uiBuilt = false;
+  var elToolbar = null, elOverlay = null, elPropBody = null, elAddTypeRow = null;
+
+  function ctxNow(){ return exploreCtx(); }
+
+  function ctxMeta(ctx){
+    var s = slides[current];
+    return { sceneId: s.sceneId, view: viewKey(s), panel: ctx.isPanel ? activePanel.id : null };
+  }
+
+  function commitContext(ctx){
+    var meta = ctxMeta(ctx);
+    store[ctx.key] = { sceneId: meta.sceneId, view: meta.view, panel: meta.panel, hotspots: clone(ctx.hotspots), words: clone(ctx.words) };
+    saveJSON(EDIT_KEY, store);
+  }
+
+  function resetContext(ctx){
+    var meta = ctxMeta(ctx);
+    var target = targetFor(meta.sceneId, meta.view, meta.panel);
+    if(target){
+      target.hotspots = clone(PRISTINE_HS[ctx.key] || []);
+      target.words = clone(PRISTINE_WORDS[ctx.key] || []);
+    }
+    delete store[ctx.key];
+    saveJSON(EDIT_KEY, store);
+    selected = null;
+    renderExplore();
+    flashMsg("已重置本场景/面板");
+  }
+
+  function resetAll(){
+    if(!window.confirm("重置全部场景+地图的热区改动？此操作不可撤销（会清空本机存的所有热区编辑）。")) return;
+    slides.forEach(function(s){
+      var key = s.sceneId + "::" + viewKey(s);
+      s.hotspots = clone(PRISTINE_HS[key] || []);
+      s.words = clone(PRISTINE_WORDS[key] || []);
+      (s.panels || []).forEach(function(p){
+        var pk = key + "::" + p.id;
+        p.hotspots = clone(PRISTINE_HS[pk] || []);
+        p.words = clone(PRISTINE_WORDS[pk] || []);
+      });
+    });
+    store = {};
+    try{ window.localStorage.removeItem(EDIT_KEY); }catch(e){}
+    mapSpots.forEach(function(s, i){
+      var p = PRISTINE_MAPSPOTS[i];
+      if(!p) return;
+      s.x = p.x; s.y = p.y;
+    });
+    mapHasEdits = false;
+    try{ window.localStorage.removeItem(MAP_EDIT_KEY); }catch(e){}
+    selected = null;
+    mapSelected = null;
+    if(mapOpen) syncMapEditOverlay();
+    renderExplore();
+    flashMsg("已重置全部场景+地图");
+  }
+
+  // ---------------------------------------------------------------
+  // 导出：把 store 里所有被改过的上下文，整理成 { changes:[{sceneId,view,panel,hotspots,words}] }，
+  // 地图热区如果动过就再追加一条 { mapSpots:[...] }（全量快照，不是增量补丁——主循环烤回时直接
+  // 整个替换 var mapSpots 数组最省事，每项自带 sceneId/zh 不会认错对象）。
+  // 主循环 bake 回源码时：hotspots 直接整体替换该 scene/panel 的 hotspots 数组；
+  // words 附带给，仅当新建过"单词"型热区时才会跟 hotspots 有出入（新词追加在数组末尾，
+  // 其余场景/面板 words 数组通常和源码一致，照抄回去无副作用）。
+  // ---------------------------------------------------------------
+  function exportChanges(){
+    var keys = Object.keys(store);
+    if(!keys.length && !mapHasEdits){ flashMsg("还没有改动——先拖/加/删一个热区再导出"); return; }
+    var changes = keys.map(function(k){
+      var rec = store[k];
+      return { sceneId: rec.sceneId, view: rec.view, panel: rec.panel || null, hotspots: clone(rec.hotspots), words: clone(rec.words) };
+    });
+    if(mapHasEdits){ changes.push({ mapSpots: clone(mapSpots) }); }
+    var json = JSON.stringify({ changes: changes }, null, 2);
+    copyToClipboard(json);
+    downloadFile("热区改动.json", json);
+    flashMsg("已导出 " + changes.length + " 处改动：剪贴板 + 热区改动.json");
+  }
+
+  function copyToClipboard(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).catch(function(){ fallbackCopy(text); });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+  function fallbackCopy(text){
+    try{
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }catch(e){ /* 复制失败没关系，下载的文件里还有 */ }
+  }
+  function downloadFile(filename, text){
+    var blob = new Blob([text], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  // ---------------------------------------------------------------
+  // 工具条 UI（懒建：第一次进编辑模式才建 DOM + 注入样式）
+  // ---------------------------------------------------------------
+  function injectStyle(){
+    if(document.getElementById("cjEditStyle")) return;
+    var style = document.createElement("style");
+    style.id = "cjEditStyle";
+    style.textContent =
+      '#cjEditToolbar{position:fixed;top:10px;right:10px;width:270px;max-height:calc(100vh - 20px);overflow:auto;' +
+        'background:rgba(43,30,20,0.94);color:#f3e9d2;border:1px solid #c79b4c;border-radius:8px;' +
+        // z-index 80：地图遮罩 .map-overlay 是 z-index:70 的全屏 fixed 层，编辑模式下开地图要盖过它，
+        // 工具栏才不会被地图糊住——两个都是 fixed 定位、各自成独立层叠上下文，谁高谁在上，跟 DOM 顺序无关
+        'padding:10px 12px;font:12px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,0.45);}' +
+      // 折叠态：只留标题行，body 整块收起；宽度改 auto 让小条贴合文字，不占一整条 270px
+      '#cjEditToolbar.cj-et-collapsed{width:auto;max-height:none;}' +
+      '#cjEditToolbar.cj-et-collapsed .cj-et-body{display:none;}' +
+      '.cj-et-headrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;}' +
+      '.cj-et-collapse-btn{flex:none;width:22px;height:22px;line-height:1;background:transparent;border:1px solid #c79b4c;color:#f3e9d2;border-radius:4px;cursor:pointer;font-size:11px;padding:0;}' +
+      '.cj-et-collapse-btn:hover{background:rgba(199,155,76,0.2);}' +
+      // 编辑模式下整页让出右侧工具栏空间：只在 .cj-edit-shrink 类存在时生效（进/出编辑模式由 JS 加减这个类）。
+      // 踩过一次坑：一开始只卡 .viewer 的 max-width，结果 .viewer 自己在 .page 内部还有左侧留白/padding，
+      // 卡完宽度右边缘照样伸到工具栏底下——量出来 gap 是负数，糊住了。改成直接卡整个 .page（跟既有
+      // .toc-open 抽屉那条规则同一个思路，只是方向对称：那个是给左侧抽屉让路 margin-left，这个是给
+      // 右侧工具栏让路 max-width + margin-right:auto 取消居中），.viewer 是 .page 的子孙，.page 本身
+      // 收窄靠左之后，.viewer 无论内部怎么留白，右边缘必然落在 .page 右边缘以内，工具栏保证够不着。
+      // 100vw 用视口宽而非 .page 自身宽度——工具栏是 position:fixed 相对视口定位，这样量才准。
+      // 图片本身没设死 height，.page 收窄后 cqw 跟着变小，浏览器按原图比例自动收高度，3:2 不用额外代码保。
+      '.page.mode-explore.cj-edit-shrink{max-width:calc(100vw - 300px) !important;margin-left:0;margin-right:auto;}' +
+      '.cj-et-head{font-weight:700;font-size:13px;margin-bottom:0;color:#eab259;}' +
+      '.cj-et-key{font-weight:400;font-size:10px;opacity:0.65;margin-left:6px;}' +
+      '.cj-et-ctx{font-size:11px;opacity:0.85;margin-bottom:8px;}' +
+      '.cj-et-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;}' +
+      '.cj-et-btn{flex:1;background:#a8562e;color:#fff;border:none;border-radius:5px;padding:6px 8px;cursor:pointer;font-size:11.5px;}' +
+      '.cj-et-btn:hover{background:#833f1e;}' +
+      '.cj-et-btn-sm{flex:none;padding:4px 8px;}' +
+      '.cj-et-btn-ghost{background:transparent;border:1px solid #c79b4c;color:#f3e9d2;}' +
+      '.cj-et-btn-ghost:hover{background:rgba(199,155,76,0.2);}' +
+      '.cj-et-btn-primary{background:#4c8c4a;}' +
+      '.cj-et-btn-primary:hover{background:#3c6f3a;}' +
+      '.cj-et-btn-danger{background:#833f1e;width:100%;margin-top:8px;}' +
+      '.cj-et-msg{font-size:11px;color:#9fd39c;min-height:14px;margin-bottom:4px;}' +
+      '.cj-et-prop{border-top:1px solid rgba(199,155,76,0.4);padding-top:8px;margin-top:4px;}' +
+      '.cj-et-hint{opacity:0.7;font-size:11px;}' +
+      '.cj-et-prop-head{font-weight:700;margin-bottom:6px;}' +
+      '.cj-et-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}' +
+      '.cj-et-field{display:flex;align-items:center;gap:4px;font-size:11px;}' +
+      '.cj-et-field input{width:60px;background:#1f150d;color:#f3e9d2;border:1px solid #6f5a44;border-radius:4px;padding:2px 4px;}' +
+      '.cj-et-field-wide{display:block;margin-bottom:5px;}' +
+      '.cj-et-field-wide input{width:100%;box-sizing:border-box;margin-top:2px;}' +
+      '.cj-et-sub{font-size:11px;opacity:0.8;margin:6px 0 2px;}' +
+      '.cj-et-select{width:100%;background:#1f150d;color:#f3e9d2;border:1px solid #6f5a44;border-radius:4px;padding:3px 4px;box-sizing:border-box;}' +
+      '.cj-et-wordform{margin-top:4px;padding-top:4px;border-top:1px dashed rgba(199,155,76,0.3);}' +
+      // #cjEditOverlay 容器本身 pointer-events:none——它 inset:0 铺满整张舞台图，退出编辑模式后
+      // 容器还留在 DOM 里（只是清空了子节点），如果容器自己能接鼠标事件，会在编辑模式关掉后
+      // 悄悄挡住底下真实热区层的点击，让正常模式点读失灵。真正要接手势的是 .cj-eb 每个框自己，
+      // 显式声明 pointer-events:auto 拿回来即可，跟父容器的 none 不冲突（子元素可以覆盖继承值）。
+      '#cjEditOverlay{position:absolute;inset:0;z-index:70;pointer-events:none;}' +
+      // 地图那份编辑遮罩，原理跟上面 #cjEditOverlay 一样（挂在 #mapStage 下，跟 #mapHotspotLayer 同级），
+      // 但两者是各自独立的定位祖先（#exploreStageInner vs #mapStage），互不相扰，各管各的 z-index:70 局部层叠
+      '#cjMapEditOverlay{position:absolute;inset:0;z-index:70;pointer-events:none;}' +
+      '.cj-eb{position:absolute;box-sizing:border-box;border:2px dashed #4fd1ff;background:rgba(79,209,255,0.12);cursor:move;pointer-events:auto;}' +
+      '.cj-eb-portal{border-color:#7be08a;background:rgba(123,224,138,0.12);}' +
+      '.cj-eb-panel{border-color:#f0c75e;background:rgba(240,199,94,0.14);}' +
+      '.cj-eb-sel{border-color:#ff5f5f;border-style:solid;background:rgba(255,95,95,0.16);z-index:2;}' +
+      '.cj-eb-tag{position:absolute;bottom:100%;left:0;margin-bottom:2px;background:#1f150d;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;white-space:nowrap;pointer-events:none;}' +
+      '.cj-eb-h{position:absolute;width:10px;height:10px;background:#fff;border:1px solid #ff5f5f;border-radius:2px;}' +
+      '.cj-eb-h-n{top:-5px;left:calc(50% - 5px);cursor:ns-resize;}' +
+      '.cj-eb-h-s{bottom:-5px;left:calc(50% - 5px);cursor:ns-resize;}' +
+      '.cj-eb-h-e{right:-5px;top:calc(50% - 5px);cursor:ew-resize;}' +
+      '.cj-eb-h-w{left:-5px;top:calc(50% - 5px);cursor:ew-resize;}' +
+      '.cj-eb-h-ne{top:-5px;right:-5px;cursor:nesw-resize;}' +
+      '.cj-eb-h-nw{top:-5px;left:-5px;cursor:nwse-resize;}' +
+      '.cj-eb-h-se{bottom:-5px;right:-5px;cursor:nwse-resize;}' +
+      '.cj-eb-h-sw{bottom:-5px;left:-5px;cursor:nesw-resize;}' +
+      // 地图坐标点编辑框：固定 22×22 圆点，只拖不缩（没有 .cj-eb-h 缩放手柄）——
+      // 用负 margin 把点精确摆在 left/top(%) 定的坐标上，跟运行时 .map-pin 同一手法
+      '.cj-eb-pin{position:absolute;width:22px;height:22px;margin-left:-11px;margin-top:-11px;border-radius:50%;border:2px dashed #7be08a;background:rgba(123,224,138,0.28);cursor:move;pointer-events:auto;box-sizing:border-box;}' +
+      '.cj-eb-pin.cj-eb-sel{border-color:#ff5f5f;border-style:solid;background:rgba(255,95,95,0.32);z-index:2;}';
+    document.head.appendChild(style);
+  }
+
+  // 折叠态存本地，刷新/重进编辑模式记得住上次开/合状态
+  var TOOLBAR_COLLAPSE_KEY = "cj_edit_toolbar_collapsed_v1";
+  function loadToolbarCollapsed(){
+    try{ return window.localStorage.getItem(TOOLBAR_COLLAPSE_KEY) === "1"; }catch(e){ return false; }
+  }
+  function saveToolbarCollapsed(v){
+    try{ window.localStorage.setItem(TOOLBAR_COLLAPSE_KEY, v ? "1" : "0"); }catch(e){ /* 存不了就不记，下次按默认展开 */ }
+  }
+
+  function buildToolbar(){
+    injectStyle();
+    elToolbar = document.createElement("div");
+    elToolbar.id = "cjEditToolbar";
+    elToolbar.innerHTML =
+      '<div class="cj-et-headrow">' +
+        '<div class="cj-et-head">🛠 编辑模式 ON <span class="cj-et-key">⌘/Ctrl+⇧+E 关闭</span></div>' +
+        '<button type="button" class="cj-et-collapse-btn" data-act="toggle-collapse" aria-label="折叠/展开工具栏">▾</button>' +
+      '</div>' +
+      '<div class="cj-et-body" id="cjEtBody">' +
+        '<div class="cj-et-ctx" id="cjEtCtx"></div>' +
+        '<div class="cj-et-row" id="cjEtAddRow">' +
+          '<button type="button" class="cj-et-btn" data-act="add">＋ 新增热区</button>' +
+        '</div>' +
+        '<div class="cj-et-row" id="cjEtAddTypeRow" hidden>' +
+          '<button type="button" class="cj-et-btn cj-et-btn-sm" data-add-type="word">单词</button>' +
+          '<button type="button" class="cj-et-btn cj-et-btn-sm" data-add-type="portal">传送门</button>' +
+          '<button type="button" class="cj-et-btn cj-et-btn-sm" data-add-type="panel">面板</button>' +
+          '<button type="button" class="cj-et-btn cj-et-btn-sm cj-et-btn-ghost" data-act="cancel-add">取消</button>' +
+        '</div>' +
+        '<div class="cj-et-row">' +
+          '<button type="button" class="cj-et-btn cj-et-btn-ghost" data-act="reset-scene" id="cjEtResetSceneBtn">重置本场景</button>' +
+          '<button type="button" class="cj-et-btn cj-et-btn-ghost" data-act="reset-all">重置全部</button>' +
+        '</div>' +
+        '<div class="cj-et-row">' +
+          '<button type="button" class="cj-et-btn cj-et-btn-primary" data-act="export">⬇ 导出改动</button>' +
+        '</div>' +
+        '<div class="cj-et-msg" id="cjEtMsg"></div>' +
+        '<div class="cj-et-prop" id="cjEtProp"></div>' +
+      '</div>';
+    document.body.appendChild(elToolbar);
+
+    elPropBody = elToolbar.querySelector("#cjEtProp");
+    elAddTypeRow = elToolbar.querySelector("#cjEtAddTypeRow");
+
+    var collapseBtn = elToolbar.querySelector('[data-act="toggle-collapse"]');
+    if(loadToolbarCollapsed()){
+      elToolbar.classList.add("cj-et-collapsed");
+      collapseBtn.textContent = "▸";
+    }
+
+    elToolbar.addEventListener("click", function(e){
+      var btn = e.target.closest ? e.target.closest("button") : null;
+      if(!btn) return;
+      var act = btn.getAttribute("data-act");
+      var addType = btn.getAttribute("data-add-type");
+      if(act === "toggle-collapse"){
+        var collapsed = elToolbar.classList.toggle("cj-et-collapsed");
+        btn.textContent = collapsed ? "▸" : "▾";
+        saveToolbarCollapsed(collapsed);
+      }
+      else if(act === "add"){ elAddTypeRow.hidden = false; }
+      else if(act === "cancel-add"){ elAddTypeRow.hidden = true; }
+      else if(act === "reset-scene"){ resetContext(ctxNow()); }
+      else if(act === "reset-all"){ resetAll(); }
+      else if(act === "export"){ exportChanges(); }
+      else if(addType){ elAddTypeRow.hidden = true; addHotspot(addType); }
+    });
+  }
+
+  function flashMsg(text){
+    var el = document.getElementById("cjEtMsg");
+    if(!el) return;
+    el.textContent = text;
+    window.clearTimeout(flashMsg._t);
+    flashMsg._t = window.setTimeout(function(){ el.textContent = ""; }, 4000);
+  }
+
+  function ensureUI(){
+    if(uiBuilt) return;
+    uiBuilt = true;
+    buildToolbar();
+  }
+
+  function ensureOverlayEl(){
+    if(!elOverlay){
+      elOverlay = document.createElement("div");
+      elOverlay.id = "cjEditOverlay";
+    }
+    if(elOverlay.parentNode !== elExploreStageInner){
+      elExploreStageInner.appendChild(elOverlay);
+    }
+    return elOverlay;
+  }
+
+  function clearOverlay(){
+    if(elOverlay) elOverlay.innerHTML = "";
+  }
+
+  // ---------------------------------------------------------------
+  // 热区框：渲染 + 拖拽/缩放
+  // ---------------------------------------------------------------
+  function typeOf(h){
+    if(h.panel !== undefined) return "panel";
+    if(h.portal !== undefined) return "portal";
+    return "word";
+  }
+  function labelFor(ctx, h){
+    var ty = typeOf(h);
+    if(ty === "word"){
+      var w = ctx.words[h.w];
+      return w ? (wordTerm(w,"en") || "(空)") + " / " + (wordTerm(w,"zh") || "") : ("缺词 #" + h.w);
+    }
+    if(ty === "portal") return "→ " + h.portal + (h.view ? ("·" + h.view) : "");
+    return "▤ " + h.panel;
+  }
+  function positionBox(box, h){
+    box.style.left = h.x + "%";
+    box.style.top = h.y + "%";
+    box.style.width = h.wd + "%";
+    box.style.height = h.ht + "%";
+  }
+  function roundHotspot(h){
+    h.x = Math.round(h.x * 10) / 10;
+    h.y = Math.round(h.y * 10) / 10;
+    h.wd = Math.round(h.wd * 10) / 10;
+    h.ht = Math.round(h.ht * 10) / 10;
+  }
+  function applyDelta(h, orig, mode, dx, dy){
+    var x = orig.x, y = orig.y, wd = orig.wd, ht = orig.ht;
+    if(mode === "move"){
+      x = orig.x + dx; y = orig.y + dy;
+    } else {
+      if(mode.indexOf("e") !== -1){ wd = Math.max(MIN_SIZE, orig.wd + dx); }
+      if(mode.indexOf("w") !== -1){ wd = Math.max(MIN_SIZE, orig.wd - dx); x = orig.x + orig.wd - wd; }
+      if(mode.indexOf("s") !== -1){ ht = Math.max(MIN_SIZE, orig.ht + dy); }
+      if(mode.indexOf("n") !== -1){ ht = Math.max(MIN_SIZE, orig.ht - dy); y = orig.y + orig.ht - ht; }
+    }
+    h.x = x; h.y = y; h.wd = wd; h.ht = ht;
+  }
+  function blurActive(){
+    var a = document.activeElement;
+    if(a && a !== document.body && a.blur){ a.blur(); }
+  }
+  function updateCoordInputsLive(h){
+    if(h !== selected || !elPropBody) return;
+    var inputs = elPropBody.querySelectorAll(".cj-et-grid input");
+    var fields = ["x","y","wd","ht"];
+    for(var i=0;i<inputs.length;i++){ inputs[i].value = Math.round(h[fields[i]] * 10) / 10; }
+  }
+
+  // startDrag 不再自己认定"完事了要 commitContext(ctx)"——原来写死只服务场景热区一种调用者，
+  // 地图热区加进来后要写回的目标（mapSpots 数组）和收尾动作完全不同。改成拖拽/缩放的通用引擎：
+  // 只认 (h, box, mode, refEl) 四件事（改哪个对象、改哪个框、往哪个方向、百分比相对谁的框量），
+  // 移动中/松手后要做什么交给调用者传 handlers 回调，场景热区和地图热区各自传各自的收尾逻辑。
+  function startDrag(e, h, box, mode, refEl, handlers){
+    var rect = refEl.getBoundingClientRect();
+    if(!rect.width || !rect.height) return;
+    var startX = e.clientX, startY = e.clientY;
+    var orig = { x:h.x, y:h.y, wd:h.wd, ht:h.ht };
+    var pid = e.pointerId;
+    function onMove(ev){
+      if(ev.pointerId !== pid) return;
+      var dx = (ev.clientX - startX) / rect.width * 100;
+      var dy = (ev.clientY - startY) / rect.height * 100;
+      applyDelta(h, orig, mode, dx, dy);
+      positionBox(box, h);
+      if(handlers.onMove) handlers.onMove(h);
+    }
+    function onUp(ev){
+      if(ev.pointerId !== pid) return;
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      roundHotspot(h);
+      positionBox(box, h);
+      if(handlers.onCommit) handlers.onCommit(h);
+    }
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+  }
+
+  function sceneDragHandlers(ctx){
+    return {
+      onMove: updateCoordInputsLive,
+      onCommit: function(){ commitContext(ctx); updatePropertyPanel(ctx); }
+    };
+  }
+
+  function buildEditBox(ctx, h, idx){
+    var box = document.createElement("div");
+    box.className = "cj-eb cj-eb-" + typeOf(h) + (h === selected ? " cj-eb-sel" : "");
+    box.setAttribute("data-idx", idx);
+    positionBox(box, h);
+    var tag = document.createElement("div");
+    tag.className = "cj-eb-tag";
+    tag.textContent = labelFor(ctx, h);
+    box.appendChild(tag);
+
+    box.addEventListener("pointerdown", function(e){
+      blurActive();
+      e.preventDefault();
+      e.stopPropagation();
+      if(selected !== h){
+        selected = h;
+        syncEditOverlay(ctx);
+        var fresh = elOverlay.querySelector('[data-idx="' + idx + '"]');
+        if(fresh) startDrag(e, h, fresh, "move", elExploreStageInner, sceneDragHandlers(ctx));
+        return;
+      }
+      startDrag(e, h, box, "move", elExploreStageInner, sceneDragHandlers(ctx));
+    });
+
+    if(h === selected){
+      HANDLE_DIRS.forEach(function(dir){
+        var hd = document.createElement("div");
+        hd.className = "cj-eb-h cj-eb-h-" + dir;
+        hd.addEventListener("pointerdown", function(e){
+          blurActive();
+          e.preventDefault();
+          e.stopPropagation();
+          startDrag(e, h, box, dir, elExploreStageInner, sceneDragHandlers(ctx));
+        });
+        box.appendChild(hd);
+      });
+    }
+    return box;
+  }
+
+  function syncEditOverlay(ctx){
+    if(!editMode) return;
+    ctx = ctx || ctxNow();
+    ensureUI();
+    var layer = ensureOverlayEl();
+    layer.innerHTML = "";
+    if(selected && ctx.hotspots.indexOf(selected) === -1){ selected = null; }
+    ctx.hotspots.forEach(function(h, idx){
+      layer.appendChild(buildEditBox(ctx, h, idx));
+    });
+    updatePropertyPanel(ctx);
+    updateContextLabel(ctx);
+    updateToolbarRowsForMode();
+  }
+
+  function updateContextLabel(ctx){
+    var el = document.getElementById("cjEtCtx");
+    if(!el) return;
+    if(mapOpen) return; // 地图开着时这块文案归 updateMapContextLabel 管，别被场景那边覆盖掉
+    if(!ctx){ el.textContent = "（当前场景没有舞台图，无法编辑）"; return; }
+    var s = slides[current];
+    var name = s.sceneNames.zh + (viewLabel(s) ? "·" + viewLabel(s) : "") + (ctx.isPanel ? "·" + ctx.name : "");
+    el.textContent = "当前：" + name + "（" + ctx.hotspots.length + " 个热区）";
+  }
+
+  // 编辑模式下，"＋新增热区"和"重置本场景"这两块只对场景热区有意义（新增会往 ctxNow() 也就是
+  // slides[current] 那个场景塞新热区/新词；地图没有"当前场景"概念）。地图打开时收起来，避免点了
+  // 要么无效要么改错对象；"重置全部"/"导出改动"两个场景地图通用，一直留着。
+  function updateToolbarRowsForMode(){
+    if(!elToolbar) return;
+    var addRow = document.getElementById("cjEtAddRow");
+    var resetSceneBtn = document.getElementById("cjEtResetSceneBtn");
+    if(addRow) addRow.hidden = mapOpen;
+    if(resetSceneBtn) resetSceneBtn.hidden = mapOpen;
+    if(mapOpen && elAddTypeRow) elAddTypeRow.hidden = true;
+  }
+
+  // ---------------------------------------------------------------
+  // 地图热区编辑（目标从 ctx.hotspots 换成 mapSpots；mapSpots 全局唯一一份，没有"上下文"切换，
+  // 逻辑比场景那边单薄很多：没有新增/删除，没有 word/portal/panel 类型分支，属性面板只出
+  // sceneId+zh 只读 + x/y 两个数字框。2026-07-19 由区域框改坐标点：只拖位置，不再有 8 向缩放手柄，
+  // 所以不复用通用的 startDrag/applyDelta/positionBox/roundHotspot（那套是给"框"设计的，
+  // 认 wd/ht；mapSpots 已经没有这两个字段了）——另起一套只认 x/y 的点位拖拽引擎，
+  // 场景热区那边的 startDrag 等函数完全不碰，行为原样保留）
+  // ---------------------------------------------------------------
+  var mapSelected = null;
+  var elMapEditOverlay = null;
+  var elMapStage = document.getElementById("mapStage");
+
+  function ensureMapOverlayEl(){
+    if(!elMapEditOverlay){
+      elMapEditOverlay = document.createElement("div");
+      elMapEditOverlay.id = "cjMapEditOverlay";
+    }
+    if(elMapEditOverlay.parentNode !== elMapStage){
+      elMapStage.appendChild(elMapEditOverlay);
+    }
+    return elMapEditOverlay;
+  }
+  function clearMapOverlay(){
+    if(elMapEditOverlay) elMapEditOverlay.innerHTML = "";
+  }
+
+  function commitMapChange(){
+    mapHasEdits = true;
+    saveMapStore();
+  }
+
+  // ---- 坐标点专用的定位/取整/拖拽：只认 x/y，跟场景热区那套 positionBox/roundHotspot/startDrag
+  // （认 x/y/wd/ht）完全分开，互不影响 ----
+  function positionMapEditBox(box, spot){
+    box.style.left = spot.x + "%";
+    box.style.top = spot.y + "%";
+  }
+  function roundMapSpot(spot){
+    spot.x = Math.round(spot.x * 10) / 10;
+    spot.y = Math.round(spot.y * 10) / 10;
+  }
+  function startMapPointDrag(e, spot, box, refEl, handlers){
+    var rect = refEl.getBoundingClientRect();
+    if(!rect.width || !rect.height) return;
+    var startX = e.clientX, startY = e.clientY;
+    var orig = { x: spot.x, y: spot.y };
+    var pid = e.pointerId;
+    function onMove(ev){
+      if(ev.pointerId !== pid) return;
+      var dx = (ev.clientX - startX) / rect.width * 100;
+      var dy = (ev.clientY - startY) / rect.height * 100;
+      spot.x = orig.x + dx;
+      spot.y = orig.y + dy;
+      positionMapEditBox(box, spot);
+      if(handlers.onMove) handlers.onMove(spot);
+    }
+    function onUp(ev){
+      if(ev.pointerId !== pid) return;
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      roundMapSpot(spot);
+      positionMapEditBox(box, spot);
+      if(handlers.onCommit) handlers.onCommit(spot);
+    }
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+  }
+
+  function updateMapCoordInputsLive(spot){
+    if(spot !== mapSelected || !elPropBody) return;
+    var inputs = elPropBody.querySelectorAll(".cj-et-grid input");
+    var fields = ["x","y"];
+    for(var i=0;i<inputs.length;i++){ inputs[i].value = Math.round(spot[fields[i]] * 10) / 10; }
+  }
+
+  function mapDragHandlers(){
+    return {
+      onMove: updateMapCoordInputsLive,
+      onCommit: function(){ commitMapChange(); updateMapPropertyPanel(); }
+    };
+  }
+
+  function buildMapEditBox(spot, idx){
+    var box = document.createElement("div");
+    box.className = "cj-eb-pin" + (spot === mapSelected ? " cj-eb-sel" : "");
+    box.setAttribute("data-idx", idx);
+    positionMapEditBox(box, spot);
+    var tag = document.createElement("div");
+    tag.className = "cj-eb-tag";
+    tag.textContent = spot.zh + "（" + spot.sceneId + "）";
+    box.appendChild(tag);
+
+    // 只拖不缩：不再挂 HANDLE_DIRS 缩放手柄，pointerdown 一律走 move
+    box.addEventListener("pointerdown", function(e){
+      blurActive();
+      e.preventDefault();
+      e.stopPropagation();
+      if(mapSelected !== spot){
+        mapSelected = spot;
+        syncMapEditOverlay();
+        var fresh = elMapEditOverlay.querySelector('[data-idx="' + idx + '"]');
+        if(fresh) startMapPointDrag(e, spot, fresh, elMapStage, mapDragHandlers());
+        return;
+      }
+      startMapPointDrag(e, spot, box, elMapStage, mapDragHandlers());
+    });
+
+    return box;
+  }
+
+  function syncMapEditOverlay(){
+    if(!editMode || !mapOpen) return;
+    ensureUI();
+    elMapHotspotLayer.style.display = "none"; // 藏起真实地图热区，编辑框接管手势，别让底下的点击跳场景
+    var layer = ensureMapOverlayEl();
+    layer.innerHTML = "";
+    if(mapSelected && mapSpots.indexOf(mapSelected) === -1){ mapSelected = null; }
+    mapSpots.forEach(function(spot, idx){
+      layer.appendChild(buildMapEditBox(spot, idx));
+    });
+    updateMapPropertyPanel();
+    updateMapContextLabel();
+    updateToolbarRowsForMode();
+  }
+
+  function updateMapContextLabel(){
+    var el = document.getElementById("cjEtCtx");
+    if(!el) return;
+    el.textContent = "当前：小镇地图（" + mapSpots.length + " 个建筑坐标点）";
+  }
+
+  function updateMapPropertyPanel(){
+    if(!elPropBody) return;
+    elPropBody.innerHTML = "";
+    if(!mapSelected){
+      var hint = document.createElement("div");
+      hint.className = "cj-et-hint";
+      hint.textContent = "点地图上的点选中一个建筑坐标点";
+      elPropBody.appendChild(hint);
+      return;
+    }
+    var spot = mapSelected;
+    var head = document.createElement("div");
+    head.className = "cj-et-prop-head";
+    head.textContent = "地图坐标点：" + spot.zh + "（" + spot.sceneId + "）";
+    elPropBody.appendChild(head);
+
+    var grid = document.createElement("div");
+    grid.className = "cj-et-grid";
+    ["x","y"].forEach(function(field){
+      var wrap = document.createElement("label");
+      wrap.className = "cj-et-field";
+      wrap.appendChild(document.createTextNode(field + " "));
+      var input = document.createElement("input");
+      input.type = "number";
+      input.step = "0.1";
+      input.value = spot[field];
+      input.addEventListener("input", function(){
+        var v = parseFloat(input.value);
+        if(isNaN(v)) return;
+        spot[field] = v;
+        var boxEl = elMapEditOverlay.querySelector('[data-idx="' + mapSpots.indexOf(spot) + '"]');
+        if(boxEl) positionMapEditBox(boxEl, spot);
+      });
+      input.addEventListener("change", function(){
+        roundMapSpot(spot);
+        input.value = spot[field];
+        commitMapChange();
+      });
+      wrap.appendChild(input);
+      grid.appendChild(wrap);
+    });
+    elPropBody.appendChild(grid);
+    // 有意不给删除按钮：mapSpots 是固定建筑集合，删了 buildMapHotspots 就少一栋楼进不去，
+    // 任务书没要求"新增/删除"，只要求"拖"，克制住不画蛇添足
+  }
+
+  // 地图开/关钩子：openMap/closeMap 有两种被调用的方式——elMapToggle/elMapQuickBtn/elMapClose
+  // 是 addEventListener(openMap) 直接传函数引用（这几行在本模块跑之前就注册了，重新赋值 openMap/closeMap
+  // 这几个引用已经定死，捕捉不到）；backdrop 点击、Esc 键、启动时兜底调用的 openMap() 都是在别处
+  // 按名字现查现调（reassign 之后现查就能查到新的）。两条路都要接住：reassign 管住"按名字调"那几条，
+  // 再在同一批按钮上各补一个监听器（注册顺序天然排在原生监听器后面，读到的都是原逻辑跑完之后的状态）
+  // 管住"传引用"那几条。
+  function afterMapOpenedInEditMode(){
+    mapSelected = null;
+    syncMapEditOverlay();
+  }
+  function afterMapClosedInEditMode(){
+    mapSelected = null;
+    clearMapOverlay();
+    if(elMapHotspotLayer) elMapHotspotLayer.style.display = "";
+    syncEditOverlay(ctxNow()); // 地图关掉，把场景那边的热区编辑框/属性面板/上下文文案刷新回来
+  }
+  var _origOpenMap = openMap;
+  openMap = function(){
+    _origOpenMap();
+    if(editMode) afterMapOpenedInEditMode();
+  };
+  var _origCloseMap = closeMap;
+  closeMap = function(){
+    _origCloseMap();
+    if(editMode) afterMapClosedInEditMode();
+  };
+  elMapToggle.addEventListener("click", function(){ if(editMode) afterMapOpenedInEditMode(); });
+  elMapQuickBtn.addEventListener("click", function(){ if(editMode) afterMapOpenedInEditMode(); });
+  elMapClose.addEventListener("click", function(){ if(editMode) afterMapClosedInEditMode(); });
+
+  // ---------------------------------------------------------------
+  // 右侧属性面板
+  // ---------------------------------------------------------------
+  function buildWordFieldsForm(ctx, w){
+    var wrap = document.createElement("div");
+    wrap.className = "cj-et-wordform";
+    var fields = [
+      ["terms","en","EN"], ["terms","zh","中文"],
+      ["reading","en","音标"], ["reading","zh","拼音"],
+      ["sen","en","例句 EN"], ["sen","zh","例句中文"],
+      ["note","zh","备注"]
+    ];
+    fields.forEach(function(f){
+      var group = f[0], lang = f[1], label = f[2];
+      if(!w[group]) w[group] = {};
+      var row = document.createElement("label");
+      row.className = "cj-et-field cj-et-field-wide";
+      row.textContent = label;
+      var input = document.createElement("input");
+      input.type = "text";
+      input.value = w[group][lang] || "";
+      input.addEventListener("change", function(){
+        w[group][lang] = input.value;
+        commitContext(ctx);
+        syncEditOverlay(ctx);
+      });
+      row.appendChild(input);
+      wrap.appendChild(row);
+    });
+    return wrap;
+  }
+
+  function buildWordTargetUI(ctx, h){
+    var wrap = document.createElement("div");
+    var label = document.createElement("div");
+    label.className = "cj-et-sub";
+    label.textContent = "改绑到已有词条：";
+    var sel = document.createElement("select");
+    sel.className = "cj-et-select";
+    ctx.words.forEach(function(ww, i){
+      var opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = i + ": " + (wordTerm(ww,"en") || "(空)") + " / " + (wordTerm(ww,"zh") || "");
+      if(i === h.w) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change", function(){
+      h.w = parseInt(sel.value, 10);
+      commitContext(ctx);
+      syncEditOverlay(ctx);
+    });
+    wrap.appendChild(label);
+    wrap.appendChild(sel);
+    var w = ctx.words[h.w];
+    if(w){ wrap.appendChild(buildWordFieldsForm(ctx, w)); }
+    return wrap;
+  }
+
+  function buildPortalTargetUI(ctx, h){
+    var wrap = document.createElement("div");
+    var sceneLabel = document.createElement("div");
+    sceneLabel.className = "cj-et-sub";
+    sceneLabel.textContent = "目标场景：";
+    var sel = document.createElement("select");
+    sel.className = "cj-et-select";
+    sceneGroups.forEach(function(g){
+      var sName = slides[g.firstIndex].sceneNames.zh;
+      var opt = document.createElement("option");
+      opt.value = g.sceneId;
+      opt.textContent = sName + "（" + g.sceneId + "）";
+      if(g.sceneId === h.portal) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change", function(){
+      h.portal = sel.value;
+      commitContext(ctx);
+      syncEditOverlay(ctx);
+    });
+
+    var viewLabelEl = document.createElement("div");
+    viewLabelEl.className = "cj-et-sub";
+    viewLabelEl.textContent = "目标视角（留空=默认）：";
+    var viewInput = document.createElement("input");
+    viewInput.type = "text";
+    viewInput.className = "cj-et-select";
+    viewInput.value = h.view || "";
+    viewInput.placeholder = "如：大厅";
+    viewInput.addEventListener("change", function(){
+      if(viewInput.value.trim()){ h.view = viewInput.value.trim(); } else { delete h.view; }
+      commitContext(ctx);
+      syncEditOverlay(ctx);
+    });
+
+    wrap.appendChild(sceneLabel); wrap.appendChild(sel);
+    wrap.appendChild(viewLabelEl); wrap.appendChild(viewInput);
+    return wrap;
+  }
+
+  function buildPanelTargetUI(ctx, h){
+    var wrap = document.createElement("div");
+    var label = document.createElement("div");
+    label.className = "cj-et-sub";
+    label.textContent = "目标面板：";
+    var s = slides[current];
+    var panels = s.panels || [];
+    var sel = document.createElement("select");
+    sel.className = "cj-et-select";
+    if(!panels.length){
+      var opt0 = document.createElement("option");
+      opt0.textContent = "（本场景没有已定义的面板）";
+      sel.appendChild(opt0);
+      sel.disabled = true;
+    } else {
+      panels.forEach(function(p){
+        var opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = panelDisplayName(p) + "（" + p.id + "）";
+        if(p.id === h.panel) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener("change", function(){
+        h.panel = sel.value;
+        commitContext(ctx);
+        syncEditOverlay(ctx);
+      });
+    }
+    wrap.appendChild(label);
+    wrap.appendChild(sel);
+    return wrap;
+  }
+
+  function updatePropertyPanel(ctx){
+    if(!elPropBody) return;
+    if(mapOpen) return; // 地图开着时属性面板归 updateMapPropertyPanel 管，别被场景这边的调用覆盖掉
+    elPropBody.innerHTML = "";
+    if(!ctx || !selected){
+      var hint = document.createElement("div");
+      hint.className = "cj-et-hint";
+      hint.textContent = "点画面里的框选中，或点上面「＋新增热区」";
+      elPropBody.appendChild(hint);
+      return;
+    }
+    var h = selected;
+    var ty = typeOf(h);
+
+    var head = document.createElement("div");
+    head.className = "cj-et-prop-head";
+    head.textContent = "类型：" + TYPE_LABEL[ty];
+    elPropBody.appendChild(head);
+
+    var grid = document.createElement("div");
+    grid.className = "cj-et-grid";
+    ["x","y","wd","ht"].forEach(function(field){
+      var wrap = document.createElement("label");
+      wrap.className = "cj-et-field";
+      wrap.appendChild(document.createTextNode(field + " "));
+      var input = document.createElement("input");
+      input.type = "number";
+      input.step = "0.1";
+      input.value = h[field];
+      input.addEventListener("input", function(){
+        var v = parseFloat(input.value);
+        if(isNaN(v)) return;
+        h[field] = v;
+        var boxEl = elOverlay.querySelector('[data-idx="' + ctx.hotspots.indexOf(h) + '"]');
+        if(boxEl) positionBox(boxEl, h);
+      });
+      input.addEventListener("change", function(){
+        roundHotspot(h);
+        input.value = h[field];
+        commitContext(ctx);
+      });
+      wrap.appendChild(input);
+      grid.appendChild(wrap);
+    });
+    elPropBody.appendChild(grid);
+
+    var targetBox = document.createElement("div");
+    if(ty === "word"){ targetBox.appendChild(buildWordTargetUI(ctx, h)); }
+    else if(ty === "portal"){ targetBox.appendChild(buildPortalTargetUI(ctx, h)); }
+    else if(ty === "panel"){ targetBox.appendChild(buildPanelTargetUI(ctx, h)); }
+    elPropBody.appendChild(targetBox);
+
+    var delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.className = "cj-et-btn cj-et-btn-danger";
+    delBtn.textContent = "删除此热区";
+    delBtn.addEventListener("click", function(){ deleteSelected(); });
+    elPropBody.appendChild(delBtn);
+  }
+
+  // ---------------------------------------------------------------
+  // 新增 / 删除
+  // ---------------------------------------------------------------
+  function addHotspot(type){
+    var s = slides[current];
+    var target = activePanel || s;
+    if(!target.hotspots) target.hotspots = [];
+    if(!target.words) target.words = [];
+    var ctx = ctxNow();
+    var h = { x:35, y:35, wd:30, ht:30 };
+    if(type === "word"){
+      ctx.words.push({ terms:{en:"",zh:""}, reading:{en:"",zh:""}, sen:{en:"",zh:""}, note:{zh:""} });
+      h.w = ctx.words.length - 1;
+    } else if(type === "portal"){
+      var candidate = sceneGroups[0];
+      for(var gi=0; gi<sceneGroups.length; gi++){
+        if(sceneGroups[gi].sceneId !== s.sceneId){ candidate = sceneGroups[gi]; break; }
+      }
+      h.portal = candidate ? candidate.sceneId : "";
+    } else if(type === "panel"){
+      h.panel = (s.panels && s.panels[0]) ? s.panels[0].id : "";
+    }
+    ctx.hotspots.push(h);
+    commitContext(ctx);
+    selected = h;
+    syncEditOverlay(ctx);
+  }
+
+  function deleteSelected(){
+    if(!selected) return;
+    if(!window.confirm("删除这个热区？")) return;
+    var ctx = ctxNow();
+    var idx = ctx.hotspots.indexOf(selected);
+    if(idx === -1) return;
+    var removed = ctx.hotspots[idx];
+    ctx.hotspots.splice(idx, 1);
+    if(removed.w !== undefined){
+      var w = ctx.words[removed.w];
+      var isTrailing = (removed.w === ctx.words.length - 1);
+      var stillUsed = ctx.hotspots.some(function(hh){ return hh.w === removed.w; });
+      var isBlank = w && !wordTerm(w,"en").trim() && !wordTerm(w,"zh").trim();
+      if(isTrailing && isBlank && !stillUsed){ ctx.words.pop(); }
+    }
+    commitContext(ctx);
+    selected = null;
+    syncEditOverlay(ctx);
+  }
+
+  // ---------------------------------------------------------------
+  // 编辑模式总开关
+  // ---------------------------------------------------------------
+  function setEditMode(on){
+    if(editMode === on) return;
+    editMode = on;
+    if(on){
+      ensureUI();
+      elToolbar.hidden = false;
+      // 舞台图让出工具栏（270px+边距）占的右上角空间，见 injectStyle 里 .cj-edit-shrink 那条规则；
+      // 只加类不直接写行内样式——具体收多少、怎么居左全交给 CSS，JS 这边只管开关
+      elPage.classList.add("cj-edit-shrink");
+      elHotspotLayer.style.display = "none";
+      if(elQuizStart) elQuizStart.style.display = "none";
+      // capture 阶段注册：宿主页面自己有一套 document 级 ArrowLeft/Right/Up/Down 场景导航监听（冒泡阶段），
+      // 选中热区时方向键要归编辑器管——capture 先于 bubble 触发，onEditKeydown 里会对这类按键
+      // stopPropagation，让事件走不到宿主那个冒泡监听器，两边就不会为同一次按键打架
+      document.addEventListener("keydown", onEditKeydown, true);
+      // 进编辑模式那一刻地图可能已经开着（比如先开地图看全镇，再按快捷键进编辑）——分流到对应的
+      // 编辑框构建逻辑；地图没开就走原来场景热区那条路
+      if(mapOpen) afterMapOpenedInEditMode();
+      else syncEditOverlay(ctxNow());
+    } else {
+      selected = null;
+      clearOverlay();
+      mapSelected = null;
+      clearMapOverlay();
+      if(elMapHotspotLayer) elMapHotspotLayer.style.display = ""; // 保险：地图编辑覆盖层可能藏过真实地图热区，退出时还原
+      if(elToolbar) elToolbar.hidden = true;
+      elPage.classList.remove("cj-edit-shrink");
+      elHotspotLayer.style.display = "";
+      if(elQuizStart) elQuizStart.style.display = "";
+      document.removeEventListener("keydown", onEditKeydown, true);
+      renderExplore(); // 用最新数据刷一遍真实热区层，切回来就能直接点验
+    }
+  }
+
+  function onEditKeydown(e){
+    if(!editMode) return;
+    var tag = document.activeElement && document.activeElement.tagName;
+    if(tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    var isNavKey = (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown");
+    // 地图坐标点：方向键只挪 x/y（没有 wd/ht 可缩，Shift 修饰符不区分），也没有删除键——
+    // mapSpots 是固定建筑集合，跟场景热区那条分支各管各的，互不影响
+    if(mapOpen){
+      if(!mapSelected || !isNavKey) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if(e.key === "ArrowLeft"){ mapSelected.x -= NUDGE; }
+      else if(e.key === "ArrowRight"){ mapSelected.x += NUDGE; }
+      else if(e.key === "ArrowUp"){ mapSelected.y -= NUDGE; }
+      else if(e.key === "ArrowDown"){ mapSelected.y += NUDGE; }
+      roundMapSpot(mapSelected);
+      commitMapChange();
+      syncMapEditOverlay();
+      return;
+    }
+    if(!selected) return;
+    var isDeleteKey = (e.key === "Backspace" || e.key === "Delete");
+    if(!isNavKey && !isDeleteKey) return;
+    // 选中了热区，这个按键就是编辑器的——挡在 capture 阶段，不让宿主页面冒泡阶段的场景/视角切换监听器再收到它
+    e.preventDefault();
+    e.stopPropagation();
+    if(isDeleteKey){ deleteSelected(); return; }
+    if(e.key === "ArrowLeft"){ if(e.shiftKey){ selected.wd = Math.max(MIN_SIZE, selected.wd - NUDGE_BIG); } else { selected.x -= NUDGE; } }
+    else if(e.key === "ArrowRight"){ if(e.shiftKey){ selected.wd = Math.max(MIN_SIZE, selected.wd + NUDGE_BIG); } else { selected.x += NUDGE; } }
+    else if(e.key === "ArrowUp"){ if(e.shiftKey){ selected.ht = Math.max(MIN_SIZE, selected.ht - NUDGE_BIG); } else { selected.y -= NUDGE; } }
+    else if(e.key === "ArrowDown"){ if(e.shiftKey){ selected.ht = Math.max(MIN_SIZE, selected.ht + NUDGE_BIG); } else { selected.y += NUDGE; } }
+    var ctx = ctxNow();
+    roundHotspot(selected);
+    commitContext(ctx);
+    syncEditOverlay(ctx);
+  }
+
+  // 唯一无条件常驻的监听：切换编辑模式的快捷键本身（公开版按了也只是拨一个内存开关，
+  // 不落盘、不产生任何 DOM——真正的 UI/事件绑定都在 setEditMode(true) 分支里，只有触发了才会跑）
+  document.addEventListener("keydown", function(e){
+    var isShortcut = (e.key === "E" || e.key === "e") && e.shiftKey && (e.metaKey || e.ctrlKey);
+    if(!isShortcut) return;
+    e.preventDefault();
+    setEditMode(!editMode);
+  });
+
+  // buildHotspots / showExplorePlaceholder 是真实热区层的两个渲染出口（同步路径 + 图片异步 onload 路径
+  // 都会走 buildHotspots；无舞台图/面板空场景走 showExplorePlaceholder）。挂钩子而不是各处手动调用，
+  // 保证编辑遮罩跟真实热区层任何时候都同步刷新，覆盖场景/面板/视角切换的所有路径。
+  var _origBuildHotspots = buildHotspots;
+  buildHotspots = function(ctx){
+    _origBuildHotspots(ctx);
+    if(editMode) syncEditOverlay(ctx);
+  };
+  var _origShowPlaceholder = showExplorePlaceholder;
+  showExplorePlaceholder = function(kind){
+    _origShowPlaceholder(kind);
+    if(editMode){ selected = null; clearOverlay(); updatePropertyPanel(null); updateContextLabel(null); }
+  };
+
+  if(editMode){
+    editMode = false; // 让 setEditMode(true) 走满整套初始化（建 UI/挂监听/画遮罩）而不是被"已是目标态"短路
+    setEditMode(true);
+  }
+  })();
+
+  // ---------------------------------------------------------------
   // 初始渲染
   // ---------------------------------------------------------------
   elPage.classList.add("mode-explore");
   applyChromeI18n();
   buildTocList();
+  current = findSceneFirstIndex("exterior"); // 2026-07-19 落地页底层场景=房屋外观：放在 render() 之前，让场景横幅/箭头/目录高亮一次性对齐，避免关地图后出现卧室残留状态
   render();
   updateFooterText();
   openMap(); // 落地页=小镇地图：一开先看全镇，点建筑进场景（场景已在底层渲染，关地图即入场）
