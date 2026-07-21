@@ -558,6 +558,77 @@
     display:none;
   }
 
+  /* ---------- 会说话气泡（dialogue，2026-07-21）----------
+     与 hotspots 平级的可选 ctx.dialogues，渲染在 #hotspotLayer 里（同坐标系、随 buildHotspots
+     重建，因此切场景/切语言天然刷新）。可点区盖在人物头顶那一带，中心浮一个「💬」徽章
+     区别于普通词热区；点击弹出漫画对话框浮层，显示当前语言那句话 + 播放按钮。 */
+  .dialogue-hotspot{
+    position:absolute;
+    z-index:32;          /* 压过词热区默认最高档 --hz:30 与传送门徽章 31，保证徽章可点 */
+    cursor:pointer;
+    pointer-events:auto;
+  }
+  .dialogue-marker{
+    position:absolute;
+    left:50%; top:0;
+    transform: translate(-50%, -50%);
+    width:26px; height:26px;
+    border-radius:50%;
+    background: var(--tag-bg);
+    border:1px solid var(--tag-border);
+    box-shadow: 0 2px 6px var(--shadow);
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.95rem; line-height:1;
+    animation: dlgBob 2.4s ease-in-out infinite;
+  }
+  @keyframes dlgBob{ 0%,100%{ transform: translate(-50%,-50%); } 50%{ transform: translate(-50%,-64%); } }
+  .dialogue-hotspot:hover .dialogue-marker,
+  .dialogue-hotspot:focus-visible .dialogue-marker{ border-color: var(--gold); box-shadow: 0 0 0 3px var(--glow-soft); }
+  /* 测验中连同词热区一起收起（class 由 updateQuizButtonVisibility 挂在 #hotspotLayer 上） */
+  .hotspot-layer.quiz-active .dialogue-hotspot{ display:none; }
+
+  .dialogue-pop{
+    position:absolute;
+    z-index:60;
+    min-width:140px;
+    max-width:78%;
+    background: var(--tag-bg);
+    border:1px solid var(--tag-border);
+    border-radius:12px;
+    box-shadow: 0 8px 22px var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.4);
+    padding:11px 14px 12px;
+    text-align:center;
+    pointer-events:auto;
+  }
+  .dialogue-pop .dlg-line{ font-family: Georgia,"Times New Roman",serif; font-weight:700; font-size:0.98rem; color: var(--ink); line-height:1.35; }
+  .dialogue-pop .dlg-ipa{ font-size:0.72rem; color: var(--ink-soft); margin-top:3px; }
+  .dialogue-pop .dlg-tr{ font-size:0.8rem; color: var(--rust-dark); margin-top:4px; }
+  .dialogue-pop .dlg-play{
+    margin-top:9px;
+    border:1px solid var(--tag-border);
+    background: var(--paper);
+    color: var(--ink);
+    border-radius:999px;
+    padding:4px 14px;
+    font-size:0.8rem;
+    cursor:pointer;
+    font-family: inherit;
+  }
+  .dialogue-pop .dlg-play:hover{ background: var(--glow-soft); border-color: var(--gold); }
+  .dialogue-pop .dlg-play:focus-visible{ outline:2px solid var(--rust); outline-offset:2px; }
+  /* 漫画对话框指向人物的小尾巴：45° 旋转方块，去掉两条边留一个三角 */
+  .dialogue-pop .dlg-tail{
+    position:absolute;
+    left:50%;
+    width:15px; height:15px;
+    margin-left:-7.5px;
+    background: var(--tag-bg);
+    border:1px solid var(--tag-border);
+    transform: rotate(45deg);
+  }
+  .dialogue-pop.tail-down .dlg-tail{ bottom:-8px; border-top:none; border-left:none; }
+  .dialogue-pop.tail-up .dlg-tail{ top:-8px; border-bottom:none; border-right:none; }
+
   /* ---------- 面板返回纸签 ---------- */
   .panel-back{
     position:absolute;
@@ -3367,9 +3438,9 @@
       sceneNames: { zh: "超市", en: "Supermarket", es: "Supermercado" },
       sceneId: "supermarket",
       section: "外出",
-      viewNames: { zh: "蔬菜区", en: "Produce", es: "Frutas y verduras" },
+      viewNames: { zh: "蔬果区", en: "Produce", es: "Frutas y verduras" },
       nav: {},
-      alt: "超市蔬菜区场景，标注7个物体名称",
+      alt: "超市蔬果区场景，标注7个物体名称，右侧 David 一家挑西瓜",
       stage: "images/舞台42-超市蔬菜区-1.jpg",
       hotspots: [
         { w: 0, x: 0, y: 10, wd: 11, ht: 23 },
@@ -3377,8 +3448,43 @@
         { w: 2, x: 40, y: 43, wd: 14, ht: 13 },
         { w: 3, x: 65, y: 79, wd: 15, ht: 18 },
         { w: 4, x: 6, y: 43, wd: 15, ht: 26 },
-        { w: 5, x: 71, y: 18, wd: 10, ht: 12 },
-        { w: 6, x: 88, y: 38, wd: 12, ht: 18 }
+        { w: 5, x: 72, y: 37, wd: 11, ht: 14 },
+        { w: 6, x: 88, y: 38, wd: 12, ht: 18 },
+        { panel: "fruit", x: 76, y: 44, wd: 24, ht: 40 }
+      ],
+      dialogues: [
+        { x: 68, y: 20, wd: 16, ht: 12,
+          terms: { en: "This watermelon is ripe.", zh: "这个西瓜熟了。", es: "Esta sandía está madura." },
+          reading: { en: "", zh: "zhè ge xī guā shú le", es: "" } }
+      ],
+      panels: [
+        {
+          id: "fruit",
+          names: { zh: "水果", en: "Fruit", es: "Frutas" },
+          stage: "images/舞台42-超市蔬菜区-面板1-水果.jpg",
+          hotspots: [
+            { w: 0, x: 2, y: 8, wd: 22, ht: 32 },
+            { w: 1, x: 54, y: 5, wd: 14, ht: 33 },
+            { w: 2, x: 68, y: 7, wd: 18, ht: 30 },
+            { w: 3, x: 1, y: 45, wd: 27, ht: 26 },
+            { w: 4, x: 31, y: 44, wd: 33, ht: 27 },
+            { w: 5, x: 58, y: 40, wd: 30, ht: 28 },
+            { w: 6, x: 89, y: 34, wd: 11, ht: 26 },
+            { w: 7, x: 37, y: 71, wd: 28, ht: 28 },
+            { w: 8, x: 1, y: 71, wd: 34, ht: 28 }
+          ],
+          words: [
+            { terms: { en: "apple", zh: "苹果", es: "manzana" }, reading: { en: "/ˈæpl/", zh: "píng guǒ", es: "/manθˈana/" }, sen: { en: "I pick a crisp red apple.", zh: "我挑了一个脆脆的红苹果。", es: "Elijo una manzana roja y crujiente." }, note: { zh: "" } },
+            { terms: { en: "banana", zh: "香蕉", es: "plátano" }, reading: { en: "/bəˈnænə/", zh: "xiāng jiāo", es: "/plˈatano/" }, sen: { en: "I peel a banana for a snack.", zh: "我剥了根香蕉当零食。", es: "Pelo un plátano para merendar." }, note: { zh: "" } },
+            { terms: { en: "grapes", zh: "葡萄", es: "uvas" }, reading: { en: "/ɡreɪps/", zh: "pú tao", es: "/ˈuβas/" }, sen: { en: "A bunch of grapes is sweet and juicy.", zh: "一串葡萄又甜又多汁。", es: "Un racimo de uvas es dulce y jugoso." }, note: { zh: "常用复数" } },
+            { terms: { en: "orange", zh: "橙子", es: "naranja" }, reading: { en: "/ˈɔːrɪndʒ/", zh: "chéng zi", es: "/naɾˈaŋxa/" }, sen: { en: "I squeeze an orange for fresh juice.", zh: "我榨了个橙子做鲜果汁。", es: "Exprimo una naranja para hacer zumo." }, note: { zh: "" } },
+            { terms: { en: "strawberry", zh: "草莓", es: "fresa" }, reading: { en: "/ˈstrɔːberi/", zh: "cǎo méi", es: "/fɾˈesa/" }, sen: { en: "Each strawberry is bright red and sweet.", zh: "每颗草莓都鲜红香甜。", es: "Cada fresa es roja y dulce." }, note: { zh: "" } },
+            { terms: { en: "watermelon", zh: "西瓜", es: "sandía" }, reading: { en: "/ˈwɔːtərˌmelən/", zh: "xī guā", es: "/sandˈia/" }, sen: { en: "A slice of watermelon is perfect in summer.", zh: "夏天来一块西瓜最爽了。", es: "Una rodaja de sandía es perfecta en verano." }, note: { zh: "" } },
+            { terms: { en: "pineapple", zh: "菠萝", es: "piña" }, reading: { en: "/ˈpaɪnæpl/", zh: "bō luó", es: "/pˈiɲa/" }, sen: { en: "The pineapple is spiky on the outside.", zh: "菠萝外面带刺。", es: "La piña es puntiaguda por fuera." }, note: { zh: "" } },
+            { terms: { en: "mango", zh: "芒果", es: "mango" }, reading: { en: "/ˈmæŋɡoʊ/", zh: "máng guǒ", es: "/mˈaŋɡo/" }, sen: { en: "A ripe mango is soft and golden.", zh: "熟芒果软软的、金黄色。", es: "Un mango maduro es suave y dorado." }, note: { zh: "" } },
+            { terms: { en: "pear", zh: "梨", es: "pera" }, reading: { en: "/per/", zh: "lí", es: "/pˈeɾa/" }, sen: { en: "This pear is juicy and sweet.", zh: "这个梨又多汁又甜。", es: "Esta pera es jugosa y dulce." }, note: { zh: "" } }
+          ]
+        }
       ],
       words: [
         { terms: { en: "leafy greens", zh: "绿叶菜", es: "verduras de hoja verde" }, reading: { en: "/ˈliːfi ɡriːnz/", zh: "lǜ yè cài", es: "/beɾðˈuɾas ðe ˈoxa βˈeɾðe/" }, sen: { en: "The leafy greens are misted every few minutes to stay fresh.", zh: "这些绿叶菜每隔几分钟就会喷一次水保鲜。", es: "A las verduras de hoja verde les rocían agua cada pocos minutos para mantenerlas frescas." }, note: { zh: "货架顶部有喷雾装置给绿叶菜保鲜" } },
@@ -3397,25 +3503,59 @@
       section: "外出",
       viewNames: { zh: "肉区", en: "Meat", es: "Carnes" },
       nav: {},
-      alt: "超市肉区场景，标注7个物体名称",
+      alt: "超市肉区场景，标注10个物体名称，后墙挂牛肉分割图海报",
       stage: "images/舞台43-超市肉区-1.jpg",
       hotspots: [
-        { w: 0, x: 65, y: 8, wd: 8, ht: 30 },
-        { w: 1, x: 64, y: 43, wd: 36, ht: 18 },
-        { w: 2, x: 80, y: 0, wd: 13, ht: 41 },
-        { w: 3, x: 9, y: 13, wd: 9, ht: 12 },
-        { w: 4, x: 20, y: 28, wd: 12, ht: 12 },
-        { w: 5, x: 37, y: 28, wd: 12, ht: 12 },
-        { w: 6, x: 0, y: 53, wd: 9, ht: 16 }
+        { w: 0, x: 9, y: 29, wd: 13, ht: 10 },
+        { w: 1, x: 31, y: 43, wd: 12, ht: 10 },
+        { w: 2, x: 1, y: 43, wd: 10, ht: 10 },
+        { w: 3, x: 11, y: 43, wd: 11, ht: 10 },
+        { w: 4, x: 43, y: 41, wd: 14, ht: 11 },
+        { w: 5, x: 30, y: 50, wd: 13, ht: 8 },
+        { w: 6, x: 87, y: 39, wd: 12, ht: 12 },
+        { w: 7, x: 53, y: 59, wd: 8, ht: 8 },
+        { w: 8, x: 1, y: 56, wd: 15, ht: 11 },
+        { w: 9, x: 60, y: 30, wd: 15, ht: 40 },
+        { panel: "beef-cuts", x: 19, y: 2, wd: 22, ht: 18 }
+      ],
+      panels: [
+        {
+          id: "beef-cuts",
+          names: { zh: "牛肉部位", en: "Beef cuts", es: "Cortes de res" },
+          stage: "images/舞台43-超市肉区-面板1-牛肉分割.jpg",
+          hotspots: [
+            { w: 0, x: 20, y: 16, wd: 18, ht: 34 },
+            { w: 1, x: 36, y: 18, wd: 16, ht: 33 },
+            { w: 2, x: 49, y: 21, wd: 15, ht: 30 },
+            { w: 3, x: 64, y: 19, wd: 13, ht: 30 },
+            { w: 4, x: 76, y: 18, wd: 18, ht: 46 },
+            { w: 5, x: 23, y: 48, wd: 18, ht: 18 },
+            { w: 6, x: 41, y: 47, wd: 27, ht: 19 },
+            { w: 7, x: 33, y: 64, wd: 10, ht: 25 }
+          ],
+          words: [
+            { terms: { en: "chuck", zh: "肩颈肉", es: "aguja" }, reading: { en: "/tʃʌk/", zh: "jiān jǐng ròu", es: "/aɣˈuxa/" }, sen: { en: "Chuck is great for a slow beef stew.", zh: "肩颈肉很适合炖牛肉。", es: "La aguja es ideal para un guiso de res." }, note: { zh: "牛前段肩颈，适合炖" } },
+            { terms: { en: "rib", zh: "肋部", es: "costilla" }, reading: { en: "/rɪb/", zh: "lèi bù", es: "/kostˈiʎa/" }, sen: { en: "The rib section gives us ribeye steaks.", zh: "肋部这一段能切出肋眼牛排。", es: "De la costilla salen los chuletones." }, note: { zh: "肋排/肋眼所在" } },
+            { terms: { en: "short loin", zh: "前腰脊", es: "lomo" }, reading: { en: "/ʃɔːrt lɔɪn/", zh: "qián yāo jǐ", es: "/lˈomo/" }, sen: { en: "The short loin holds the T-bone cuts.", zh: "前腰脊出的是 T 骨牛排。", es: "El lomo da los cortes tipo T-bone." }, note: { zh: "T骨/纽约客所在" } },
+            { terms: { en: "sirloin", zh: "西冷", es: "solomillo" }, reading: { en: "/ˈsɜːrlɔɪn/", zh: "xī lěng", es: "/soloˈmiʎo/" }, sen: { en: "A sirloin steak is lean and tender.", zh: "西冷牛排瘦而嫩。", es: "Un filete de solomillo es magro y tierno." }, note: { zh: "后腰脊，即沙朗" } },
+            { terms: { en: "round", zh: "后腿臀肉", es: "redondo" }, reading: { en: "/raʊnd/", zh: "hòu tuǐ tún ròu", es: "/reðˈondo/" }, sen: { en: "Round is lean and good for roasts.", zh: "后腿臀肉很瘦，适合烤。", es: "El redondo es magro y bueno para asar." }, note: { zh: "瘦、后腿" } },
+            { terms: { en: "brisket", zh: "牛腩", es: "pecho" }, reading: { en: "/ˈbrɪskɪt/", zh: "niú nǎn", es: "/pˈetʃo/" }, sen: { en: "Brisket turns tender after hours of cooking.", zh: "牛腩慢炖几小时就变得软烂。", es: "El pecho queda tierno tras horas de cocción." }, note: { zh: "前胸，适合慢炖" } },
+            { terms: { en: "flank", zh: "腹胁肉", es: "falda" }, reading: { en: "/flæŋk/", zh: "fù xié ròu", es: "/fˈalda/" }, sen: { en: "Flank steak is thin and full of flavor.", zh: "腹胁肉又薄又有味。", es: "La falda es fina y muy sabrosa." }, note: { zh: "腹部薄片肉" } },
+            { terms: { en: "shank", zh: "牛腱", es: "jarrete" }, reading: { en: "/ʃæŋk/", zh: "niú jiàn", es: "/xarˈete/" }, sen: { en: "Beef shank makes a rich, gelatinous broth.", zh: "牛腱能炖出浓稠的高汤。", es: "El jarrete da un caldo rico y gelatinoso." }, note: { zh: "带筋，小腿，适合炖" } }
+          ]
+        }
       ],
       words: [
-        { terms: { en: "meat display case", zh: "肉类冷柜", es: "vitrina de carnes" }, reading: { en: "/miːt dɪˈspleɪ keɪs/", zh: "ròu lèi lěng guì", es: "/bitɾˈina ðe kˈaɾnes/" }, sen: { en: "Steaks and chicken breasts line the meat display case.", zh: "牛排和鸡胸肉整齐地摆在肉类冷柜里。", es: "Los filetes y las pechugas de pollo se alinean en la vitrina de carnes." }, note: { zh: "带弧形侧板的开放式冷藏陈列柜" } },
-        { terms: { en: "glass display case", zh: "玻璃展柜", es: "vitrina de vidrio" }, reading: { en: "/ɡlæs dɪˈspleɪ keɪs/", zh: "bō lí zhǎn guì", es: "/bitɾˈina ðe βˈiðɾio/" }, sen: { en: "The butcher points out a cut inside the glass display case.", zh: "肉贩指了指玻璃展柜里的一块肉。", es: "El carnicero señala un corte dentro de la vitrina de vidrio." }, note: { zh: "柜台前带玻璃罩的近景展示柜，和后面的开放冷柜是两处" } },
-        { terms: { en: "hanging scale", zh: "悬挂秤", es: "báscula colgante" }, reading: { en: "/ˈhæŋɪŋ skeɪl/", zh: "xuán guà chèng", es: "/bˈaskula kolɣˈante/" }, sen: { en: "The butcher hangs the tray on the hanging scale to weigh it.", zh: "肉贩把托盘挂在悬挂秤上称重。", es: "El carnicero cuelga la bandeja en la báscula colgante para pesarla." }, note: { zh: "从天花板垂下的圆盘秤，和别处的电子秤/果蔬秤是不同款" } },
-        { terms: { en: "meat tray", zh: "冷藏肉盒", es: "bandeja de carne" }, reading: { en: "/miːt treɪ/", zh: "lěng cáng ròu hé", es: "/bandˈexa ðe kˈaɾne/" }, sen: { en: "Each meat tray is wrapped tight in plastic.", zh: "每个冷藏肉盒都用保鲜膜裹得严严实实。", es: "Cada bandeja de carne está bien envuelta en plástico." }, note: { zh: "" } },
+        { terms: { en: "steak", zh: "牛排", es: "bistec" }, reading: { en: "/steɪk/", zh: "niú pái", es: "/bistˈek/" }, sen: { en: "The butcher cuts me a thick steak.", zh: "肉贩给我切了一块厚牛排。", es: "El carnicero me corta un bistec grueso." }, note: { zh: "厚切生牛排" } },
         { terms: { en: "ground beef", zh: "牛肉糜", es: "carne molida" }, reading: { en: "/ɡraʊnd biːf/", zh: "niú ròu mí", es: "/kˈaɾne molˈiða/" }, sen: { en: "I need a pound of ground beef for the meatballs.", zh: "我要买一磅牛肉糜做肉丸。", es: "Necesito medio kilo de carne molida para las albóndigas." }, note: { zh: "" } },
-        { terms: { en: "raw chicken", zh: "生鸡肉", es: "pollo crudo" }, reading: { en: "/rɔː ˈtʃɪkɪn/", zh: "shēng jī ròu", es: "/pˈoʎo kɾˈuðo/" }, sen: { en: "Always wash your hands after touching raw chicken.", zh: "摸过生鸡肉后一定要洗手。", es: "Lávate siempre las manos después de tocar pollo crudo." }, note: { zh: "" } },
-        { terms: { en: "salmon fillet", zh: "三文鱼柳", es: "filete de salmón" }, reading: { en: "/ˈsæmən fɪˈleɪ/", zh: "sān wén yú liǔ", es: "/filˈete ðe salmˈon/" }, sen: { en: "The salmon fillets are bright orange and boneless.", zh: "三文鱼柳颜色橙亮，已经去骨。", es: "Los filetes de salmón son de color naranja brillante y sin espinas." }, note: { zh: "salmon 的 l 不发音" } }
+        { terms: { en: "pork belly", zh: "五花肉", es: "panceta de cerdo" }, reading: { en: "/pɔːrk ˈbeli/", zh: "wǔ huā ròu", es: "/panθˈeta ðe θˈeɾðo/" }, sen: { en: "Pork belly has layers of fat and meat.", zh: "五花肉有一层层肥肉和瘦肉。", es: "La panceta de cerdo tiene capas de grasa y carne." }, note: { zh: "肥瘦相间的猪腹肉" } },
+        { terms: { en: "pork chop", zh: "猪排", es: "chuleta de cerdo" }, reading: { en: "/pɔːrk tʃɑːp/", zh: "zhū pái", es: "/tʃulˈeta ðe θˈeɾðo/" }, sen: { en: "I fry a pork chop for dinner.", zh: "我煎了一块猪排当晚饭。", es: "Frío una chuleta de cerdo para la cena." }, note: { zh: "带骨猪排" } },
+        { terms: { en: "whole chicken", zh: "整鸡", es: "pollo entero" }, reading: { en: "/hoʊl ˈtʃɪkɪn/", zh: "zhěng jī", es: "/pˈoʎo entˈeɾo/" }, sen: { en: "I roast a whole chicken on Sundays.", zh: "我周日会烤一整只鸡。", es: "Aso un pollo entero los domingos." }, note: { zh: "去毛去内脏的整只" } },
+        { terms: { en: "chicken drumstick", zh: "鸡腿", es: "muslo de pollo" }, reading: { en: "/ˈtʃɪkɪn ˈdrʌmstɪk/", zh: "jī tuǐ", es: "/mˈuslo ðe pˈoʎo/" }, sen: { en: "The kids love a crispy chicken drumstick.", zh: "孩子们爱吃酥脆的鸡腿。", es: "A los niños les encanta un muslo de pollo crujiente." }, note: { zh: "下段带骨鸡腿" } },
+        { terms: { en: "lobster", zh: "龙虾", es: "langosta" }, reading: { en: "/ˈlɑːbstər/", zh: "lóng xiā", es: "/laŋɡˈosta/" }, sen: { en: "A live lobster crawls in the tank.", zh: "一只活龙虾在缸里爬。", es: "Una langosta viva se mueve en el tanque." }, note: { zh: "海鲜缸里的活龙虾" } },
+        { terms: { en: "shrimp", zh: "虾", es: "camarones" }, reading: { en: "/ʃrɪmp/", zh: "xiā", es: "/kamaɾˈones/" }, sen: { en: "I peel the shrimp before cooking.", zh: "我下锅前先剥虾。", es: "Pelo los camarones antes de cocinarlos." }, note: { zh: "单复数同形" } },
+        { terms: { en: "salmon fillet", zh: "三文鱼柳", es: "filete de salmón" }, reading: { en: "/ˈsæmən fɪˈleɪ/", zh: "sān wén yú liǔ", es: "/filˈete ðe salmˈon/" }, sen: { en: "The salmon fillets are bright orange and boneless.", zh: "三文鱼柳颜色橙亮，已经去骨。", es: "Los filetes de salmón son de color naranja brillante y sin espinas." }, note: { zh: "salmon 的 l 不发音" } },
+        { terms: { en: "butcher", zh: "肉贩", es: "carnicero" }, reading: { en: "/ˈbʊtʃər/", zh: "ròu fàn", es: "/kaɾniθˈeɾo/" }, sen: { en: "The butcher weighs the meat for me.", zh: "肉贩帮我称了肉。", es: "El carnicero me pesa la carne." }, note: { zh: "柜台后穿围裙切肉的人" } }
       ]
     },
 {
@@ -4754,6 +4894,7 @@
       esComingSoon: "未开发",
       openPanelSuffix: "↗", goToPrefix: "去", goToSuffix: "🚪",
       ariaOpenPanel: "打开", ariaGoTo: "前往",
+      dlgPlay: "播放", dlgAria: "对话",
       arrowPrevScene: "上一个场景：", arrowNextScene: "下一个场景：", arrowPan: "平移视角：",
       phUnavailMsg: "这个场景的探索版还没做好", phUnavailHint: "热区数据补齐后即可点读",
       phMissingMsg: "舞台图缺失", phPanelMissingMsg: "面板舞台图缺失",
@@ -4779,6 +4920,7 @@
       esComingSoon: "coming soon",
       openPanelSuffix: "↗", goToPrefix: "Go to", goToSuffix: "🚪",
       ariaOpenPanel: "Open", ariaGoTo: "Go to",
+      dlgPlay: "Play", dlgAria: "Dialogue",
       arrowPrevScene: "Previous scene: ", arrowNextScene: "Next scene: ", arrowPan: "Pan to: ",
       phUnavailMsg: "This scene isn’t ready to explore yet", phUnavailHint: "It opens once its hotspots are added",
       phMissingMsg: "Stage image missing", phPanelMissingMsg: "Panel stage image missing",
@@ -4816,6 +4958,8 @@
       goToSuffix: "🚪",
       ariaOpenPanel: "Abrir",
       ariaGoTo: "Ir a",
+      dlgPlay: "Reproducir",
+      dlgAria: "Diálogo",
       arrowPrevScene: "Escena anterior: ",
       arrowNextScene: "Escena siguiente: ",
       arrowPan: "Desplazar a: ",
@@ -4841,6 +4985,7 @@
         stage: activePanel.stage,
         hotspots: activePanel.hotspots || [],
         words: activePanel.words || [],
+        dialogues: activePanel.dialogues || [],
         key: s.sceneId + "::" + viewKey(s) + "::" + activePanel.id,
         isPanel: true,
         name: activePanel.names[nativeLang]
@@ -4850,6 +4995,7 @@
       stage: s.stage,
       hotspots: s.hotspots || [],
       words: s.words,
+      dialogues: s.dialogues || [],
       key: s.sceneId + "::" + viewKey(s),
       isPanel: false,
       name: s.sceneNames[nativeLang]
@@ -5656,8 +5802,136 @@
 
       elHotspotLayer.appendChild(hotspot);
     });
+    buildDialogues(ctx);
     applyLabelMode();
   }
+
+  // ---------------------------------------------------------------
+  // 探索模式：会说话气泡（dialogue）——与 hotspots 平级的可选 ctx.dialogues，
+  // 渲染在 #hotspotLayer 内（同容器/同坐标系，随 buildHotspots 重建，故切场景/切语言天然刷新）。
+  // 每条 dialogue 结构同「词」：{ x,y,wd,ht, terms:{en,zh,es}, reading:{en,zh,es} }，
+  // 因此可直接复用 wordTerm/wordReading/speak（slug=slugify(terms.en) 整句，与发音 pipeline 一致）。
+  // ---------------------------------------------------------------
+  var dialoguePopEl = null; // 当前打开的对话浮层（单例）
+
+  function closeDialoguePopover(){
+    if(dialoguePopEl && dialoguePopEl.parentNode){ dialoguePopEl.parentNode.removeChild(dialoguePopEl); }
+    dialoguePopEl = null;
+  }
+
+  function buildDialogues(ctx){
+    closeDialoguePopover(); // 重建热区层前先收掉旧浮层（innerHTML 清空其实已经摘除，这里只复位引用）
+    (ctx.dialogues || []).forEach(function(d){
+      var dh = document.createElement("div");
+      dh.className = "dialogue-hotspot";
+      dh.style.left = d.x + "%";
+      dh.style.top = d.y + "%";
+      dh.style.width = d.wd + "%";
+      dh.style.height = d.ht + "%";
+      dh.tabIndex = 0;
+      dh.setAttribute("role", "button");
+      var dName = wordTerm(d, learnLang) || wordTerm(d, nativeLang);
+      dh.setAttribute("aria-label", t("dlgAria") + "：" + dName);
+      var marker = document.createElement("div");
+      marker.className = "dialogue-marker";
+      marker.textContent = "💬";
+      dh.appendChild(marker);
+      dh.addEventListener("click", function(e){ e.stopPropagation(); openDialoguePopover(d, dh); });
+      dh.addEventListener("keydown", function(e){
+        if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openDialoguePopover(d, dh); }
+      });
+      elHotspotLayer.appendChild(dh);
+    });
+  }
+
+  // 浮层内容按当前 learnLang/nativeLang 解析（照词卡那套：learnLang 当主句、nativeLang 作译文），
+  // 绝不写死语言；切母语/学习语言会经 render()→buildHotspots 重建，天然跟随
+  function openDialoguePopover(d, anchorEl){
+    var reopen = !!(dialoguePopEl && dialoguePopEl.__dlg === d);
+    closeDialoguePopover();
+    if(reopen) return; // 再点同一个 = 收起（toggle）
+
+    var degenerate = (learnLang === nativeLang);
+    var pop = document.createElement("div");
+    pop.className = "dialogue-pop tail-down";
+    pop.__dlg = d;
+
+    var line = document.createElement("div");
+    line.className = "dlg-line";
+    line.textContent = wordTerm(d, learnLang);
+    pop.appendChild(line);
+
+    var ipaText = wordReading(d, learnLang);
+    if(ipaText){
+      var ipa = document.createElement("div");
+      ipa.className = "dlg-ipa";
+      ipa.textContent = ipaText;
+      pop.appendChild(ipa);
+    }
+    if(!degenerate){
+      var tr = document.createElement("div");
+      tr.className = "dlg-tr";
+      tr.textContent = wordTerm(d, nativeLang);
+      pop.appendChild(tr);
+    }
+
+    var play = document.createElement("button");
+    play.type = "button";
+    play.className = "dlg-play";
+    play.textContent = "🔊 " + t("dlgPlay");
+    play.addEventListener("click", function(e){ e.stopPropagation(); speak(d, null); });
+    pop.appendChild(play);
+
+    var tail = document.createElement("span");
+    tail.className = "dlg-tail";
+    pop.appendChild(tail);
+
+    pop.addEventListener("click", function(e){ e.stopPropagation(); });
+    elHotspotLayer.appendChild(pop);
+    dialoguePopEl = pop;
+    positionDialoguePopover(pop, d);
+    speak(d, null); // 打开即播当前语言（与词卡点击即播一致；音频缺失时 speak 自带 Web Speech 兜底）
+  }
+
+  // 气泡默认落在 marker 上方（尾巴朝下指向人物）；上方越出舞台图顶就翻到 marker 下方（尾巴朝上）；
+  // 水平越界用像素平移钳回图内，同时反向平移尾巴保持指向 marker——逻辑与 layoutLabels 一脉相承
+  function positionDialoguePopover(pop, d){
+    var cont = elExploreStageInner.getBoundingClientRect();
+    if(!cont.width || !cont.height) return;
+    var cx = d.x + d.wd / 2; // marker 水平中心（%）
+    var PAD = 4;
+    pop.classList.add("tail-down");
+    pop.classList.remove("tail-up");
+    pop.style.left = cx + "%";
+    pop.style.top = d.y + "%";
+    pop.style.marginLeft = "";
+    pop.style.transform = "translate(-50%, calc(-100% - 15px))";
+    var r = pop.getBoundingClientRect();
+    if(r.top < cont.top + PAD){
+      // 上方放不下 → 翻到 marker 下方，尾巴朝上
+      pop.classList.remove("tail-down");
+      pop.classList.add("tail-up");
+      pop.style.top = (d.y + d.ht) + "%";
+      pop.style.transform = "translate(-50%, 15px)";
+      r = pop.getBoundingClientRect();
+    }
+    var shift = 0;
+    if(r.left < cont.left + PAD){ shift = (cont.left + PAD) - r.left; }
+    else if(r.right > cont.right - PAD){ shift = (cont.right - PAD) - r.right; }
+    if(shift){
+      pop.style.marginLeft = shift + "px";
+      var tl = pop.querySelector(".dlg-tail");
+      if(tl){ tl.style.marginLeft = (-7.5 - shift) + "px"; } // 尾巴反向平移，仍指向 marker
+    }
+  }
+
+  // 点浮层/徽章以外的任何地方都收起（徽章与浮层自身的 click 都 stopPropagation，不会误触发这里）
+  document.addEventListener("click", function(e){
+    if(!dialoguePopEl) return;
+    if(dialoguePopEl.contains(e.target)) return;
+    if(e.target.closest && e.target.closest(".dialogue-hotspot")) return;
+    closeDialoguePopover();
+  });
 
   function updatePanelBackButton(){
     if(activePanel){
@@ -5929,6 +6203,8 @@
     elMapToggle.hidden = quiz.active; // 地图纸签测验中隐藏，与 quiz.active 联动
     elMapQuickBtn.hidden = quiz.active; // 顶栏地图快速入口同步隐藏
     elPortalPinLayer.classList.toggle("quiz-active", quiz.active); // 传送门常驻徽章找词测验时跟着隐藏，见 CSS .portal-pin-layer.quiz-active
+    elHotspotLayer.classList.toggle("quiz-active", quiz.active); // 会说话气泡徽章同步在测验时隐藏，见 CSS .hotspot-layer.quiz-active
+    if(quiz.active){ closeDialoguePopover(); } // 进测验先收掉可能开着的对话浮层
     renderStageBanner(); // 测验开/收、面板进出、占位切换都路过这里，横幅状态跟着刷
   }
 
