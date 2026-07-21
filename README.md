@@ -30,6 +30,9 @@ Bake text into the image and you get a poster: it can't be tapped, hidden, quizz
 
 ## 🆕 Recent updates
 
+**2026-07 · Spanish added — a third language**
+- **Spanish is now a first-class language** — learn Spanish, or set it as your native language (the full UI, scene menu, map, and word cards all render in Spanish). 861 words with Spanish terms, IPA, example sentences, and bundled neural TTS audio. Mix any pair: 中文 / English / Español.
+
 **2026-07 · Big scene expansion + navigation overhaul**
 - **16 new scenes at once** — the full airport line (terminal → check-in → security → boarding → baggage claim + gift shop), the supermarket split into 5 aisles (produce / meat / snacks / household / condiments), a mall food court, the hotel (game room / corridor / guest room), a dog park, the train station, the mall hall… scene count **27 → 47**
 - **Navigation fully reworked** — loop around the residential street (← → brings you back), one ⬇️ from any room / backyard returns to the street, the airport follows a real check-in flow; entrances that used to be "hidden" (mall / clinic / food court) now have clear markers on the map
@@ -37,7 +40,7 @@ Bake text into the image and you get a poster: it can't be tapped, hidden, quizz
 - **Phone / tablet** — the same directional-arrow routing as desktop, consistent across devices
 
 **2026-07 · Multi-language + panels + mobile**
-- **Multi-language** — pick your native and learning language (zh／en) and swap direction in one tap; pinyin on the Chinese side, phonetics on the English side
+- **Multi-language** — pick your native and learning language (zh／en／es) and swap direction in one tap; pinyin on the Chinese side, phonetics on the English/Spanish side
 - **Panels for busy scenes** — tap into crowded clusters (car dashboard, workbench, instrument tray…) to see their detailed words
 - **Phone / tablet tuning** — the tapped word shows at the bottom; iPhone uses a cleaner default, iPad matches desktop, landscape gets a bigger view
 - **Polish** — reading font size, pronunciation labels, and hotspot positions refined
@@ -91,7 +94,7 @@ A minimal one-command example (one scene image + a tiny word list → one playab
 
 - **47 scenes · ~860 words** — home (bedroom / kitchen / bathroom) → out (supermarket / café / clinic / barbershop) → travel (airport / hotel), plus a town map you tap to enter scenes.
 - **Fully local** — open and play; no login, no network, no ads, no tracking.
-- Play online above, or [download a single self-contained html](https://github.com/MrSenter/cijing/releases/latest) to run offline. (iPad/iPhone: the Files app only previews it — open with Edge, or serve it over your LAN. Details in [简体中文 README](README.zh.md).)
+- Play online above, or [download a single self-contained html](https://github.com/MrSenter/cijing/releases/latest) to run offline. **The offline download is 中文 + English only for now — Spanish is on the web version above.** (iPad/iPhone: the Files app only previews it — open with Edge, or serve it over your LAN. Details in [简体中文 README](README.zh.md).)
 
 ## License
 
