@@ -95,7 +95,7 @@
 ## 发音说明
 
 - **英文发音**已内置（本地音频，[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) 神经语音，Apache-2.0）
-- **中文发音**未内置（见下方许可证说明），点中文时会调用浏览器自带的中文语音朗读。想要离线中文发音，可自行生成 —— 方法见[`factory/pipeline/发音管线`](factory/pipeline/发音管线) 
+- **中文、西语发音均已内置**（本地音频，离线可用，神经 TTS 声线）。想给新语言生成发音，方法见[`factory/pipeline/发音管线`](factory/pipeline/发音管线)
 
 > **发音是 AI 生成的**，绝大多数准确，但个别单词可能有合成瑕疵（发音略糊/吞音）。词境已经用机器验耳（whisper 对账）跑过一轮质检修复，但仍以人耳为准。想自己复查/重修发音，工作流仓库有整套**质检模式**（`发音质检.py`）——它需要额外下载一个开源语音识别模型（[whisper.cpp](https://github.com/ggerganov/whisper.cpp)）来给发音"判卷"。
 
