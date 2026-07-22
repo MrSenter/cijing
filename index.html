@@ -5513,6 +5513,37 @@
     return s;
   }
 
+  // word -> 本地音频文件 src，与 speak() 内原有构造逻辑同一份实现（speak/预载共用，避免两处逻辑漂移）
+  function audioSrcFor(word, lang){
+    var slug = slugify(word.terms.en);
+    return (lang === "en") ? ("sounds/" + slug + ".m4a") : ("sounds/" + slug + "_" + lang + ".mp3");
+  }
+
+  // ---------------------------------------------------------------
+  // 音频预载缓存：src -> Audio 对象，speak() 与 warmAudio() 共用同一份缓存，
+  // 命中就复用（免去每次点词现场 new Audio 触发的下载等待）。带条数上限防内存无限涨——
+  // 全部场景词量级不大，48 条足够覆盖"当前场景一屏词"，超限按插入顺序淘汰最早的。
+  // ---------------------------------------------------------------
+  var AUDIO_CACHE_LIMIT = 48;
+  var audioCache = {};
+  var audioCacheOrder = []; // 记录入缓存顺序（src），超限时从头部（最早）淘汰
+
+  // 只预下载、不播放：background 预载专用；speak() 真正要播时会命中这里的缓存
+  function warmAudio(src){
+    if(!src || audioCache[src]) return;
+    try{
+      var a = new Audio();
+      a.preload = "auto";
+      a.src = src;
+      audioCache[src] = a;
+      audioCacheOrder.push(src);
+      if(audioCacheOrder.length > AUDIO_CACHE_LIMIT){
+        var oldest = audioCacheOrder.shift();
+        if(oldest && oldest !== src){ delete audioCache[oldest]; }
+      }
+    }catch(e){ /* 预载失败静默——不影响 speak() 到时候按需 new Audio 现场加载 */ }
+  }
+
   // 回落路径：Web Speech API 朗读（本地音频缺失/播放失败时用）
   function speakFallback(text, lang, rowEl){
     if(!window.speechSynthesis) return;
@@ -5555,8 +5586,7 @@
 
     // speakLang（learn|native）先解到具体语言代码；音频文件名 slug 一律用 terms.en（英文词天然当概念ID）
     var lang = (speakLang === "native") ? nativeLang : learnLang;
-    var slug = slugify(word.terms.en);
-    var audioSrc = (lang === "en") ? ("sounds/" + slug + ".m4a") : ("sounds/" + slug + "_" + lang + ".mp3");
+    var audioSrc = audioSrcFor(word, lang);
     var fallbackText = wordTerm(word, lang);
     var fallbackLang = lang;
 
@@ -5567,7 +5597,13 @@
       speakFallback(fallbackText, fallbackLang, rowEl);
     }
 
-    var audio = new Audio(audioSrc);
+    // 优先复用预载/上次播放留下的缓存 Audio 对象，避免每次点词现场 new Audio 触发下载等待；
+    // 缓存未命中（warmAudio 还没暖过，或极端情况下 warmAudio 内部 new Audio 失败）才现场 new。
+    warmAudio(audioSrc);
+    var audio = audioCache[audioSrc] || new Audio(audioSrc);
+    try{ audio.currentTime = 0; }catch(e){ /* 极少数浏览器在未就绪时 seek 会抛错，忽略即可——照常从头播 */ }
+    // 复用对象必须重绑下面这几个 on* 回调（不能残留上一次 speak() 挂的旧回调），
+    // 下面 onended/onerror/onplaying 的赋值本就会整段覆盖，天然满足这一点。
     activeAudio = audio;
     if(rowEl){ rowEl.classList.add("speaking"); }
     activeRow = rowEl || null;
@@ -5944,6 +5980,92 @@
     }
   }
 
+  // ---------------------------------------------------------------
+  // 后台预载：进场景后暖当前场景的词发音 + 一步可达的邻居场景图（视角兄弟/nav/
+  // portal/面板），减少"切场景/点物体没反应"的空窗。纯后台、失败静默，绝不
+  // 影响主流程；只在 idle 时机触发（见 renderExplore 里的 schedulePreload），
+  // 不跟当前场景自己的舞台图加载抢带宽。
+  // ---------------------------------------------------------------
+  var warmedImg = {}; // src -> true，去重集合，避免重复 fetch 同一张图
+
+  // 只把图片 fetch 进 HTTP 缓存、不长期持有解码位图（iPhone 上 new Image() 长期引用会吃内存）；
+  // 之后 elExploreImg.src 赋同一个 src 时会命中 HTTP 缓存，onload 秒触发。
+  function warmImage(src){
+    if(!src || warmedImg[src]) return;
+    warmedImg[src] = true;
+    try{
+      if(window.fetch){ window.fetch(src).catch(function(){}); }
+    }catch(e){ /* 预载失败静默——真正显示时 elExploreImg.src 仍会按需正常加载 */ }
+  }
+
+  // 收集当前 slide 一步可达的所有场景/视角舞台图 src（去重）：
+  // 1) 视角兄弟（同 sceneId 的其它 slide，←→ 平移目标）
+  // 2) 场景 nav（有 nav 则 up/down/left/right 各自解析；没有 nav 则回退 sceneGroups 前一个/后一个）
+  // 3) 传送门（当前 slide 热区里的 portal 项）
+  // 4) 当前场景的面板图
+  function collectNeighborStages(){
+    var srcs = [];
+    var seen = {};
+    function add(src){
+      if(!src || seen[src]) return;
+      seen[src] = true;
+      srcs.push(src);
+    }
+
+    var s = slides[current];
+
+    // 1) 视角兄弟
+    sceneSlideIndices().forEach(function(i){
+      if(i !== current) add(slides[i].stage);
+    });
+
+    // 2) 场景 nav / 无 nav 回退 sceneGroups 前后
+    if(s.nav){
+      ["up", "down", "left", "right"].forEach(function(dir){
+        var navIdx = navTargetIndex(s.nav[dir]);
+        if(navIdx >= 0) add(slides[navIdx].stage);
+      });
+    } else {
+      var gi = currentSceneGroupIndex();
+      var prevGi = (gi - 1 + sceneGroups.length) % sceneGroups.length;
+      var nextGi = (gi + 1) % sceneGroups.length;
+      add(slides[sceneGroups[prevGi].firstIndex].stage);
+      add(slides[sceneGroups[nextGi].firstIndex].stage);
+    }
+
+    // 3) 传送门
+    (s.hotspots || []).forEach(function(h){
+      if(h.portal === undefined) return;
+      var portalIdx = findPortalTarget(h);
+      if(portalIdx >= 0) add(slides[portalIdx].stage);
+    });
+
+    // 4) 当前场景的面板图
+    (s.panels || []).forEach(function(p){ add(p.stage); });
+
+    return srcs;
+  }
+
+  // 暖当前 exploreCtx()（主舞台或面板态）的词发音 + 当前场景一步可达的邻居舞台图。
+  // 面板态时 exploreCtx().words 就是面板内的词（顺带暖面板发音），
+  // collectNeighborStages 恒基于 slides[current]（不看 activePanel），面板态下也照常暖主舞台的邻居。
+  function preloadForCurrentView(){
+    try{
+      var ctx = exploreCtx();
+      var lang = (speakLang === "native") ? nativeLang : learnLang;
+      (ctx.words || []).forEach(function(w){
+        try{ warmAudio(audioSrcFor(w, lang)); }catch(e){ /* 单词预载失败静默，不影响其它词 */ }
+      });
+      collectNeighborStages().forEach(function(src){ warmImage(src); });
+    }catch(e){ /* 预载纯后台，任何失败都不能打断主流程 */ }
+  }
+
+  // 延迟到 idle 再暖：让当前场景自己的图/热区先加载完，再后台暖邻居，别抢带宽
+  function schedulePreload(){
+    if(window.requestIdleCallback) window.requestIdleCallback(preloadForCurrentView);
+    else setTimeout(preloadForCurrentView, 300);
+  }
+
   function renderExplore(){
     cancelQuizSilently();
     resetWordInfoBar();
@@ -5952,6 +6074,7 @@
     if(ctx.isPanel && (!ctx.hotspots || !ctx.hotspots.length)){
       showExplorePlaceholder("panel-empty");
       updateQuizButtonVisibility();
+      schedulePreload();
       return;
     }
     if(!ctx.stage){
@@ -5959,6 +6082,7 @@
       // 只有真的没有 stage 图才算探索版还没做好
       showExplorePlaceholder("unavailable");
       updateQuizButtonVisibility();
+      schedulePreload();
       return;
     }
     var mySlide = slides[current];
@@ -5987,6 +6111,7 @@
       elExploreImg.src = ctx.stage;
     }
     updateQuizButtonVisibility();
+    schedulePreload();
   }
 
   // ---------------------------------------------------------------
