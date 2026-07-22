@@ -6417,8 +6417,8 @@
     var h = ctx.hotspots[idx];
     var w = ctx.words[h.w];
     elQuizProgress.textContent = quiz.roundIndex + " / " + quiz.total;
-    // 找词测验提示词：显母语词形（用户已知的意思），去图上找对应的学习语言标签物体
-    elQuizZh.textContent = wordTerm(w, nativeLang);
+    // 找词测验提示词：显学习语言词形，测用户是否掌握该词（去图上找对应物体）
+    elQuizZh.textContent = wordTerm(w, learnLang);
     speak(w, null);
   }
 
