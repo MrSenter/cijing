@@ -4583,8 +4583,7 @@
         { w: 2, x: 65, y: 35, wd: 11, ht: 32 },
         { w: 3, x: 1, y: 49, wd: 52, ht: 37 },
         { w: 4, x: 71, y: 11, wd: 19, ht: 15 },
-        { w: 5, x: 54, y: 44, wd: 17, ht: 34 },
-        { portal: "asiaentry", x: 43, y: 24, wd: 29, ht: 26 } /* 复制自 jet bridge 词热区坐标（🌏亚洲区 场景49 传送门入口） */
+        { w: 5, x: 54, y: 44, wd: 17, ht: 34 }
       ],
       words: [
         { terms: { en: "boarding gate", zh: "登机口", es: "puerta de embarque" }, reading: { en: "/ˈbɔːrdɪŋ ɡeɪt/", zh: "dēng jī kǒu", es: "/pwˈeɾta ðe embˈaɾke/" }, sen: { en: "Our boarding gate is all the way at the end of the terminal.", zh: "我们的登机口在航站楼最尽头。", es: "Nuestra puerta de embarque está al fondo de la terminal." }, note: { zh: "登机的门,常简称 gate 加编号(Gate 22);gate 在别处已用,此为复合词" } },
@@ -4705,73 +4704,6 @@
         { terms: { en: "door frame", zh: "门框", es: "marco de la puerta" }, reading: { en: "/dɔːr freɪm/", zh: "mén kuàng", es: "/mˈaɾko ðe la pwˈeɾta/" }, sen: { en: "The wooden door frame was carved with a simple molded trim.", zh: "木质门框上刻着简单的线条装饰。", es: "El marco de madera de la puerta estaba tallado con una sencilla moldura." }, note: { zh: "包住房门四周的木质框架；区别于门本身(door)" } },
         { terms: { en: "laundry bag", zh: "布草袋", es: "bolsa de ropa sucia" }, reading: { en: "/ˈlɔːndri bæɡ/", zh: "bù cǎo dài", es: "/bˈolsa ðe rˈopa sˈuθja/" }, sen: { en: "She tossed the used sheets into the laundry bag on the cart.", zh: "她把用过的床单扔进了服务车上的布草袋。", es: "Echó las sábanas usadas en la bolsa de ropa sucia del carrito." }, note: { zh: "服务车侧边挂的黑色布袋，装换下来的脏床单毛巾；也叫 linen bag" } },
         { terms: { en: "crown molding", zh: "天花线脚", es: "moldura de techo" }, reading: { en: "/kraʊn ˈmoʊldɪŋ/", zh: "tiān huā xiàn jiǎo", es: "/molðˈuɾa ðe tˈetʃo/" }, sen: { en: "Crown molding traced the edge where the ceiling met the walls.", zh: "天花线脚沿着天花板与墙面交界的地方勾勒出一圈轮廓。", es: "La moldura de techo recorría el borde donde el techo se unía con las paredes." }, note: { zh: "天花板与墙面交界处的装饰线条；美式说 crown molding，英式常说 coving" } }
-      ]
-    },
-{
-      sceneCode: "49",
-      sceneNames: { zh: "亚洲机场入境", en: "Immigration & Arrivals", es: "Inmigración y llegadas" },
-      sceneId: "asiaentry",
-      section: "亚洲区",
-      viewNames: { zh: "全景", en: "Full view", es: "Vista completa" },
-      nav: {},
-      alt: "亚洲机场入境场景，测温门、边检柜台与自助查验闸机、开箱查验台与缉毒犬、红绿通道拱门、货币兑换与电话卡柜台、充电站、直饮水机、行李打包机，尽头是到达大厅出口玻璃门",
-      stage: "images/舞台49-亚洲机场入境-1.jpg",
-      hotspots: [ /* DINO+SigLIP 标注 + 大模型裁决终版 2026-07-30 */
-        { w: 0, x: 3.9, y: 13.7, wd: 13.7, ht: 70.3 },
-        { w: 1, x: 21.8, y: 39.5, wd: 23.5, ht: 17 },
-        { w: 2, x: 25.8, y: 33.1, wd: 7.2, ht: 14.3 },
-        { w: 3, x: 19.5, y: 47, wd: 30.5, ht: 36 },
-        { w: 4, x: 52, y: 35.9, wd: 12.8, ht: 39 },
-        { w: 5, x: 61.4, y: 64.8, wd: 11.9, ht: 16.6 },
-        { w: 6, x: 37.1, y: 55.3, wd: 25.3, ht: 36.5 },
-        { w: 7, x: 43.7, y: 21.1, wd: 9.2, ht: 31.7 },
-        { w: 8, x: 53.5, y: 21, wd: 10.2, ht: 32.5 },
-        { w: 9, x: 62, y: 22, wd: 10, ht: 33 },
-        { w: 10, x: 71.5, y: 23.5, wd: 6.3, ht: 12 },
-        { w: 11, x: 78, y: 31.5, wd: 8.7, ht: 12 },
-        { w: 12, x: 79.4, y: 41.8, wd: 5.3, ht: 21.6 },
-        { w: 13, x: 68.4, y: 38, wd: 10.5, ht: 25 },
-        { w: 14, x: 84, y: 17.5, wd: 9, ht: 50 },
-        { panel: "counter", x: 22, y: 42, wd: 12, ht: 10 }, /* 边检柜台桌面入口(主角递护照的首个柜台) */
-        { portal: "airport", view: "登机口", x: 93.5, y: 22.5, wd: 6.3, ht: 40 } /* 出口玻璃门回程 */
-      ],
-      words: [
-        { terms: { en: "thermal scanner", zh: "测温门", es: "escáner térmico" }, reading: { en: "/ˈθɜːrml ˈskænər/", zh: "cè wēn mén", es: "/eskˈaneɾ tˈeɾmiko/" }, sen: { en: "We walked through the thermal scanner right after landing.", zh: "我们一下飞机就走过了测温门。", es: "Pasamos por el escáner térmico nada más aterrizar." }, note: { zh: "机场入境第一关，测体温的门形通道" } },
-        { terms: { en: "immigration counter", zh: "边检柜台", es: "mostrador de inmigración" }, reading: { en: "/ˌɪmɪˈɡreɪʃn ˈkaʊntər/", zh: "biān jiǎn guì tái", es: "/mˌostɾaðˈoɾ ðe ˌimmiɣɾaθjˈon/" }, sen: { en: "He handed his passport to the officer at the immigration counter.", zh: "他在边检柜台把护照递给了官员。", es: "Le entregó su pasaporte al oficial en el mostrador de inmigración." }, note: { zh: "也叫 passport control" } },
-        { terms: { en: "immigration officer", zh: "边检官员", es: "oficial de inmigración" }, reading: { en: "/ˌɪmɪˈɡreɪʃn ˈɔːfɪsər/", zh: "biān jiǎn guān yuán", es: "/ofiθjˈal ðe ˌimmiɣɾaθjˈon/" }, sen: { en: "The immigration officer flipped through my passport pages.", zh: "边检官员翻看了我护照的每一页。", es: "El oficial de inmigración hojeó las páginas de mi pasaporte." }, note: { zh: "" } },
-        { terms: { en: "e-gate", zh: "自助查验闸机", es: "puerta electrónica" }, reading: { en: "/ˈiː ɡeɪt/", zh: "zì zhù chá yàn zhá jī", es: "/pwˈeɾta elektɾˈonika/" }, sen: { en: "She scanned her passport and walked through the e-gate in seconds.", zh: "她刷了护照，几秒钟就走过了自助查验闸机。", es: "Escaneó su pasaporte y cruzó la puerta electrónica en segundos." }, note: { zh: "也叫 automated gate/自助通关" } },
-        { terms: { en: "customs officer", zh: "海关官员", es: "oficial de aduanas" }, reading: { en: "/ˈkʌstəmz ˈɔːfɪsər/", zh: "hǎi guān guān yuán", es: "/ofiθjˈal ðe aðwˈanas/" }, sen: { en: "The customs officer asked if we had anything to declare.", zh: "海关官员问我们有没有需要申报的东西。", es: "El oficial de aduanas nos preguntó si teníamos algo que declarar." }, note: { zh: "与 immigration officer 区分：管物品不管人" } },
-        { terms: { en: "sniffer dog", zh: "缉毒犬", es: "perro detector" }, reading: { en: "/ˈsnɪfər ˌdɔːɡ/", zh: "jī dú quǎn", es: "/pˈero detektˈoɾ/" }, sen: { en: "A sniffer dog circled the suitcases on the inspection table.", zh: "一只缉毒犬绕着开箱查验台上的行李箱转来转去。", es: "Un perro detector rondaba las maletas sobre la mesa de inspección." }, note: { zh: "也叫 detection dog" } },
-        { terms: { en: "inspection table", zh: "开箱查验台", es: "mesa de inspección" }, reading: { en: "/ɪnˈspekʃn ˈteɪbl/", zh: "kāi xiāng chá yàn tái", es: "/mˈesa ðe inspekθjˈon/" }, sen: { en: "The officer laid the open suitcase flat on the inspection table.", zh: "官员把打开的行李箱平放在开箱查验台上。", es: "El oficial dejó la maleta abierta sobre la mesa de inspección." }, note: { zh: "" } },
-        { terms: { en: "green channel", zh: "绿色通道", es: "canal verde" }, reading: { en: "/ˌɡriːn ˈtʃænl/", zh: "lǜ sè tōng dào", es: "/kanˈal bˈeɾðe/" }, sen: { en: "We had nothing to declare, so we walked through the green channel.", zh: "我们没有需要申报的东西，就走了绿色通道。", es: "No teníamos nada que declarar, así que pasamos por el canal verde." }, note: { zh: "无申报通道，nothing to declare" } },
-        { terms: { en: "red channel", zh: "红色通道", es: "canal rojo" }, reading: { en: "/ˌred ˈtʃænl/", zh: "hóng sè tōng dào", es: "/kanˈal rˈoxo/" }, sen: { en: "He carried extra bottles of wine, so he chose the red channel.", zh: "他带了多余的酒瓶，所以选了红色通道。", es: "Llevaba botellas de más de vino, así que eligió el canal rojo." }, note: { zh: "需申报通道，goods to declare" } },
-        { terms: { en: "currency exchange", zh: "货币兑换处", es: "casa de cambio" }, reading: { en: "/ˈkɜːrənsi ɪksˈtʃeɪndʒ/", zh: "huò bì duì huàn chù", es: "/kˈasa ðe kˈambjo/" }, sen: { en: "We changed some cash at the currency exchange near the exit.", zh: "我们在出口附近的货币兑换处换了些现金。", es: "Cambiamos algo de efectivo en la casa de cambio cerca de la salida." }, note: { zh: "" } },
-        { terms: { en: "SIM card", zh: "电话卡", es: "tarjeta SIM" }, reading: { en: "/ˈsɪm ˌkɑːrd/", zh: "diàn huà kǎ", es: "/taɾxˈeta sˈim/" }, sen: { en: "I bought a local SIM card right after baggage claim.", zh: "我一取完行李就买了张本地电话卡。", es: "Compré una tarjeta SIM local justo después de recoger el equipaje." }, note: { zh: "读 /sɪm/ 一个音节，不逐字母拼读" } },
-        { terms: { en: "charging station", zh: "充电站", es: "estación de carga" }, reading: { en: "/ˈtʃɑːrdʒɪŋ ˌsteɪʃn/", zh: "chōng diàn zhàn", es: "/estaθjˈon de kˈaɾɣa/" }, sen: { en: "She plugged her phone in at the charging station while we waited.", zh: "我们等待的时候，她在充电站给手机充上了电。", es: "Enchufó su teléfono en la estación de carga mientras esperábamos." }, note: { zh: "" } },
-        { terms: { en: "water dispenser", zh: "直饮水机", es: "dispensador de agua" }, reading: { en: "/ˈwɔːtər dɪˈspensər/", zh: "zhí yǐn shuǐ jī", es: "/dispensaðˈoɾ ðe ˈaɣwa/" }, sen: { en: "He filled his bottle at the water dispenser before the long ride home.", zh: "回家前他在直饮水机那儿灌满了水瓶。", es: "Llenó su botella en el dispensador de agua antes del largo trayecto a casa." }, note: { zh: "美式也叫 water fountain" } },
-        { terms: { en: "luggage wrap machine", zh: "行李打包机", es: "máquina de envoltura de equipaje" }, reading: { en: "/ˈlʌɡɪdʒ ˈræp məˌʃiːn/", zh: "xíng lǐ dǎ bāo jī", es: "/mˈakina de embolˈtuɾa de ekipˈaxe/" }, sen: { en: "She ran her suitcase through the luggage wrap machine to protect it.", zh: "她把行李箱放上行李打包机，裹了一层膜保护起来。", es: "Pasó su maleta por la máquina de envoltura de equipaje para protegerla." }, note: { zh: "也叫 luggage wrapping machine" } },
-        { terms: { en: "arrivals hall", zh: "到达大厅", es: "sala de llegadas" }, reading: { en: "/əˈraɪvlz ˌhɔːl/", zh: "dào dá dà tīng", es: "/sˈala ðe ʎeɣˈaðas/" }, sen: { en: "A friend was waiting for us just outside the arrivals hall.", zh: "朋友就在到达大厅外面等我们。", es: "Una amiga nos esperaba justo a la salida de la sala de llegadas." }, note: { zh: "" } }
-      ],
-      panels: [
-        {
-          id: "counter",
-          names: { zh: "边检柜台桌面", en: "Immigration Counter Desk", es: "Mesa del mostrador de inmigración" },
-          stage: "images/舞台49-亚洲机场入境-面板1.jpg",
-          hotspots: [ /* DINO+SigLIP 标注 + 大模型裁决终版 2026-07-30 */
-            { w: 0, x: 15.3, y: 34.2, wd: 14.3, ht: 29.3 },
-            { w: 1, x: 52.6, y: 27.2, wd: 10.1, ht: 24.4 },
-            { w: 2, x: 32, y: 35.5, wd: 15.4, ht: 35.5 },
-            { w: 3, x: 72.9, y: 33.5, wd: 23.5, ht: 37.7 },
-            { w: 4, x: 46.9, y: 0.5, wd: 24.2, ht: 19.5 }
-          ],
-          words: [
-            { terms: { en: "visa", zh: "签证", es: "visado" }, reading: { en: "/ˈviːzə/", zh: "qiān zhèng", es: "/bisˈaðo/" }, sen: { en: "The officer stamped my visa page without asking any questions.", zh: "官员在我的签证页盖了章，什么都没问。", es: "El oficial selló la página de mi visado sin hacer ninguna pregunta." }, note: { zh: "" } },
-            { terms: { en: "entry stamp", zh: "入境章", es: "sello de entrada" }, reading: { en: "/ˈentri ˌstæmp/", zh: "rù jìng zhāng", es: "/sˈeʎo ðe entɾˈaða/" }, sen: { en: "He pressed the entry stamp firmly onto the open passport.", zh: "他用力把入境章盖在了翻开的护照上。", es: "Presionó el sello de entrada firmemente sobre el pasaporte abierto." }, note: { zh: "" } },
-            { terms: { en: "arrival card", zh: "入境卡", es: "tarjeta de desembarco" }, reading: { en: "/əˈraɪvl ˌkɑːrd/", zh: "rù jìng kǎ", es: "/taɾxˈeta ðe ðesembˈaɾko/" }, sen: { en: "I filled out the arrival card on the plane before we landed.", zh: "落地前我在飞机上填好了入境卡。", es: "Rellené la tarjeta de desembarco en el avión antes de aterrizar." }, note: { zh: "也叫 landing card/disembarkation card" } },
-            { terms: { en: "fingerprint scanner", zh: "指纹扫描仪", es: "escáner de huellas dactilares" }, reading: { en: "/ˈfɪŋɡərprɪnt ˈskænər/", zh: "zhǐ wén sǎo miáo yí", es: "/eskˈaneɾ ðe wˈeʎas daktilˈaɾes/" }, sen: { en: "The officer asked me to press my fingers on the fingerprint scanner.", zh: "官员让我把手指按在指纹扫描仪上。", es: "El oficial me pidió que pusiera los dedos en el escáner de huellas dactilares." }, note: { zh: "" } },
-            { terms: { en: "intercom", zh: "对讲麦克风", es: "intercomunicador" }, reading: { en: "/ˈɪntərkɑːm/", zh: "duì jiǎng mài kè fēng", es: "/ˌinteɾkomunikaðˈoɾ/" }, sen: { en: "The officer's voice crackled through the intercom in the glass window.", zh: "官员的声音从玻璃窗口的对讲麦克风里传出来，有点沙沙的。", es: "La voz del oficial sonó entrecortada por el intercomunicador de la ventanilla." }, note: { zh: "柜台玻璃窗口那种鹅颈麦" } }
-          ]
-        }
       ]
     }
   ];
@@ -4917,11 +4849,11 @@
   function viewLabel(s){ return (s.viewNames && s.viewNames[nativeLang]) || ""; }
 
   // 板块分组头：emoji 固定，文案随母语（房子/交通/外出 ↔ Home/Transit/Out）
-  var SECTION_EMOJI = { "房子": "🏠", "交通": "🚗", "外出": "🛒", "亚洲区": "🌏" };
+  var SECTION_EMOJI = { "房子": "🏠", "交通": "🚗", "外出": "🛒" };
   var SECTION_LABEL_TEXT = {
-    zh: { "房子": "房子", "交通": "交通", "外出": "外出", "亚洲区": "亚洲区" },
-    en: { "房子": "Home", "交通": "Transit", "外出": "Out", "亚洲区": "Asia" },
-    es: { "房子": "Casa", "交通": "Transporte", "外出": "Salir", "亚洲区": "Asia" }
+    zh: { "房子": "房子", "交通": "交通", "外出": "外出" },
+    en: { "房子": "Home", "交通": "Transit", "外出": "Out" },
+    es: { "房子": "Casa", "交通": "Transporte", "外出": "Salir" }
   };
   var TOC_PLACEHOLDER_TEXT = {
     zh: "超市 · 餐厅点餐（待开）",
@@ -5338,13 +5270,12 @@
     return outer;
   }
 
-  // 板块顺序固定：房子 → 交通 → 外出 → 亚洲区（2026-07-30 新增；无场景的板块仍展示板块头 + 占位行）
+  // 板块顺序固定：房子 → 交通 → 外出（外出目前无场景，仍展示板块头 + 占位行）
   // 板块头文案随母语（sectionLabel()），id 仍用中文键——数据 section 字段本身保留中文键，不改
   var TOC_SECTIONS = [
     { id: "房子" },
     { id: "交通" },
-    { id: "外出" },
-    { id: "亚洲区" }
+    { id: "外出" }
   ];
 
   // 板块开合状态（localStorage 持久化），默认全展开——缺记录即视为展开
